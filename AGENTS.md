@@ -34,13 +34,36 @@ You are building **Toki Shrine**, a native Android app. This document tells you 
 | Theme | Dark only |
 | Icons | Phosphor |
 
-Build and install with the toolchain already on this machine:
+## 2a. Build and device
+
+The toolchain is already installed and wired up. **Android Studio is not installed and is not needed.**
+
+Always build with `./build.sh` — it sets `JAVA_HOME` and the SDK path for you:
 
 ```bash
-JAVA_HOME=~/dev-tools/jdk-17.0.19+10/Contents/Home ./gradlew assembleDebug
+./build.sh assembleDebug
 ```
 
-`adb` is at `~/dev-tools/android-sdk/platform-tools/adb`. The test device is a Samsung Galaxy S23 Ultra on Android 16.
+For `adb` and other SDK tools, source the environment first:
+
+```bash
+source tools/env.sh
+```
+
+The Gradle wrapper (8.7), `local.properties` and `gradle.properties` are already committed and correct. Do not regenerate them and do not change the Gradle or Kotlin version without asking.
+
+The test device is a Samsung Galaxy S23 Ultra on Android 16, connected over USB.
+
+**Three device facts that will otherwise waste your time:**
+
+1. **`adb` fails with "more than one device/emulator" if wireless debugging is also on.** If you see that, stop and ask the user to turn wireless debugging off rather than guessing at a serial.
+2. **Reinstalling the app disables its accessibility service.** After every `adb install`, re-enable it before running any detection test:
+   ```bash
+   adb shell settings put secure enabled_accessibility_services com.arjunrana.tokishrine/com.arjunrana.tokishrine.TokiAccessibilityService
+   adb shell settings put secure accessibility_enabled 1
+   ```
+   Confirm it actually bound with `adb shell dumpsys accessibility | grep "label=Toki Shrine"` — the setting can read as enabled while the service is not yet bound, and binding is asynchronous. Wait for the bind before asserting a detection test failed.
+3. **Any other blocker app installed on the device will fight yours.** If a detection test behaves strangely, check `adb shell settings get secure enabled_accessibility_services` for a second blocking service before debugging your own code.
 
 ## 3. Workflow rules
 

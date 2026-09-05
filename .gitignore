@@ -3,6 +3,7 @@
 toki-shrine-ui-mockups/project/_render/
 build/
 .gradle/
+app/build/
 local.properties
 *.iml
 .idea/
