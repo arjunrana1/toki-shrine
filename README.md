@@ -13,6 +13,7 @@ Deliberately friction-only. A hard blocker is a different product.
 | [AGENTS.md](AGENTS.md) | Build instructions — read first. Phases, acceptance tests, workflow rules |
 | [PRD.md](PRD.md) | Product specification 1.0 — flows, screens, rules, analytics events |
 | [DECISIONS.md](DECISIONS.md) | Running log of decisions made during the build |
+| [HANDOVER.md](HANDOVER.md) | Starting context for a session verifying build phases |
 
 ## Design
 
