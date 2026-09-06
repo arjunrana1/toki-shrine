@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The only hex outside the Compose theme: the launch-window and launcher
+     need values before any Kotlin runs. Both mirror the Nocturne bg and accent
+     tokens from nocturne-*/styles.css. -->
+<resources>
+    <color name="nocturne_bg">#161826</color>
+    <color name="nocturne_accent">#9184d9</color>
+    <color name="ic_launcher_background">#161826</color>
+</resources>
