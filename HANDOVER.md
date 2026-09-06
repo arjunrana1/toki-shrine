@@ -45,16 +45,32 @@ Device: **Samsung Galaxy S23 Ultra, Android 16**, over USB-C.
   ```
 - **A rival blocker app will fight ours.** A prototype called CaffyBlock may still be installed. If detection behaves oddly, check `adb shell settings get secure enabled_accessibility_services` before debugging the code.
 
-## Your loop
+## Your job is a code review, not a smoke test
 
-When the owner says "phase N is done":
+Acceptance tests prove the app *behaves* correctly today. They say nothing about whether the code is any good. You are a lead dev reviewing a junior's work — both questions matter, and the second one compounds. A bad abstraction in phase 1 is cheap to fix and ruinous by phase 5.
 
-1. `git log` and `git diff` for that phase's commit.
-2. **Run the acceptance tests for phase N from `AGENTS.md` yourself.** They are deliberately objective — commands with checkable output, or specific observable results on the device. Run them; don't read the code and infer.
-3. Read `DECISIONS.md` for anything GLM resolved quietly or flagged as blocking.
-4. Report: which tests pass, which fail, and anything out of scope for that phase.
+### How much to read
 
-**If a phase fails, report it — don't fix it.** Send it back to GLM. A verifier that patches the builder's code produces conflicts nobody can untangle.
+- **Phase 0: read every file in full.** It is small, and everything downstream inherits it — especially the Nocturne theme translation. A wrong token there makes all 25 screens subtly wrong for the rest of the build, and no acceptance test will catch it.
+- **Phase 1 onward: read the diff, plus every file it touches in full,** plus anything those files depend on that you don't already understand. A bare diff hides deletions, dead code left behind, and functions that no longer make sense in context.
+- **After phases 3 and 6, do a wider architectural pass** over the whole `app/src/main` tree. Drift accumulates quietly and is much cheaper to correct at a phase boundary.
+
+### The four layers, every phase
+
+1. **Scope.** Does the diff touch only what phase N scopes? Building ahead is the single most common failure mode. Flag anything from a later phase even if it works.
+2. **Acceptance tests.** Run them yourself, on the device. They are deliberately objective — commands with checkable output or specific observable results. Run them; never read the code and infer the result.
+3. **Code review.** If the `/code-review` skill is available in your session, use it on the phase's diff. Otherwise review by hand. Look for: dead or duplicated code, leaked registrations and unclosed resources, Compose recomposition problems, error paths that silently swallow failures, tests that assert nothing, misleading names, and abstractions that will fight the next phase.
+4. **Spec conformance.** Check behaviour the acceptance tests don't cover against `PRD.md`. The tests are a floor, not the specification.
+
+Then read `DECISIONS.md` for anything GLM resolved quietly or flagged as blocking.
+
+### Reporting
+
+Give a single verdict — **PASS**, **PASS WITH NOTES**, or **FAIL** — followed by findings. For each finding: the file and line, what is wrong, and why it matters. The owner pastes these to GLM verbatim, so write them to be actioned by someone who cannot see this conversation.
+
+Separate **blocking** findings (must fix before the next phase) from **notes** (worth fixing, not worth stopping for). Don't inflate severity — a phase held up over naming preferences wastes everyone's time, and a real defect waved through costs a rebuild.
+
+**Never fix the code yourself.** Report and send it back to GLM. A verifier that patches the builder's work produces conflicts nobody can untangle, and destroys the record of what the builder actually produced.
 
 ## Be skeptical of
 
@@ -65,7 +81,11 @@ When the owner says "phase N is done":
 - The countdown stalls when the phone is set down and resumes **from where it stalled, not from zero**
 - The token check: `grep -rE "#[0-9a-fA-F]{6}" app/src/main/java --include=*.kt | grep -v ui/theme/` returns nothing
 
-Also watch for GLM building past the current phase. Scope creep is the main failure mode here.
+Also check that assertions actually assert. An instrumented test that runs green while testing nothing is worse than no test, because it buys false confidence.
+
+## Device contention
+
+**Only one agent touches the device at a time.** GLM and you will both run `adb` and Gradle. If GLM is mid-build while you are running acceptance tests, you will get install failures, locked Gradle caches and results neither of you can trust. Confirm with the owner that GLM is idle before you start.
 
 ## Settled — do not reopen
 
