@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.arjunrana.tokishrine.data.Phase1VerificationProbe" tests="3" failures="3" errors="0" skipped="0" time="0.766" timestamp="2026-09-08T19:57:51" hostname="localhost">
+  <properties>
+    <property name="device" value="SM-S918B - 16" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="perAppLeaderboardMustExcludeSites" classname="com.arjunrana.tokishrine.data.Phase1VerificationProbe" time="0.069">
+    <failure>java.lang.AssertionError: PRD section 9 specifies a per-app leaderboard expected:&lt;[com.instagram.android]&gt; but was:&lt;[reddit.com, com.instagram.android]&gt;
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.failNotEquals(Assert.java:835)
+at org.junit.Assert.assertEquals(Assert.java:120)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe$perAppLeaderboardMustExcludeSites$1.invokeSuspend(Phase1VerificationProbe.kt:47)
+at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe.perAppLeaderboardMustExcludeSites(Phase1VerificationProbe.kt:41)
+</failure>
+  </testcase>
+  <testcase name="failedCreateMustRollBackAllRows" classname="com.arjunrana.tokishrine.data.Phase1VerificationProbe" time="0.0">
+    <failure>java.lang.AssertionError: Failed create left a partial block and its first target expected:&lt;1&gt; but was:&lt;2&gt;
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.failNotEquals(Assert.java:835)
+at org.junit.Assert.assertEquals(Assert.java:120)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe$failedCreateMustRollBackAllRows$1.invokeSuspend(Phase1VerificationProbe.kt:33)
+at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe.failedCreateMustRollBackAllRows(Phase1VerificationProbe.kt:27)
+</failure>
+  </testcase>
+  <testcase name="sameDomainCaseMustConflict" classname="com.arjunrana.tokishrine.data.Phase1VerificationProbe" time="0.013">
+    <failure>java.lang.AssertionError: DNS names differing only in case are the same site expected:&lt;Conflict(holdingBlockId=1, holdingBlockName=A)&gt; but was:&lt;Added&gt;
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.failNotEquals(Assert.java:835)
+at org.junit.Assert.assertEquals(Assert.java:120)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe$sameDomainCaseMustConflict$1.invokeSuspend(Phase1VerificationProbe.kt:39)
+at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-77c0583a4f56c02fb9b0dd27ec9db6c041a53ad5:1)
+at com.arjunrana.tokishrine.data.Phase1VerificationProbe.sameDomainCaseMustConflict(Phase1VerificationProbe.kt:36)
+</failure>
+  </testcase>
+</testsuite>

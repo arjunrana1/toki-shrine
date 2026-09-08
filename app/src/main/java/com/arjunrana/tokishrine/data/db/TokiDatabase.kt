@@ -10,7 +10,9 @@ import com.arjunrana.tokishrine.data.entity.Event
 
 @Database(
     entities = [Block::class, BlockedApp::class, BlockedSite::class, Event::class, AppMeta::class],
-    version = 1,
+    // v2: event gains target_type. No production database exists yet (nothing
+    // outside tests builds TokiDatabase), so no migration ships.
+    version = 2,
     exportSchema = false,
 )
 abstract class TokiDatabase : RoomDatabase() {

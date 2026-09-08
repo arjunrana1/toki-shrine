@@ -10,9 +10,11 @@ import com.arjunrana.tokishrine.data.repo.EventRepository
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,8 +41,15 @@ class EventRepositoryTest {
         db.close()
     }
 
-    private fun insert(name: String, timestampUtc: Long, target: String? = null) = runBlocking {
-        db.eventDao().insert(Event(name = name, timestampUtc = timestampUtc, target = target))
+    private fun insert(
+        name: String,
+        timestampUtc: Long,
+        target: String? = null,
+        targetType: String? = null,
+    ) = runBlocking {
+        db.eventDao().insert(
+            Event(name = name, timestampUtc = timestampUtc, target = target, targetType = targetType),
+        )
     }
 
     // Local noon of the day `daysAgo` before today. Noon keeps every seeded
@@ -59,7 +68,14 @@ class EventRepositoryTest {
     // count is correct.
     @Test
     fun hundredEventsWalkAwaysLastSevenDaysCorrect() = runBlocking {
-        repeat(35) { insert(EventRepository.EVENT_WALK_AWAY, now - 1L * 60 * 60 * 1000) }
+        repeat(35) {
+            insert(
+                EventRepository.EVENT_WALK_AWAY,
+                now - 1L * 60 * 60 * 1000,
+                target = "com.instagram.android",
+                targetType = EventRepository.TARGET_TYPE_APP,
+            )
+        }
         repeat(25) { insert(EventRepository.EVENT_WALK_AWAY, now - 30L * 24 * 60 * 60 * 1000) }
         repeat(20) { insert(EventRepository.EVENT_CHALLENGE_COMPLETED, now - 2L * 24 * 60 * 60 * 1000) }
         repeat(20) { insert(EventRepository.EVENT_BLOCK_SCREEN_SHOWN, now - 10L * 24 * 60 * 60 * 1000) }
@@ -99,7 +115,12 @@ class EventRepositoryTest {
             Pair(12L, "com.youtube.app"),
         )
         seed.forEach { (daysAgo, target) ->
-            insert(EventRepository.EVENT_WALK_AWAY, localNoonDaysAgo(daysAgo), target)
+            insert(
+                EventRepository.EVENT_WALK_AWAY,
+                localNoonDaysAgo(daysAgo),
+                target = target,
+                targetType = EventRepository.TARGET_TYPE_APP,
+            )
         }
 
         // 6 completed challenges count in the rate denominator; abandoned
@@ -126,12 +147,45 @@ class EventRepositoryTest {
         assertEquals(3, stats.mostWalkedAwayFrom[2].count)
     }
 
+    // P2 fix: the leaderboard is per-app; website walk-aways count in global
+    // totals but never appear as leaderboard rows. Both packages and domains
+    // contain dots, so the stored target_type decides — never the shape.
+    @Test
+    fun leaderboardExcludesWebsiteTargetsButTotalsStayInclusive() = runBlocking {
+        insert(
+            EventRepository.EVENT_WALK_AWAY,
+            now - 1,
+            target = "com.instagram.android",
+            targetType = EventRepository.TARGET_TYPE_APP,
+        )
+        insert(
+            EventRepository.EVENT_WALK_AWAY,
+            now - 2,
+            target = "reddit.com",
+            targetType = EventRepository.TARGET_TYPE_SITE,
+        )
+        insert(
+            EventRepository.EVENT_WALK_AWAY,
+            now - 3,
+            target = "reddit.com",
+            targetType = EventRepository.TARGET_TYPE_SITE,
+        )
+
+        val stats = repo.getStats(now, ZoneId.systemDefault())
+
+        assertEquals(3, stats.totalWalkAways)
+        assertEquals(1, stats.mostWalkedAwayFrom.size)
+        assertEquals("com.instagram.android", stats.mostWalkedAwayFrom[0].target)
+        assertEquals(1, stats.mostWalkedAwayFrom[0].count)
+    }
+
     @Test
     fun logRecordsEventsAndParams() = runBlocking {
         repo.log(
             EventRepository.EVENT_BLOCK_SCREEN_SHOWN,
             blockId = 3,
             target = "com.instagram.android",
+            targetType = EventRepository.TARGET_TYPE_APP,
             params = mapOf("trigger_type" to "app", "latency_ms" to 42L),
         )
 
@@ -140,8 +194,20 @@ class EventRepositoryTest {
         assertEquals(EventRepository.EVENT_BLOCK_SCREEN_SHOWN, stored.name)
         assertEquals(3L, stored.blockId)
         assertEquals("com.instagram.android", stored.target)
-        assertNotNull(stored.paramsJson)
-        assert(stored.paramsJson!!.contains("latency_ms"))
+        assertEquals(EventRepository.TARGET_TYPE_APP, stored.targetType)
+        // Parse the JSON and verify the actual key/value round-trip.
+        val params = JSONObject(stored.paramsJson!!)
+        assertEquals("app", params.getString("trigger_type"))
+        assertEquals(42L, params.getLong("latency_ms"))
+    }
+
+    @Test
+    fun logRejectsTargetWithoutType() {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repo.log(EventRepository.EVENT_WALK_AWAY, target = "reddit.com")
+            }
+        }
     }
 
     @Test

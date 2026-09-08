@@ -1,7 +1,9 @@
 package com.arjunrana.tokishrine.data.repo
 
+import androidx.room.withTransaction
 import com.arjunrana.tokishrine.data.db.BlockDao
 import com.arjunrana.tokishrine.data.db.BlockWithContents
+import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.entity.BlockedApp
 import com.arjunrana.tokishrine.data.entity.BlockedSite
 import com.arjunrana.tokishrine.data.entity.Block
@@ -29,11 +31,18 @@ data class BlockDraft(
     val showTypos: Boolean,
 )
 
-class BlockRepository(private val dao: BlockDao) {
+class BlockRepository(private val db: TokiDatabase) {
+
+    private val dao: BlockDao = db.blockDao()
 
     // PRD §4: a new block is saved OFF and does nothing until turned on —
     // enabled is forced false regardless of any draft state.
-    suspend fun createBlock(draft: BlockDraft): Long {
+    //
+    // One transaction for the parent row and every child, so a rejected save
+    // (e.g. a duplicate reaching the unique index) rolls back completely: no
+    // half-built block, no reserved targets. The create flow resolves
+    // conflicts in the editor before saving; the index stays as the backstop.
+    suspend fun createBlock(draft: BlockDraft): Long = db.withTransaction {
         val id = dao.insertBlock(
             Block(
                 name = draft.name,
@@ -46,12 +55,9 @@ class BlockRepository(private val dao: BlockDao) {
                 enabled = false,
             ),
         )
-        // The create flow resolves conflicts in the editor before saving; if a
-        // duplicate still reaches here the unique index fails loudly rather
-        // than duplicating.
         draft.appPackageNames.forEach { dao.insertApp(BlockedApp(blockId = id, packageName = it)) }
-        draft.siteDomains.forEach { dao.insertSite(BlockedSite(blockId = id, domain = it)) }
-        return id
+        draft.siteDomains.forEach { dao.insertSite(BlockedSite(blockId = id, domain = canonicalDomain(it))) }
+        id
     }
 
     suspend fun getBlockWithContents(id: Long): BlockWithContents? = dao.getBlockWithContents(id)
@@ -77,9 +83,10 @@ class BlockRepository(private val dao: BlockDao) {
     }
 
     suspend fun addSite(blockId: Long, domain: String): AddTargetResult {
-        val existing = dao.findSiteByDomain(domain)
+        val canonical = canonicalDomain(domain)
+        val existing = dao.findSiteByDomain(canonical)
         if (existing == null) {
-            dao.insertSite(BlockedSite(blockId = blockId, domain = domain))
+            dao.insertSite(BlockedSite(blockId = blockId, domain = canonical))
             return AddTargetResult.Added
         }
         if (existing.blockId == blockId) return AddTargetResult.AlreadyInThisBlock
@@ -87,15 +94,23 @@ class BlockRepository(private val dao: BlockDao) {
     }
 
     // The conflict dialog's *Move it here*: reassign the single row atomically.
+    // Lookups canonicalize too, so a case-variant spelling still finds the row.
     suspend fun moveApp(packageName: String, toBlockId: Long) =
         dao.moveAppToBlock(packageName, toBlockId)
 
     suspend fun moveSite(domain: String, toBlockId: Long) =
-        dao.moveSiteToBlock(domain, toBlockId)
+        dao.moveSiteToBlock(canonicalDomain(domain), toBlockId)
 
     suspend fun removeApp(packageName: String) = dao.deleteAppByPackageName(packageName)
 
-    suspend fun removeSite(domain: String) = dao.deleteSiteByDomain(domain)
+    suspend fun removeSite(domain: String) = dao.deleteSiteByDomain(canonicalDomain(domain))
+
+    // Domains are case-insensitive in DNS; identity is the lowercased,
+    // trimmed name without a trailing root dot. Storage only ever holds
+    // canonical spellings, so the unique index protects the same identity the
+    // repository compares. Whole-domain only — no path handling (PRD §13).
+    private fun canonicalDomain(domain: String): String =
+        domain.trim().trimEnd('.').lowercase()
 
     private suspend fun holdingName(blockId: Long): String =
         dao.getBlock(blockId)?.name ?: ""

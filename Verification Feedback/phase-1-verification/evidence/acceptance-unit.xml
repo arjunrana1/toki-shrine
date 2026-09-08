@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-09-08T19:58:14" hostname="Arjuns-Laptop.local" time="0.006">
+  <properties/>
+  <testcase name="daysSince_launchDayIsZero" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.004"/>
+  <testcase name="walkAwayRate_matchesFormula" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.0"/>
+  <testcase name="walkAwayRate_zeroData_isZero_notNaN" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.0"/>
+  <testcase name="calendarWeekStart_opensAtStartOfSixDaysAgo_utc" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.0"/>
+  <testcase name="calendarWeekStart_usesLocalCalendar_notUtc" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.001"/>
+  <testcase name="daysSince_futureFirstLaunch_clampsToZero" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.0"/>
+  <testcase name="daysSince_countsWholeCalendarDays" classname="com.arjunrana.tokishrine.data.stats.StatsCalculatorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

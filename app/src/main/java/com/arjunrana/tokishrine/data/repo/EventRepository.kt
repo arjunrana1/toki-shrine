@@ -28,8 +28,14 @@ class EventRepository(
         name: String,
         blockId: Long? = null,
         target: String? = null,
+        targetType: String? = null,
         params: Map<String, Any?> = emptyMap(),
     ) {
+        // A target without a kind would silently vanish from the per-app
+        // leaderboard, so the contract is enforced loudly at the call site.
+        require(target == null || targetType != null) {
+            "target_type is required whenever target is set (event: $name, target: $target)"
+        }
         ensureFirstLaunchRecorded()
         val paramsJson = if (params.isEmpty()) null else JSONObject(params).toString()
         eventDao.insert(
@@ -38,6 +44,7 @@ class EventRepository(
                 timestampUtc = clock(),
                 blockId = blockId,
                 target = target,
+                targetType = targetType,
                 paramsJson = paramsJson,
             ),
         )
@@ -59,7 +66,7 @@ class EventRepository(
             ),
             bestDay = eventDao.maxCountPerLocalDay(EVENT_WALK_AWAY) ?: 0,
             walkAwayRate = StatsCalculator.walkAwayRate(totalWalkAways, completed),
-            mostWalkedAwayFrom = eventDao.countsByTarget(EVENT_WALK_AWAY),
+            mostWalkedAwayFrom = eventDao.countsByTarget(EVENT_WALK_AWAY, TARGET_TYPE_APP),
         )
     }
 
@@ -81,5 +88,9 @@ class EventRepository(
         const val EVENT_BLOCK_SCREEN_SHOWN = "block_screen_shown"
         const val EVENT_TURNOFF_COMPLETED = "turnoff_completed"
         const val EVENT_STATS_VIEWED = "stats_viewed"
+
+        // target_type values, aligned with §10's trigger_type (app | site).
+        const val TARGET_TYPE_APP = "app"
+        const val TARGET_TYPE_SITE = "site"
     }
 }

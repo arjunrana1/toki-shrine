@@ -1,5 +1,6 @@
 package com.arjunrana.tokishrine.data
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -14,6 +15,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +34,7 @@ class BlockRepositoryTest {
             TokiDatabase::class.java,
         ).build()
         dao = db.blockDao()
-        repo = BlockRepository(dao)
+        repo = BlockRepository(db)
     }
 
     @After
@@ -122,6 +124,64 @@ class BlockRepositoryTest {
             repo.addSite(news, "reddit.com"),
         )
         assertEquals(social, dao.findSiteByDomain("reddit.com")?.blockId)
+    }
+
+    // P2 fix: domain identity is the canonical (lowercased, trimmed) name, so
+    // REDDIT.COM is reddit.com and cannot enter a second block. Storage holds
+    // the canonical spelling only.
+    @Test
+    fun domainIdentityIsCaseInsensitive() = runBlocking {
+        val social = repo.createBlock(draft("Social"))
+        val news = repo.createBlock(draft("News"))
+
+        assertEquals(AddTargetResult.Added, repo.addSite(social, "reddit.com"))
+        assertEquals(
+            AddTargetResult.Conflict(social, "Social"),
+            repo.addSite(news, "REDDIT.COM"),
+        )
+        // Stored spelling is canonical; only one row exists.
+        assertEquals("reddit.com", dao.findSiteByDomain("reddit.com")?.domain)
+        assertNull(dao.findSiteByDomain("REDDIT.COM"))
+
+        // The create path canonicalizes too.
+        val other = repo.createBlock(draft("Other", sites = listOf("News.SiteExample.COM")))
+        assertEquals(
+            listOf("news.siteexample.com"),
+            repo.getBlockWithContents(other)!!.sites.map { it.domain },
+        )
+
+        // Move and remove find the row through case-variant spellings.
+        repo.moveSite("REDDIT.COM", news)
+        assertEquals(news, dao.findSiteByDomain("reddit.com")?.blockId)
+        repo.removeSite("Reddit.Com")
+        assertNull(dao.findSiteByDomain("reddit.com"))
+    }
+
+    // P1 fix: a save rejected mid-way (duplicate reaching the unique index)
+    // must roll back completely — no half-built block, no reserved targets.
+    @Test
+    fun failedCreateBlockLeavesNothingBehind() = runBlocking {
+        val existing = repo.createBlock(draft("Existing", apps = listOf("com.instagram.android")))
+
+        assertThrows(SQLiteConstraintException::class.java) {
+            runBlocking {
+                repo.createBlock(
+                    draft("Failed", apps = listOf("com.reddit.frontpage", "com.instagram.android")),
+                )
+            }
+        }
+
+        // Only the original block survives, intact; nothing from the failed
+        // save was persisted, including the app inserted before the failure.
+        val blocks = repo.getBlocksWithContents()
+        assertEquals(1, blocks.size)
+        assertEquals(existing, blocks[0].block.id)
+        assertEquals("Existing", blocks[0].block.name)
+        assertEquals(
+            listOf("com.instagram.android"),
+            blocks[0].apps.map { it.packageName },
+        )
+        assertNull(dao.findAppByPackageName("com.reddit.frontpage"))
     }
 
     // The conflict dialog's *Move it here*: the row reassigns and the conflict

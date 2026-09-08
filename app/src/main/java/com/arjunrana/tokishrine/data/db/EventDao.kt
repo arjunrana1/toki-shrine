@@ -29,12 +29,15 @@ interface EventDao {
     )
     suspend fun maxCountPerLocalDay(name: String): Int?
 
+    // Per-app leaderboard only (PRD §9: "Most walked away from — per-app").
+    // Website walk-aways carry target_type 'site' and are excluded here while
+    // global counts (countByName / countByNameSince) stay inclusive.
     @Query(
         "SELECT target AS target, COUNT(*) AS count FROM event " +
-            "WHERE name = :name AND target IS NOT NULL " +
+            "WHERE name = :name AND target IS NOT NULL AND target_type = :targetType " +
             "GROUP BY target ORDER BY count DESC",
     )
-    suspend fun countsByTarget(name: String): List<TargetCount>
+    suspend fun countsByTarget(name: String, targetType: String): List<TargetCount>
 
     @Query("SELECT COUNT(*) FROM event")
     suspend fun countAll(): Int

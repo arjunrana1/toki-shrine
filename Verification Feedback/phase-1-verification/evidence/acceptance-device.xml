@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.arjunrana.tokishrine.data.BlockRepositoryTest" tests="10" failures="0" errors="0" skipped="0" time="1.057" timestamp="2026-09-08T19:56:57" hostname="localhost">
+  <properties>
+    <property name="device" value="SM-S918B - 16" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="moveAppReassignsOwnership" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.007" />
+  <testcase name="deletingBlockCascadesItsTargetsOnly" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.002" />
+  <testcase name="appHeldByAnotherBlockConflictsAndNeverDuplicates" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.001" />
+  <testcase name="insertBlockAndReadBackAllFields" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.029" />
+  <testcase name="setEnabledTogglesWithoutTouchingOtherFields" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.002" />
+  <testcase name="siteHeldByAnotherBlockConflictsAndNeverDuplicates" classname="com.arjunrana.tokishrine.data.BlockRepositoryTest" time="0.001" />
+  <testcase name="firstLaunchRecordedOnceAcrossManyLogs" classname="com.arjunrana.tokishrine.data.EventRepositoryTest" time="0.032" />
+  <testcase name="logRecordsEventsAndParams" classname="com.arjunrana.tokishrine.data.EventRepositoryTest" time="0.001" />
+  <testcase name="hundredEventsWalkAwaysLastSevenDaysCorrect" classname="com.arjunrana.tokishrine.data.EventRepositoryTest" time="0.061" />
+  <testcase name="statsFormulasMatchSeededFixture" classname="com.arjunrana.tokishrine.data.EventRepositoryTest" time="0.032" />
+</testsuite>
