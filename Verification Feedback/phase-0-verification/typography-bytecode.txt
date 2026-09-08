@@ -1,0 +1,838 @@
+Compiled from "Typography.kt"
+public final class androidx.compose.material3.Typography {
+  private final androidx.compose.ui.text.TextStyle displayLarge;
+
+  private final androidx.compose.ui.text.TextStyle displayMedium;
+
+  private final androidx.compose.ui.text.TextStyle displaySmall;
+
+  private final androidx.compose.ui.text.TextStyle headlineLarge;
+
+  private final androidx.compose.ui.text.TextStyle headlineMedium;
+
+  private final androidx.compose.ui.text.TextStyle headlineSmall;
+
+  private final androidx.compose.ui.text.TextStyle titleLarge;
+
+  private final androidx.compose.ui.text.TextStyle titleMedium;
+
+  private final androidx.compose.ui.text.TextStyle titleSmall;
+
+  private final androidx.compose.ui.text.TextStyle bodyLarge;
+
+  private final androidx.compose.ui.text.TextStyle bodyMedium;
+
+  private final androidx.compose.ui.text.TextStyle bodySmall;
+
+  private final androidx.compose.ui.text.TextStyle labelLarge;
+
+  private final androidx.compose.ui.text.TextStyle labelMedium;
+
+  private final androidx.compose.ui.text.TextStyle labelSmall;
+
+  public static final int $stable;
+
+  public androidx.compose.material3.Typography(androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle);
+    Code:
+       0: aload_0
+       1: invokespecial #10                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+       9: aload_0
+      10: aload_2
+      11: putfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      14: aload_0
+      15: aload_3
+      16: putfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      19: aload_0
+      20: aload         4
+      22: putfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      25: aload_0
+      26: aload         5
+      28: putfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+      31: aload_0
+      32: aload         6
+      34: putfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+      37: aload_0
+      38: aload         7
+      40: putfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+      43: aload_0
+      44: aload         8
+      46: putfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+      49: aload_0
+      50: aload         9
+      52: putfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+      55: aload_0
+      56: aload         10
+      58: putfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+      61: aload_0
+      62: aload         11
+      64: putfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+      67: aload_0
+      68: aload         12
+      70: putfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+      73: aload_0
+      74: aload         13
+      76: putfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+      79: aload_0
+      80: aload         14
+      82: putfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+      85: aload_0
+      86: aload         15
+      88: putfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+      91: return
+
+  public androidx.compose.material3.Typography(androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, int, kotlin.jvm.internal.DefaultConstructorMarker);
+    Code:
+       0: iload         16
+       2: iconst_1
+       3: iand
+       4: ifeq          14
+       7: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      10: invokevirtual #69                 // Method androidx/compose/material3/tokens/TypographyTokens.getDisplayLarge:()Landroidx/compose/ui/text/TextStyle;
+      13: astore_1
+      14: iload         16
+      16: iconst_2
+      17: iand
+      18: ifeq          28
+      21: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      24: invokevirtual #72                 // Method androidx/compose/material3/tokens/TypographyTokens.getDisplayMedium:()Landroidx/compose/ui/text/TextStyle;
+      27: astore_2
+      28: iload         16
+      30: iconst_4
+      31: iand
+      32: ifeq          42
+      35: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      38: invokevirtual #75                 // Method androidx/compose/material3/tokens/TypographyTokens.getDisplaySmall:()Landroidx/compose/ui/text/TextStyle;
+      41: astore_3
+      42: iload         16
+      44: bipush        8
+      46: iand
+      47: ifeq          58
+      50: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      53: invokevirtual #78                 // Method androidx/compose/material3/tokens/TypographyTokens.getHeadlineLarge:()Landroidx/compose/ui/text/TextStyle;
+      56: astore        4
+      58: iload         16
+      60: bipush        16
+      62: iand
+      63: ifeq          74
+      66: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      69: invokevirtual #81                 // Method androidx/compose/material3/tokens/TypographyTokens.getHeadlineMedium:()Landroidx/compose/ui/text/TextStyle;
+      72: astore        5
+      74: iload         16
+      76: bipush        32
+      78: iand
+      79: ifeq          90
+      82: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+      85: invokevirtual #84                 // Method androidx/compose/material3/tokens/TypographyTokens.getHeadlineSmall:()Landroidx/compose/ui/text/TextStyle;
+      88: astore        6
+      90: iload         16
+      92: bipush        64
+      94: iand
+      95: ifeq          106
+      98: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     101: invokevirtual #87                 // Method androidx/compose/material3/tokens/TypographyTokens.getTitleLarge:()Landroidx/compose/ui/text/TextStyle;
+     104: astore        7
+     106: iload         16
+     108: sipush        128
+     111: iand
+     112: ifeq          123
+     115: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     118: invokevirtual #90                 // Method androidx/compose/material3/tokens/TypographyTokens.getTitleMedium:()Landroidx/compose/ui/text/TextStyle;
+     121: astore        8
+     123: iload         16
+     125: sipush        256
+     128: iand
+     129: ifeq          140
+     132: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     135: invokevirtual #93                 // Method androidx/compose/material3/tokens/TypographyTokens.getTitleSmall:()Landroidx/compose/ui/text/TextStyle;
+     138: astore        9
+     140: iload         16
+     142: sipush        512
+     145: iand
+     146: ifeq          157
+     149: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     152: invokevirtual #96                 // Method androidx/compose/material3/tokens/TypographyTokens.getBodyLarge:()Landroidx/compose/ui/text/TextStyle;
+     155: astore        10
+     157: iload         16
+     159: sipush        1024
+     162: iand
+     163: ifeq          174
+     166: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     169: invokevirtual #99                 // Method androidx/compose/material3/tokens/TypographyTokens.getBodyMedium:()Landroidx/compose/ui/text/TextStyle;
+     172: astore        11
+     174: iload         16
+     176: sipush        2048
+     179: iand
+     180: ifeq          191
+     183: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     186: invokevirtual #102                // Method androidx/compose/material3/tokens/TypographyTokens.getBodySmall:()Landroidx/compose/ui/text/TextStyle;
+     189: astore        12
+     191: iload         16
+     193: sipush        4096
+     196: iand
+     197: ifeq          208
+     200: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     203: invokevirtual #105                // Method androidx/compose/material3/tokens/TypographyTokens.getLabelLarge:()Landroidx/compose/ui/text/TextStyle;
+     206: astore        13
+     208: iload         16
+     210: sipush        8192
+     213: iand
+     214: ifeq          225
+     217: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     220: invokevirtual #108                // Method androidx/compose/material3/tokens/TypographyTokens.getLabelMedium:()Landroidx/compose/ui/text/TextStyle;
+     223: astore        14
+     225: iload         16
+     227: sipush        16384
+     230: iand
+     231: ifeq          242
+     234: getstatic     #65                 // Field androidx/compose/material3/tokens/TypographyTokens.INSTANCE:Landroidx/compose/material3/tokens/TypographyTokens;
+     237: invokevirtual #111                // Method androidx/compose/material3/tokens/TypographyTokens.getLabelSmall:()Landroidx/compose/ui/text/TextStyle;
+     240: astore        15
+     242: aload_0
+     243: aload_1
+     244: aload_2
+     245: aload_3
+     246: aload         4
+     248: aload         5
+     250: aload         6
+     252: aload         7
+     254: aload         8
+     256: aload         9
+     258: aload         10
+     260: aload         11
+     262: aload         12
+     264: aload         13
+     266: aload         14
+     268: aload         15
+     270: invokespecial #113                // Method "<init>":(Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)V
+     273: return
+
+  public final androidx.compose.ui.text.TextStyle getDisplayLarge();
+    Code:
+       0: aload_0
+       1: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getDisplayMedium();
+    Code:
+       0: aload_0
+       1: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getDisplaySmall();
+    Code:
+       0: aload_0
+       1: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getHeadlineLarge();
+    Code:
+       0: aload_0
+       1: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getHeadlineMedium();
+    Code:
+       0: aload_0
+       1: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getHeadlineSmall();
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getTitleLarge();
+    Code:
+       0: aload_0
+       1: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getTitleMedium();
+    Code:
+       0: aload_0
+       1: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getTitleSmall();
+    Code:
+       0: aload_0
+       1: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getBodyLarge();
+    Code:
+       0: aload_0
+       1: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getBodyMedium();
+    Code:
+       0: aload_0
+       1: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getBodySmall();
+    Code:
+       0: aload_0
+       1: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getLabelLarge();
+    Code:
+       0: aload_0
+       1: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getLabelMedium();
+    Code:
+       0: aload_0
+       1: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.ui.text.TextStyle getLabelSmall();
+    Code:
+       0: aload_0
+       1: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+       4: areturn
+
+  public final androidx.compose.material3.Typography copy(androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle);
+    Code:
+       0: new           #2                  // class androidx/compose/material3/Typography
+       3: dup
+       4: aload_1
+       5: aload_2
+       6: aload_3
+       7: aload         4
+       9: aload         5
+      11: aload         6
+      13: aload         7
+      15: aload         8
+      17: aload         9
+      19: aload         10
+      21: aload         11
+      23: aload         12
+      25: aload         13
+      27: aload         14
+      29: aload         15
+      31: invokespecial #113                // Method "<init>":(Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)V
+      34: areturn
+
+  public static androidx.compose.material3.Typography copy$default(androidx.compose.material3.Typography, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, androidx.compose.ui.text.TextStyle, int, java.lang.Object);
+    Code:
+       0: iload         16
+       2: iconst_1
+       3: iand
+       4: ifeq          12
+       7: aload_0
+       8: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+      11: astore_1
+      12: iload         16
+      14: iconst_2
+      15: iand
+      16: ifeq          24
+      19: aload_0
+      20: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      23: astore_2
+      24: iload         16
+      26: iconst_4
+      27: iand
+      28: ifeq          36
+      31: aload_0
+      32: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      35: astore_3
+      36: iload         16
+      38: bipush        8
+      40: iand
+      41: ifeq          50
+      44: aload_0
+      45: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      48: astore        4
+      50: iload         16
+      52: bipush        16
+      54: iand
+      55: ifeq          64
+      58: aload_0
+      59: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+      62: astore        5
+      64: iload         16
+      66: bipush        32
+      68: iand
+      69: ifeq          78
+      72: aload_0
+      73: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+      76: astore        6
+      78: iload         16
+      80: bipush        64
+      82: iand
+      83: ifeq          92
+      86: aload_0
+      87: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+      90: astore        7
+      92: iload         16
+      94: sipush        128
+      97: iand
+      98: ifeq          107
+     101: aload_0
+     102: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+     105: astore        8
+     107: iload         16
+     109: sipush        256
+     112: iand
+     113: ifeq          122
+     116: aload_0
+     117: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+     120: astore        9
+     122: iload         16
+     124: sipush        512
+     127: iand
+     128: ifeq          137
+     131: aload_0
+     132: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+     135: astore        10
+     137: iload         16
+     139: sipush        1024
+     142: iand
+     143: ifeq          152
+     146: aload_0
+     147: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+     150: astore        11
+     152: iload         16
+     154: sipush        2048
+     157: iand
+     158: ifeq          167
+     161: aload_0
+     162: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+     165: astore        12
+     167: iload         16
+     169: sipush        4096
+     172: iand
+     173: ifeq          182
+     176: aload_0
+     177: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+     180: astore        13
+     182: iload         16
+     184: sipush        8192
+     187: iand
+     188: ifeq          197
+     191: aload_0
+     192: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+     195: astore        14
+     197: iload         16
+     199: sipush        16384
+     202: iand
+     203: ifeq          212
+     206: aload_0
+     207: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+     210: astore        15
+     212: aload_0
+     213: aload_1
+     214: aload_2
+     215: aload_3
+     216: aload         4
+     218: aload         5
+     220: aload         6
+     222: aload         7
+     224: aload         8
+     226: aload         9
+     228: aload         10
+     230: aload         11
+     232: aload         12
+     234: aload         13
+     236: aload         14
+     238: aload         15
+     240: invokevirtual #119                // Method copy:(Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)Landroidx/compose/material3/Typography;
+     243: areturn
+
+  public boolean equals(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: if_acmpne     7
+       5: iconst_1
+       6: ireturn
+       7: aload_1
+       8: instanceof    #2                  // class androidx/compose/material3/Typography
+      11: ifne          16
+      14: iconst_0
+      15: ireturn
+      16: aload_0
+      17: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+      20: aload_1
+      21: checkcast     #2                  // class androidx/compose/material3/Typography
+      24: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+      27: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      30: ifne          35
+      33: iconst_0
+      34: ireturn
+      35: aload_0
+      36: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      39: aload_1
+      40: checkcast     #2                  // class androidx/compose/material3/Typography
+      43: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      46: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      49: ifne          54
+      52: iconst_0
+      53: ireturn
+      54: aload_0
+      55: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      58: aload_1
+      59: checkcast     #2                  // class androidx/compose/material3/Typography
+      62: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      65: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      68: ifne          73
+      71: iconst_0
+      72: ireturn
+      73: aload_0
+      74: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      77: aload_1
+      78: checkcast     #2                  // class androidx/compose/material3/Typography
+      81: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      84: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      87: ifne          92
+      90: iconst_0
+      91: ireturn
+      92: aload_0
+      93: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+      96: aload_1
+      97: checkcast     #2                  // class androidx/compose/material3/Typography
+     100: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+     103: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     106: ifne          111
+     109: iconst_0
+     110: ireturn
+     111: aload_0
+     112: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+     115: aload_1
+     116: checkcast     #2                  // class androidx/compose/material3/Typography
+     119: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+     122: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     125: ifne          130
+     128: iconst_0
+     129: ireturn
+     130: aload_0
+     131: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+     134: aload_1
+     135: checkcast     #2                  // class androidx/compose/material3/Typography
+     138: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+     141: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     144: ifne          149
+     147: iconst_0
+     148: ireturn
+     149: aload_0
+     150: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+     153: aload_1
+     154: checkcast     #2                  // class androidx/compose/material3/Typography
+     157: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+     160: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     163: ifne          168
+     166: iconst_0
+     167: ireturn
+     168: aload_0
+     169: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+     172: aload_1
+     173: checkcast     #2                  // class androidx/compose/material3/Typography
+     176: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+     179: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     182: ifne          187
+     185: iconst_0
+     186: ireturn
+     187: aload_0
+     188: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+     191: aload_1
+     192: checkcast     #2                  // class androidx/compose/material3/Typography
+     195: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+     198: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     201: ifne          206
+     204: iconst_0
+     205: ireturn
+     206: aload_0
+     207: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+     210: aload_1
+     211: checkcast     #2                  // class androidx/compose/material3/Typography
+     214: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+     217: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     220: ifne          225
+     223: iconst_0
+     224: ireturn
+     225: aload_0
+     226: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+     229: aload_1
+     230: checkcast     #2                  // class androidx/compose/material3/Typography
+     233: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+     236: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     239: ifne          244
+     242: iconst_0
+     243: ireturn
+     244: aload_0
+     245: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+     248: aload_1
+     249: checkcast     #2                  // class androidx/compose/material3/Typography
+     252: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+     255: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     258: ifne          263
+     261: iconst_0
+     262: ireturn
+     263: aload_0
+     264: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+     267: aload_1
+     268: checkcast     #2                  // class androidx/compose/material3/Typography
+     271: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+     274: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     277: ifne          282
+     280: iconst_0
+     281: ireturn
+     282: aload_0
+     283: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+     286: aload_1
+     287: checkcast     #2                  // class androidx/compose/material3/Typography
+     290: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+     293: invokestatic  #128                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     296: ifne          301
+     299: iconst_0
+     300: ireturn
+     301: iconst_1
+     302: ireturn
+
+  public int hashCode();
+    Code:
+       0: aload_0
+       1: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+       4: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+       7: istore_1
+       8: bipush        31
+      10: iload_1
+      11: imul
+      12: aload_0
+      13: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      16: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      19: iadd
+      20: istore_1
+      21: bipush        31
+      23: iload_1
+      24: imul
+      25: aload_0
+      26: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      29: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      32: iadd
+      33: istore_1
+      34: bipush        31
+      36: iload_1
+      37: imul
+      38: aload_0
+      39: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      42: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      45: iadd
+      46: istore_1
+      47: bipush        31
+      49: iload_1
+      50: imul
+      51: aload_0
+      52: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+      55: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      58: iadd
+      59: istore_1
+      60: bipush        31
+      62: iload_1
+      63: imul
+      64: aload_0
+      65: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+      68: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      71: iadd
+      72: istore_1
+      73: bipush        31
+      75: iload_1
+      76: imul
+      77: aload_0
+      78: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+      81: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      84: iadd
+      85: istore_1
+      86: bipush        31
+      88: iload_1
+      89: imul
+      90: aload_0
+      91: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+      94: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+      97: iadd
+      98: istore_1
+      99: bipush        31
+     101: iload_1
+     102: imul
+     103: aload_0
+     104: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+     107: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     110: iadd
+     111: istore_1
+     112: bipush        31
+     114: iload_1
+     115: imul
+     116: aload_0
+     117: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+     120: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     123: iadd
+     124: istore_1
+     125: bipush        31
+     127: iload_1
+     128: imul
+     129: aload_0
+     130: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+     133: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     136: iadd
+     137: istore_1
+     138: bipush        31
+     140: iload_1
+     141: imul
+     142: aload_0
+     143: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+     146: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     149: iadd
+     150: istore_1
+     151: bipush        31
+     153: iload_1
+     154: imul
+     155: aload_0
+     156: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+     159: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     162: iadd
+     163: istore_1
+     164: bipush        31
+     166: iload_1
+     167: imul
+     168: aload_0
+     169: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+     172: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     175: iadd
+     176: istore_1
+     177: bipush        31
+     179: iload_1
+     180: imul
+     181: aload_0
+     182: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+     185: invokevirtual #136                // Method androidx/compose/ui/text/TextStyle.hashCode:()I
+     188: iadd
+     189: istore_1
+     190: iload_1
+     191: ireturn
+
+  public java.lang.String toString();
+    Code:
+       0: new           #142                // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #143                // Method java/lang/StringBuilder."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #145                // String Typography(displayLarge=
+      11: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      14: aload_0
+      15: getfield      #14                 // Field displayLarge:Landroidx/compose/ui/text/TextStyle;
+      18: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      21: ldc           #154                // String , displayMedium=
+      23: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      26: aload_0
+      27: getfield      #17                 // Field displayMedium:Landroidx/compose/ui/text/TextStyle;
+      30: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      33: ldc           #156                // String ,displaySmall=
+      35: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      38: aload_0
+      39: getfield      #20                 // Field displaySmall:Landroidx/compose/ui/text/TextStyle;
+      42: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      45: ldc           #158                // String , headlineLarge=
+      47: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      50: aload_0
+      51: getfield      #23                 // Field headlineLarge:Landroidx/compose/ui/text/TextStyle;
+      54: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      57: ldc           #160                // String , headlineMedium=
+      59: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      62: aload_0
+      63: getfield      #26                 // Field headlineMedium:Landroidx/compose/ui/text/TextStyle;
+      66: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      69: ldc           #162                // String , headlineSmall=
+      71: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      74: aload_0
+      75: getfield      #29                 // Field headlineSmall:Landroidx/compose/ui/text/TextStyle;
+      78: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      81: ldc           #164                // String , titleLarge=
+      83: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      86: aload_0
+      87: getfield      #32                 // Field titleLarge:Landroidx/compose/ui/text/TextStyle;
+      90: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      93: ldc           #166                // String , titleMedium=
+      95: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      98: aload_0
+      99: getfield      #35                 // Field titleMedium:Landroidx/compose/ui/text/TextStyle;
+     102: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     105: ldc           #168                // String , titleSmall=
+     107: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     110: aload_0
+     111: getfield      #38                 // Field titleSmall:Landroidx/compose/ui/text/TextStyle;
+     114: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     117: ldc           #170                // String , bodyLarge=
+     119: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     122: aload_0
+     123: getfield      #41                 // Field bodyLarge:Landroidx/compose/ui/text/TextStyle;
+     126: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     129: ldc           #172                // String , bodyMedium=
+     131: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     134: aload_0
+     135: getfield      #44                 // Field bodyMedium:Landroidx/compose/ui/text/TextStyle;
+     138: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     141: ldc           #174                // String , bodySmall=
+     143: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     146: pop
+     147: aload_1
+     148: aload_0
+     149: getfield      #47                 // Field bodySmall:Landroidx/compose/ui/text/TextStyle;
+     152: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     155: ldc           #176                // String , labelLarge=
+     157: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     160: aload_0
+     161: getfield      #50                 // Field labelLarge:Landroidx/compose/ui/text/TextStyle;
+     164: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     167: ldc           #178                // String , labelMedium=
+     169: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     172: aload_0
+     173: getfield      #53                 // Field labelMedium:Landroidx/compose/ui/text/TextStyle;
+     176: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     179: ldc           #180                // String , labelSmall=
+     181: invokevirtual #149                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     184: aload_0
+     185: getfield      #56                 // Field labelSmall:Landroidx/compose/ui/text/TextStyle;
+     188: invokevirtual #152                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     191: bipush        41
+     193: invokevirtual #183                // Method java/lang/StringBuilder.append:(C)Ljava/lang/StringBuilder;
+     196: pop
+     197: aload_1
+     198: invokevirtual #185                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     201: areturn
+
+  public androidx.compose.material3.Typography();
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: aconst_null
+       3: aconst_null
+       4: aconst_null
+       5: aconst_null
+       6: aconst_null
+       7: aconst_null
+       8: aconst_null
+       9: aconst_null
+      10: aconst_null
+      11: aconst_null
+      12: aconst_null
+      13: aconst_null
+      14: aconst_null
+      15: aconst_null
+      16: sipush        32767
+      19: aconst_null
+      20: invokespecial #187                // Method "<init>":(Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+      23: return
+
+  static {};
+    Code:
+       0: return
+}

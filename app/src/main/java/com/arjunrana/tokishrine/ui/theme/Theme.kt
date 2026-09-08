@@ -180,6 +180,23 @@ val NocturneColorScheme: ColorScheme = darkColorScheme(
     surfaceContainer = NocturneSurface,
     surfaceContainerHigh = NocturneSurface,
     surfaceContainerHighest = NocturneSurface,
+    // Roles Nocturne does not name, mapped so no Material default leaks in:
+    // - Inverse roles (snackbars, toasts): the light end of the neutral ramp
+    //   as the opposite-polarity surface, matching M3's tone 90/20 pairing.
+    inversePrimary = NocturneAccentRamp700,
+    inverseSurface = NocturneNeutral200,
+    inverseOnSurface = NocturneNeutral900,
+    // - Error: derived family (see DECISIONS.md, Phase 0). Nocturne has no
+    //   error colour, so one was generated the way the system builds its own
+    //   ramps — OKLCH, shared lightness steps, low chroma, warm-red hue 25
+    //   (the hue of the mocks' #8B0000 typo marks). Same L/C as the accent.
+    error = NocturneError,
+    onError = NocturneBg, // text on a filled error surface, as onPrimary
+    errorContainer = NocturneErrorContainer, // mirrors accent-800's step
+    onErrorContainer = NocturneOnErrorContainer, // mirrors accent-100's step
+    // - Scrim: the .dialog-backdrop value the CSS component layer authors —
+    //   neutral-900 at 50%, not M3's pure black.
+    scrim = NocturneScrim,
 )
 
 object NocturneTheme {

@@ -1,0 +1,1767 @@
+Compiled from "ColorScheme.kt"
+public final class androidx.compose.material3.ColorSchemeKt {
+  private static final androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.material3.ColorScheme> LocalColorScheme;
+
+  private static final androidx.compose.runtime.ProvidableCompositionLocal<java.lang.Boolean> LocalTonalElevationEnabled;
+
+  public static final float DisabledAlpha;
+
+  public static final androidx.compose.material3.ColorScheme lightColorScheme-C-Xl9yA(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long);
+    Code:
+       0: new           #9                  // class androidx/compose/material3/ColorScheme
+       3: dup
+       4: lload_0
+       5: lload_2
+       6: lload         4
+       8: lload         6
+      10: lload         8
+      12: lload         10
+      14: lload         12
+      16: lload         14
+      18: lload         16
+      20: lload         18
+      22: lload         20
+      24: lload         22
+      26: lload         24
+      28: lload         26
+      30: lload         28
+      32: lload         30
+      34: lload         32
+      36: lload         34
+      38: lload         36
+      40: lload         38
+      42: lload         40
+      44: lload         42
+      46: lload         44
+      48: lload         46
+      50: lload         48
+      52: lload         50
+      54: lload         52
+      56: lload         54
+      58: lload         56
+      60: lload         58
+      62: lload         70
+      64: lload         60
+      66: lload         62
+      68: lload         64
+      70: lload         66
+      72: lload         68
+      74: aconst_null
+      75: invokespecial #13                 // Method androidx/compose/material3/ColorScheme."<init>":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+      78: areturn
+
+  public static androidx.compose.material3.ColorScheme lightColorScheme-C-Xl9yA$default(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, int, int, java.lang.Object);
+    Code:
+       0: iload         72
+       2: iconst_1
+       3: iand
+       4: ifeq          14
+       7: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      10: invokevirtual #62                 // Method androidx/compose/material3/tokens/ColorLightTokens."getPrimary-0d7_KjU":()J
+      13: lstore_0
+      14: iload         72
+      16: iconst_2
+      17: iand
+      18: ifeq          28
+      21: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      24: invokevirtual #65                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnPrimary-0d7_KjU":()J
+      27: lstore_2
+      28: iload         72
+      30: iconst_4
+      31: iand
+      32: ifeq          43
+      35: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      38: invokevirtual #68                 // Method androidx/compose/material3/tokens/ColorLightTokens."getPrimaryContainer-0d7_KjU":()J
+      41: lstore        4
+      43: iload         72
+      45: bipush        8
+      47: iand
+      48: ifeq          59
+      51: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      54: invokevirtual #71                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnPrimaryContainer-0d7_KjU":()J
+      57: lstore        6
+      59: iload         72
+      61: bipush        16
+      63: iand
+      64: ifeq          75
+      67: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      70: invokevirtual #74                 // Method androidx/compose/material3/tokens/ColorLightTokens."getInversePrimary-0d7_KjU":()J
+      73: lstore        8
+      75: iload         72
+      77: bipush        32
+      79: iand
+      80: ifeq          91
+      83: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      86: invokevirtual #77                 // Method androidx/compose/material3/tokens/ColorLightTokens."getSecondary-0d7_KjU":()J
+      89: lstore        10
+      91: iload         72
+      93: bipush        64
+      95: iand
+      96: ifeq          107
+      99: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     102: invokevirtual #80                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSecondary-0d7_KjU":()J
+     105: lstore        12
+     107: iload         72
+     109: sipush        128
+     112: iand
+     113: ifeq          124
+     116: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     119: invokevirtual #83                 // Method androidx/compose/material3/tokens/ColorLightTokens."getSecondaryContainer-0d7_KjU":()J
+     122: lstore        14
+     124: iload         72
+     126: sipush        256
+     129: iand
+     130: ifeq          141
+     133: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     136: invokevirtual #86                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSecondaryContainer-0d7_KjU":()J
+     139: lstore        16
+     141: iload         72
+     143: sipush        512
+     146: iand
+     147: ifeq          158
+     150: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     153: invokevirtual #89                 // Method androidx/compose/material3/tokens/ColorLightTokens."getTertiary-0d7_KjU":()J
+     156: lstore        18
+     158: iload         72
+     160: sipush        1024
+     163: iand
+     164: ifeq          175
+     167: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     170: invokevirtual #92                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnTertiary-0d7_KjU":()J
+     173: lstore        20
+     175: iload         72
+     177: sipush        2048
+     180: iand
+     181: ifeq          192
+     184: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     187: invokevirtual #95                 // Method androidx/compose/material3/tokens/ColorLightTokens."getTertiaryContainer-0d7_KjU":()J
+     190: lstore        22
+     192: iload         72
+     194: sipush        4096
+     197: iand
+     198: ifeq          209
+     201: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     204: invokevirtual #98                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnTertiaryContainer-0d7_KjU":()J
+     207: lstore        24
+     209: iload         72
+     211: sipush        8192
+     214: iand
+     215: ifeq          226
+     218: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     221: invokevirtual #101                // Method androidx/compose/material3/tokens/ColorLightTokens."getBackground-0d7_KjU":()J
+     224: lstore        26
+     226: iload         72
+     228: sipush        16384
+     231: iand
+     232: ifeq          243
+     235: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     238: invokevirtual #104                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnBackground-0d7_KjU":()J
+     241: lstore        28
+     243: iload         72
+     245: ldc           #105                // int 32768
+     247: iand
+     248: ifeq          259
+     251: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     254: invokevirtual #108                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurface-0d7_KjU":()J
+     257: lstore        30
+     259: iload         72
+     261: ldc           #109                // int 65536
+     263: iand
+     264: ifeq          275
+     267: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     270: invokevirtual #112                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSurface-0d7_KjU":()J
+     273: lstore        32
+     275: iload         72
+     277: ldc           #113                // int 131072
+     279: iand
+     280: ifeq          291
+     283: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     286: invokevirtual #116                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceVariant-0d7_KjU":()J
+     289: lstore        34
+     291: iload         72
+     293: ldc           #117                // int 262144
+     295: iand
+     296: ifeq          307
+     299: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     302: invokevirtual #120                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSurfaceVariant-0d7_KjU":()J
+     305: lstore        36
+     307: iload         72
+     309: ldc           #121                // int 524288
+     311: iand
+     312: ifeq          318
+     315: lload_0
+     316: lstore        38
+     318: iload         72
+     320: ldc           #122                // int 1048576
+     322: iand
+     323: ifeq          334
+     326: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     329: invokevirtual #125                // Method androidx/compose/material3/tokens/ColorLightTokens."getInverseSurface-0d7_KjU":()J
+     332: lstore        40
+     334: iload         72
+     336: ldc           #126                // int 2097152
+     338: iand
+     339: ifeq          350
+     342: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     345: invokevirtual #129                // Method androidx/compose/material3/tokens/ColorLightTokens."getInverseOnSurface-0d7_KjU":()J
+     348: lstore        42
+     350: iload         72
+     352: ldc           #130                // int 4194304
+     354: iand
+     355: ifeq          366
+     358: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     361: invokevirtual #133                // Method androidx/compose/material3/tokens/ColorLightTokens."getError-0d7_KjU":()J
+     364: lstore        44
+     366: iload         72
+     368: ldc           #134                // int 8388608
+     370: iand
+     371: ifeq          382
+     374: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     377: invokevirtual #137                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnError-0d7_KjU":()J
+     380: lstore        46
+     382: iload         72
+     384: ldc           #138                // int 16777216
+     386: iand
+     387: ifeq          398
+     390: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     393: invokevirtual #141                // Method androidx/compose/material3/tokens/ColorLightTokens."getErrorContainer-0d7_KjU":()J
+     396: lstore        48
+     398: iload         72
+     400: ldc           #142                // int 33554432
+     402: iand
+     403: ifeq          414
+     406: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     409: invokevirtual #145                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnErrorContainer-0d7_KjU":()J
+     412: lstore        50
+     414: iload         72
+     416: ldc           #146                // int 67108864
+     418: iand
+     419: ifeq          430
+     422: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     425: invokevirtual #149                // Method androidx/compose/material3/tokens/ColorLightTokens."getOutline-0d7_KjU":()J
+     428: lstore        52
+     430: iload         72
+     432: ldc           #150                // int 134217728
+     434: iand
+     435: ifeq          446
+     438: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     441: invokevirtual #153                // Method androidx/compose/material3/tokens/ColorLightTokens."getOutlineVariant-0d7_KjU":()J
+     444: lstore        54
+     446: iload         72
+     448: ldc           #154                // int 268435456
+     450: iand
+     451: ifeq          462
+     454: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     457: invokevirtual #157                // Method androidx/compose/material3/tokens/ColorLightTokens."getScrim-0d7_KjU":()J
+     460: lstore        56
+     462: iload         72
+     464: ldc           #158                // int 536870912
+     466: iand
+     467: ifeq          478
+     470: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     473: invokevirtual #161                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceBright-0d7_KjU":()J
+     476: lstore        58
+     478: iload         72
+     480: ldc           #162                // int 1073741824
+     482: iand
+     483: ifeq          494
+     486: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     489: invokevirtual #165                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceContainer-0d7_KjU":()J
+     492: lstore        60
+     494: iload         72
+     496: ldc           #166                // int -2147483648
+     498: iand
+     499: ifeq          510
+     502: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     505: invokevirtual #169                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceContainerHigh-0d7_KjU":()J
+     508: lstore        62
+     510: iload         73
+     512: iconst_1
+     513: iand
+     514: ifeq          525
+     517: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     520: invokevirtual #172                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceContainerHighest-0d7_KjU":()J
+     523: lstore        64
+     525: iload         73
+     527: iconst_2
+     528: iand
+     529: ifeq          540
+     532: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     535: invokevirtual #175                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceContainerLow-0d7_KjU":()J
+     538: lstore        66
+     540: iload         73
+     542: iconst_4
+     543: iand
+     544: ifeq          555
+     547: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     550: invokevirtual #178                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceContainerLowest-0d7_KjU":()J
+     553: lstore        68
+     555: iload         73
+     557: bipush        8
+     559: iand
+     560: ifeq          571
+     563: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     566: invokevirtual #181                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceDim-0d7_KjU":()J
+     569: lstore        70
+     571: lload_0
+     572: lload_2
+     573: lload         4
+     575: lload         6
+     577: lload         8
+     579: lload         10
+     581: lload         12
+     583: lload         14
+     585: lload         16
+     587: lload         18
+     589: lload         20
+     591: lload         22
+     593: lload         24
+     595: lload         26
+     597: lload         28
+     599: lload         30
+     601: lload         32
+     603: lload         34
+     605: lload         36
+     607: lload         38
+     609: lload         40
+     611: lload         42
+     613: lload         44
+     615: lload         46
+     617: lload         48
+     619: lload         50
+     621: lload         52
+     623: lload         54
+     625: lload         56
+     627: lload         58
+     629: lload         60
+     631: lload         62
+     633: lload         64
+     635: lload         66
+     637: lload         68
+     639: lload         70
+     641: invokestatic  #183                // Method "lightColorScheme-C-Xl9yA":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Landroidx/compose/material3/ColorScheme;
+     644: areturn
+
+  public static final androidx.compose.material3.ColorScheme lightColorScheme-G1PFc-w(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long);
+    Code:
+       0: lload_0
+       1: lload_2
+       2: lload         4
+       4: lload         6
+       6: lload         8
+       8: lload         10
+      10: lload         12
+      12: lload         14
+      14: lload         16
+      16: lload         18
+      18: lload         20
+      20: lload         22
+      22: lload         24
+      24: lload         26
+      26: lload         28
+      28: lload         30
+      30: lload         32
+      32: lload         34
+      34: lload         36
+      36: lload         38
+      38: lload         40
+      40: lload         42
+      42: lload         44
+      44: lload         46
+      46: lload         48
+      48: lload         50
+      50: lload         52
+      52: lload         54
+      54: lload         56
+      56: lconst_0
+      57: lconst_0
+      58: lconst_0
+      59: lconst_0
+      60: lconst_0
+      61: lconst_0
+      62: lconst_0
+      63: ldc           #192                // int -536870912
+      65: bipush        15
+      67: aconst_null
+      68: invokestatic  #194                // Method "lightColorScheme-C-Xl9yA$default":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Landroidx/compose/material3/ColorScheme;
+      71: areturn
+
+  public static androidx.compose.material3.ColorScheme lightColorScheme-G1PFc-w$default(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, int, java.lang.Object);
+    Code:
+       0: iload         58
+       2: iconst_1
+       3: iand
+       4: ifeq          14
+       7: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      10: invokevirtual #62                 // Method androidx/compose/material3/tokens/ColorLightTokens."getPrimary-0d7_KjU":()J
+      13: lstore_0
+      14: iload         58
+      16: iconst_2
+      17: iand
+      18: ifeq          28
+      21: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      24: invokevirtual #65                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnPrimary-0d7_KjU":()J
+      27: lstore_2
+      28: iload         58
+      30: iconst_4
+      31: iand
+      32: ifeq          43
+      35: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      38: invokevirtual #68                 // Method androidx/compose/material3/tokens/ColorLightTokens."getPrimaryContainer-0d7_KjU":()J
+      41: lstore        4
+      43: iload         58
+      45: bipush        8
+      47: iand
+      48: ifeq          59
+      51: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      54: invokevirtual #71                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnPrimaryContainer-0d7_KjU":()J
+      57: lstore        6
+      59: iload         58
+      61: bipush        16
+      63: iand
+      64: ifeq          75
+      67: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      70: invokevirtual #74                 // Method androidx/compose/material3/tokens/ColorLightTokens."getInversePrimary-0d7_KjU":()J
+      73: lstore        8
+      75: iload         58
+      77: bipush        32
+      79: iand
+      80: ifeq          91
+      83: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+      86: invokevirtual #77                 // Method androidx/compose/material3/tokens/ColorLightTokens."getSecondary-0d7_KjU":()J
+      89: lstore        10
+      91: iload         58
+      93: bipush        64
+      95: iand
+      96: ifeq          107
+      99: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     102: invokevirtual #80                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSecondary-0d7_KjU":()J
+     105: lstore        12
+     107: iload         58
+     109: sipush        128
+     112: iand
+     113: ifeq          124
+     116: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     119: invokevirtual #83                 // Method androidx/compose/material3/tokens/ColorLightTokens."getSecondaryContainer-0d7_KjU":()J
+     122: lstore        14
+     124: iload         58
+     126: sipush        256
+     129: iand
+     130: ifeq          141
+     133: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     136: invokevirtual #86                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSecondaryContainer-0d7_KjU":()J
+     139: lstore        16
+     141: iload         58
+     143: sipush        512
+     146: iand
+     147: ifeq          158
+     150: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     153: invokevirtual #89                 // Method androidx/compose/material3/tokens/ColorLightTokens."getTertiary-0d7_KjU":()J
+     156: lstore        18
+     158: iload         58
+     160: sipush        1024
+     163: iand
+     164: ifeq          175
+     167: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     170: invokevirtual #92                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnTertiary-0d7_KjU":()J
+     173: lstore        20
+     175: iload         58
+     177: sipush        2048
+     180: iand
+     181: ifeq          192
+     184: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     187: invokevirtual #95                 // Method androidx/compose/material3/tokens/ColorLightTokens."getTertiaryContainer-0d7_KjU":()J
+     190: lstore        22
+     192: iload         58
+     194: sipush        4096
+     197: iand
+     198: ifeq          209
+     201: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     204: invokevirtual #98                 // Method androidx/compose/material3/tokens/ColorLightTokens."getOnTertiaryContainer-0d7_KjU":()J
+     207: lstore        24
+     209: iload         58
+     211: sipush        8192
+     214: iand
+     215: ifeq          226
+     218: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     221: invokevirtual #101                // Method androidx/compose/material3/tokens/ColorLightTokens."getBackground-0d7_KjU":()J
+     224: lstore        26
+     226: iload         58
+     228: sipush        16384
+     231: iand
+     232: ifeq          243
+     235: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     238: invokevirtual #104                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnBackground-0d7_KjU":()J
+     241: lstore        28
+     243: iload         58
+     245: ldc           #105                // int 32768
+     247: iand
+     248: ifeq          259
+     251: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     254: invokevirtual #108                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurface-0d7_KjU":()J
+     257: lstore        30
+     259: iload         58
+     261: ldc           #109                // int 65536
+     263: iand
+     264: ifeq          275
+     267: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     270: invokevirtual #112                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSurface-0d7_KjU":()J
+     273: lstore        32
+     275: iload         58
+     277: ldc           #113                // int 131072
+     279: iand
+     280: ifeq          291
+     283: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     286: invokevirtual #116                // Method androidx/compose/material3/tokens/ColorLightTokens."getSurfaceVariant-0d7_KjU":()J
+     289: lstore        34
+     291: iload         58
+     293: ldc           #117                // int 262144
+     295: iand
+     296: ifeq          307
+     299: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     302: invokevirtual #120                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnSurfaceVariant-0d7_KjU":()J
+     305: lstore        36
+     307: iload         58
+     309: ldc           #121                // int 524288
+     311: iand
+     312: ifeq          318
+     315: lload_0
+     316: lstore        38
+     318: iload         58
+     320: ldc           #122                // int 1048576
+     322: iand
+     323: ifeq          334
+     326: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     329: invokevirtual #125                // Method androidx/compose/material3/tokens/ColorLightTokens."getInverseSurface-0d7_KjU":()J
+     332: lstore        40
+     334: iload         58
+     336: ldc           #126                // int 2097152
+     338: iand
+     339: ifeq          350
+     342: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     345: invokevirtual #129                // Method androidx/compose/material3/tokens/ColorLightTokens."getInverseOnSurface-0d7_KjU":()J
+     348: lstore        42
+     350: iload         58
+     352: ldc           #130                // int 4194304
+     354: iand
+     355: ifeq          366
+     358: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     361: invokevirtual #133                // Method androidx/compose/material3/tokens/ColorLightTokens."getError-0d7_KjU":()J
+     364: lstore        44
+     366: iload         58
+     368: ldc           #134                // int 8388608
+     370: iand
+     371: ifeq          382
+     374: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     377: invokevirtual #137                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnError-0d7_KjU":()J
+     380: lstore        46
+     382: iload         58
+     384: ldc           #138                // int 16777216
+     386: iand
+     387: ifeq          398
+     390: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     393: invokevirtual #141                // Method androidx/compose/material3/tokens/ColorLightTokens."getErrorContainer-0d7_KjU":()J
+     396: lstore        48
+     398: iload         58
+     400: ldc           #142                // int 33554432
+     402: iand
+     403: ifeq          414
+     406: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     409: invokevirtual #145                // Method androidx/compose/material3/tokens/ColorLightTokens."getOnErrorContainer-0d7_KjU":()J
+     412: lstore        50
+     414: iload         58
+     416: ldc           #146                // int 67108864
+     418: iand
+     419: ifeq          430
+     422: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     425: invokevirtual #149                // Method androidx/compose/material3/tokens/ColorLightTokens."getOutline-0d7_KjU":()J
+     428: lstore        52
+     430: iload         58
+     432: ldc           #150                // int 134217728
+     434: iand
+     435: ifeq          446
+     438: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     441: invokevirtual #153                // Method androidx/compose/material3/tokens/ColorLightTokens."getOutlineVariant-0d7_KjU":()J
+     444: lstore        54
+     446: iload         58
+     448: ldc           #154                // int 268435456
+     450: iand
+     451: ifeq          462
+     454: getstatic     #58                 // Field androidx/compose/material3/tokens/ColorLightTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorLightTokens;
+     457: invokevirtual #157                // Method androidx/compose/material3/tokens/ColorLightTokens."getScrim-0d7_KjU":()J
+     460: lstore        56
+     462: lload_0
+     463: lload_2
+     464: lload         4
+     466: lload         6
+     468: lload         8
+     470: lload         10
+     472: lload         12
+     474: lload         14
+     476: lload         16
+     478: lload         18
+     480: lload         20
+     482: lload         22
+     484: lload         24
+     486: lload         26
+     488: lload         28
+     490: lload         30
+     492: lload         32
+     494: lload         34
+     496: lload         36
+     498: lload         38
+     500: lload         40
+     502: lload         42
+     504: lload         44
+     506: lload         46
+     508: lload         48
+     510: lload         50
+     512: lload         52
+     514: lload         54
+     516: lload         56
+     518: invokestatic  #198                // Method "lightColorScheme-G1PFc-w":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Landroidx/compose/material3/ColorScheme;
+     521: areturn
+
+  public static final androidx.compose.material3.ColorScheme darkColorScheme-C-Xl9yA(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long);
+    Code:
+       0: new           #9                  // class androidx/compose/material3/ColorScheme
+       3: dup
+       4: lload_0
+       5: lload_2
+       6: lload         4
+       8: lload         6
+      10: lload         8
+      12: lload         10
+      14: lload         12
+      16: lload         14
+      18: lload         16
+      20: lload         18
+      22: lload         20
+      24: lload         22
+      26: lload         24
+      28: lload         26
+      30: lload         28
+      32: lload         30
+      34: lload         32
+      36: lload         34
+      38: lload         36
+      40: lload         38
+      42: lload         40
+      44: lload         42
+      46: lload         44
+      48: lload         46
+      50: lload         48
+      52: lload         50
+      54: lload         52
+      56: lload         54
+      58: lload         56
+      60: lload         58
+      62: lload         70
+      64: lload         60
+      66: lload         62
+      68: lload         64
+      70: lload         66
+      72: lload         68
+      74: aconst_null
+      75: invokespecial #13                 // Method androidx/compose/material3/ColorScheme."<init>":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+      78: areturn
+
+  public static androidx.compose.material3.ColorScheme darkColorScheme-C-Xl9yA$default(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, int, int, java.lang.Object);
+    Code:
+       0: iload         72
+       2: iconst_1
+       3: iand
+       4: ifeq          14
+       7: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      10: invokevirtual #206                // Method androidx/compose/material3/tokens/ColorDarkTokens."getPrimary-0d7_KjU":()J
+      13: lstore_0
+      14: iload         72
+      16: iconst_2
+      17: iand
+      18: ifeq          28
+      21: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      24: invokevirtual #207                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnPrimary-0d7_KjU":()J
+      27: lstore_2
+      28: iload         72
+      30: iconst_4
+      31: iand
+      32: ifeq          43
+      35: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      38: invokevirtual #208                // Method androidx/compose/material3/tokens/ColorDarkTokens."getPrimaryContainer-0d7_KjU":()J
+      41: lstore        4
+      43: iload         72
+      45: bipush        8
+      47: iand
+      48: ifeq          59
+      51: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      54: invokevirtual #209                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnPrimaryContainer-0d7_KjU":()J
+      57: lstore        6
+      59: iload         72
+      61: bipush        16
+      63: iand
+      64: ifeq          75
+      67: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      70: invokevirtual #210                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInversePrimary-0d7_KjU":()J
+      73: lstore        8
+      75: iload         72
+      77: bipush        32
+      79: iand
+      80: ifeq          91
+      83: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      86: invokevirtual #211                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSecondary-0d7_KjU":()J
+      89: lstore        10
+      91: iload         72
+      93: bipush        64
+      95: iand
+      96: ifeq          107
+      99: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     102: invokevirtual #212                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSecondary-0d7_KjU":()J
+     105: lstore        12
+     107: iload         72
+     109: sipush        128
+     112: iand
+     113: ifeq          124
+     116: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     119: invokevirtual #213                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSecondaryContainer-0d7_KjU":()J
+     122: lstore        14
+     124: iload         72
+     126: sipush        256
+     129: iand
+     130: ifeq          141
+     133: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     136: invokevirtual #214                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSecondaryContainer-0d7_KjU":()J
+     139: lstore        16
+     141: iload         72
+     143: sipush        512
+     146: iand
+     147: ifeq          158
+     150: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     153: invokevirtual #215                // Method androidx/compose/material3/tokens/ColorDarkTokens."getTertiary-0d7_KjU":()J
+     156: lstore        18
+     158: iload         72
+     160: sipush        1024
+     163: iand
+     164: ifeq          175
+     167: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     170: invokevirtual #216                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnTertiary-0d7_KjU":()J
+     173: lstore        20
+     175: iload         72
+     177: sipush        2048
+     180: iand
+     181: ifeq          192
+     184: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     187: invokevirtual #217                // Method androidx/compose/material3/tokens/ColorDarkTokens."getTertiaryContainer-0d7_KjU":()J
+     190: lstore        22
+     192: iload         72
+     194: sipush        4096
+     197: iand
+     198: ifeq          209
+     201: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     204: invokevirtual #218                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnTertiaryContainer-0d7_KjU":()J
+     207: lstore        24
+     209: iload         72
+     211: sipush        8192
+     214: iand
+     215: ifeq          226
+     218: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     221: invokevirtual #219                // Method androidx/compose/material3/tokens/ColorDarkTokens."getBackground-0d7_KjU":()J
+     224: lstore        26
+     226: iload         72
+     228: sipush        16384
+     231: iand
+     232: ifeq          243
+     235: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     238: invokevirtual #220                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnBackground-0d7_KjU":()J
+     241: lstore        28
+     243: iload         72
+     245: ldc           #105                // int 32768
+     247: iand
+     248: ifeq          259
+     251: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     254: invokevirtual #221                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurface-0d7_KjU":()J
+     257: lstore        30
+     259: iload         72
+     261: ldc           #109                // int 65536
+     263: iand
+     264: ifeq          275
+     267: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     270: invokevirtual #222                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSurface-0d7_KjU":()J
+     273: lstore        32
+     275: iload         72
+     277: ldc           #113                // int 131072
+     279: iand
+     280: ifeq          291
+     283: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     286: invokevirtual #223                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceVariant-0d7_KjU":()J
+     289: lstore        34
+     291: iload         72
+     293: ldc           #117                // int 262144
+     295: iand
+     296: ifeq          307
+     299: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     302: invokevirtual #224                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSurfaceVariant-0d7_KjU":()J
+     305: lstore        36
+     307: iload         72
+     309: ldc           #121                // int 524288
+     311: iand
+     312: ifeq          318
+     315: lload_0
+     316: lstore        38
+     318: iload         72
+     320: ldc           #122                // int 1048576
+     322: iand
+     323: ifeq          334
+     326: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     329: invokevirtual #225                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInverseSurface-0d7_KjU":()J
+     332: lstore        40
+     334: iload         72
+     336: ldc           #126                // int 2097152
+     338: iand
+     339: ifeq          350
+     342: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     345: invokevirtual #226                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInverseOnSurface-0d7_KjU":()J
+     348: lstore        42
+     350: iload         72
+     352: ldc           #130                // int 4194304
+     354: iand
+     355: ifeq          366
+     358: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     361: invokevirtual #227                // Method androidx/compose/material3/tokens/ColorDarkTokens."getError-0d7_KjU":()J
+     364: lstore        44
+     366: iload         72
+     368: ldc           #134                // int 8388608
+     370: iand
+     371: ifeq          382
+     374: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     377: invokevirtual #228                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnError-0d7_KjU":()J
+     380: lstore        46
+     382: iload         72
+     384: ldc           #138                // int 16777216
+     386: iand
+     387: ifeq          398
+     390: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     393: invokevirtual #229                // Method androidx/compose/material3/tokens/ColorDarkTokens."getErrorContainer-0d7_KjU":()J
+     396: lstore        48
+     398: iload         72
+     400: ldc           #142                // int 33554432
+     402: iand
+     403: ifeq          414
+     406: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     409: invokevirtual #230                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnErrorContainer-0d7_KjU":()J
+     412: lstore        50
+     414: iload         72
+     416: ldc           #146                // int 67108864
+     418: iand
+     419: ifeq          430
+     422: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     425: invokevirtual #231                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOutline-0d7_KjU":()J
+     428: lstore        52
+     430: iload         72
+     432: ldc           #150                // int 134217728
+     434: iand
+     435: ifeq          446
+     438: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     441: invokevirtual #232                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOutlineVariant-0d7_KjU":()J
+     444: lstore        54
+     446: iload         72
+     448: ldc           #154                // int 268435456
+     450: iand
+     451: ifeq          462
+     454: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     457: invokevirtual #233                // Method androidx/compose/material3/tokens/ColorDarkTokens."getScrim-0d7_KjU":()J
+     460: lstore        56
+     462: iload         72
+     464: ldc           #158                // int 536870912
+     466: iand
+     467: ifeq          478
+     470: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     473: invokevirtual #234                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceBright-0d7_KjU":()J
+     476: lstore        58
+     478: iload         72
+     480: ldc           #162                // int 1073741824
+     482: iand
+     483: ifeq          494
+     486: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     489: invokevirtual #235                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceContainer-0d7_KjU":()J
+     492: lstore        60
+     494: iload         72
+     496: ldc           #166                // int -2147483648
+     498: iand
+     499: ifeq          510
+     502: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     505: invokevirtual #236                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceContainerHigh-0d7_KjU":()J
+     508: lstore        62
+     510: iload         73
+     512: iconst_1
+     513: iand
+     514: ifeq          525
+     517: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     520: invokevirtual #237                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceContainerHighest-0d7_KjU":()J
+     523: lstore        64
+     525: iload         73
+     527: iconst_2
+     528: iand
+     529: ifeq          540
+     532: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     535: invokevirtual #238                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceContainerLow-0d7_KjU":()J
+     538: lstore        66
+     540: iload         73
+     542: iconst_4
+     543: iand
+     544: ifeq          555
+     547: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     550: invokevirtual #239                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceContainerLowest-0d7_KjU":()J
+     553: lstore        68
+     555: iload         73
+     557: bipush        8
+     559: iand
+     560: ifeq          571
+     563: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     566: invokevirtual #240                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceDim-0d7_KjU":()J
+     569: lstore        70
+     571: lload_0
+     572: lload_2
+     573: lload         4
+     575: lload         6
+     577: lload         8
+     579: lload         10
+     581: lload         12
+     583: lload         14
+     585: lload         16
+     587: lload         18
+     589: lload         20
+     591: lload         22
+     593: lload         24
+     595: lload         26
+     597: lload         28
+     599: lload         30
+     601: lload         32
+     603: lload         34
+     605: lload         36
+     607: lload         38
+     609: lload         40
+     611: lload         42
+     613: lload         44
+     615: lload         46
+     617: lload         48
+     619: lload         50
+     621: lload         52
+     623: lload         54
+     625: lload         56
+     627: lload         58
+     629: lload         60
+     631: lload         62
+     633: lload         64
+     635: lload         66
+     637: lload         68
+     639: lload         70
+     641: invokestatic  #242                // Method "darkColorScheme-C-Xl9yA":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Landroidx/compose/material3/ColorScheme;
+     644: areturn
+
+  public static final androidx.compose.material3.ColorScheme darkColorScheme-G1PFc-w(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long);
+    Code:
+       0: lload_0
+       1: lload_2
+       2: lload         4
+       4: lload         6
+       6: lload         8
+       8: lload         10
+      10: lload         12
+      12: lload         14
+      14: lload         16
+      16: lload         18
+      18: lload         20
+      20: lload         22
+      22: lload         24
+      24: lload         26
+      26: lload         28
+      28: lload         30
+      30: lload         32
+      32: lload         34
+      34: lload         36
+      36: lload         38
+      38: lload         40
+      40: lload         42
+      42: lload         44
+      44: lload         46
+      46: lload         48
+      48: lload         50
+      50: lload         52
+      52: lload         54
+      54: lload         56
+      56: lconst_0
+      57: lconst_0
+      58: lconst_0
+      59: lconst_0
+      60: lconst_0
+      61: lconst_0
+      62: lconst_0
+      63: ldc           #192                // int -536870912
+      65: bipush        15
+      67: aconst_null
+      68: invokestatic  #245                // Method "darkColorScheme-C-Xl9yA$default":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Landroidx/compose/material3/ColorScheme;
+      71: areturn
+
+  public static androidx.compose.material3.ColorScheme darkColorScheme-G1PFc-w$default(long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, long, int, java.lang.Object);
+    Code:
+       0: iload         58
+       2: iconst_1
+       3: iand
+       4: ifeq          14
+       7: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      10: invokevirtual #206                // Method androidx/compose/material3/tokens/ColorDarkTokens."getPrimary-0d7_KjU":()J
+      13: lstore_0
+      14: iload         58
+      16: iconst_2
+      17: iand
+      18: ifeq          28
+      21: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      24: invokevirtual #207                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnPrimary-0d7_KjU":()J
+      27: lstore_2
+      28: iload         58
+      30: iconst_4
+      31: iand
+      32: ifeq          43
+      35: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      38: invokevirtual #208                // Method androidx/compose/material3/tokens/ColorDarkTokens."getPrimaryContainer-0d7_KjU":()J
+      41: lstore        4
+      43: iload         58
+      45: bipush        8
+      47: iand
+      48: ifeq          59
+      51: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      54: invokevirtual #209                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnPrimaryContainer-0d7_KjU":()J
+      57: lstore        6
+      59: iload         58
+      61: bipush        16
+      63: iand
+      64: ifeq          75
+      67: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      70: invokevirtual #210                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInversePrimary-0d7_KjU":()J
+      73: lstore        8
+      75: iload         58
+      77: bipush        32
+      79: iand
+      80: ifeq          91
+      83: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      86: invokevirtual #211                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSecondary-0d7_KjU":()J
+      89: lstore        10
+      91: iload         58
+      93: bipush        64
+      95: iand
+      96: ifeq          107
+      99: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     102: invokevirtual #212                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSecondary-0d7_KjU":()J
+     105: lstore        12
+     107: iload         58
+     109: sipush        128
+     112: iand
+     113: ifeq          124
+     116: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     119: invokevirtual #213                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSecondaryContainer-0d7_KjU":()J
+     122: lstore        14
+     124: iload         58
+     126: sipush        256
+     129: iand
+     130: ifeq          141
+     133: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     136: invokevirtual #214                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSecondaryContainer-0d7_KjU":()J
+     139: lstore        16
+     141: iload         58
+     143: sipush        512
+     146: iand
+     147: ifeq          158
+     150: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     153: invokevirtual #215                // Method androidx/compose/material3/tokens/ColorDarkTokens."getTertiary-0d7_KjU":()J
+     156: lstore        18
+     158: iload         58
+     160: sipush        1024
+     163: iand
+     164: ifeq          175
+     167: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     170: invokevirtual #216                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnTertiary-0d7_KjU":()J
+     173: lstore        20
+     175: iload         58
+     177: sipush        2048
+     180: iand
+     181: ifeq          192
+     184: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     187: invokevirtual #217                // Method androidx/compose/material3/tokens/ColorDarkTokens."getTertiaryContainer-0d7_KjU":()J
+     190: lstore        22
+     192: iload         58
+     194: sipush        4096
+     197: iand
+     198: ifeq          209
+     201: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     204: invokevirtual #218                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnTertiaryContainer-0d7_KjU":()J
+     207: lstore        24
+     209: iload         58
+     211: sipush        8192
+     214: iand
+     215: ifeq          226
+     218: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     221: invokevirtual #219                // Method androidx/compose/material3/tokens/ColorDarkTokens."getBackground-0d7_KjU":()J
+     224: lstore        26
+     226: iload         58
+     228: sipush        16384
+     231: iand
+     232: ifeq          243
+     235: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     238: invokevirtual #220                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnBackground-0d7_KjU":()J
+     241: lstore        28
+     243: iload         58
+     245: ldc           #105                // int 32768
+     247: iand
+     248: ifeq          259
+     251: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     254: invokevirtual #221                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurface-0d7_KjU":()J
+     257: lstore        30
+     259: iload         58
+     261: ldc           #109                // int 65536
+     263: iand
+     264: ifeq          275
+     267: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     270: invokevirtual #222                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSurface-0d7_KjU":()J
+     273: lstore        32
+     275: iload         58
+     277: ldc           #113                // int 131072
+     279: iand
+     280: ifeq          291
+     283: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     286: invokevirtual #223                // Method androidx/compose/material3/tokens/ColorDarkTokens."getSurfaceVariant-0d7_KjU":()J
+     289: lstore        34
+     291: iload         58
+     293: ldc           #117                // int 262144
+     295: iand
+     296: ifeq          307
+     299: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     302: invokevirtual #224                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnSurfaceVariant-0d7_KjU":()J
+     305: lstore        36
+     307: iload         58
+     309: ldc           #121                // int 524288
+     311: iand
+     312: ifeq          318
+     315: lload_0
+     316: lstore        38
+     318: iload         58
+     320: ldc           #122                // int 1048576
+     322: iand
+     323: ifeq          334
+     326: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     329: invokevirtual #225                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInverseSurface-0d7_KjU":()J
+     332: lstore        40
+     334: iload         58
+     336: ldc           #126                // int 2097152
+     338: iand
+     339: ifeq          350
+     342: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     345: invokevirtual #226                // Method androidx/compose/material3/tokens/ColorDarkTokens."getInverseOnSurface-0d7_KjU":()J
+     348: lstore        42
+     350: iload         58
+     352: ldc           #130                // int 4194304
+     354: iand
+     355: ifeq          366
+     358: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     361: invokevirtual #227                // Method androidx/compose/material3/tokens/ColorDarkTokens."getError-0d7_KjU":()J
+     364: lstore        44
+     366: iload         58
+     368: ldc           #134                // int 8388608
+     370: iand
+     371: ifeq          382
+     374: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     377: invokevirtual #228                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnError-0d7_KjU":()J
+     380: lstore        46
+     382: iload         58
+     384: ldc           #138                // int 16777216
+     386: iand
+     387: ifeq          398
+     390: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     393: invokevirtual #229                // Method androidx/compose/material3/tokens/ColorDarkTokens."getErrorContainer-0d7_KjU":()J
+     396: lstore        48
+     398: iload         58
+     400: ldc           #142                // int 33554432
+     402: iand
+     403: ifeq          414
+     406: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     409: invokevirtual #230                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOnErrorContainer-0d7_KjU":()J
+     412: lstore        50
+     414: iload         58
+     416: ldc           #146                // int 67108864
+     418: iand
+     419: ifeq          430
+     422: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     425: invokevirtual #231                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOutline-0d7_KjU":()J
+     428: lstore        52
+     430: iload         58
+     432: ldc           #150                // int 134217728
+     434: iand
+     435: ifeq          446
+     438: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     441: invokevirtual #232                // Method androidx/compose/material3/tokens/ColorDarkTokens."getOutlineVariant-0d7_KjU":()J
+     444: lstore        54
+     446: iload         58
+     448: ldc           #154                // int 268435456
+     450: iand
+     451: ifeq          462
+     454: getstatic     #205                // Field androidx/compose/material3/tokens/ColorDarkTokens.INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     457: invokevirtual #233                // Method androidx/compose/material3/tokens/ColorDarkTokens."getScrim-0d7_KjU":()J
+     460: lstore        56
+     462: lload_0
+     463: lload_2
+     464: lload         4
+     466: lload         6
+     468: lload         8
+     470: lload         10
+     472: lload         12
+     474: lload         14
+     476: lload         16
+     478: lload         18
+     480: lload         20
+     482: lload         22
+     484: lload         24
+     486: lload         26
+     488: lload         28
+     490: lload         30
+     492: lload         32
+     494: lload         34
+     496: lload         36
+     498: lload         38
+     500: lload         40
+     502: lload         42
+     504: lload         44
+     506: lload         46
+     508: lload         48
+     510: lload         50
+     512: lload         52
+     514: lload         54
+     516: lload         56
+     518: invokestatic  #248                // Method "darkColorScheme-G1PFc-w":(JJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Landroidx/compose/material3/ColorScheme;
+     521: areturn
+
+  public static final long contentColorFor-4WTKRHQ(androidx.compose.material3.ColorScheme, long);
+    Code:
+       0: lload_1
+       1: lstore_3
+       2: lload_3
+       3: aload_0
+       4: invokevirtual #252                // Method androidx/compose/material3/ColorScheme."getPrimary-0d7_KjU":()J
+       7: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      10: ifeq          20
+      13: aload_0
+      14: invokevirtual #259                // Method androidx/compose/material3/ColorScheme."getOnPrimary-0d7_KjU":()J
+      17: goto          332
+      20: lload_3
+      21: aload_0
+      22: invokevirtual #260                // Method androidx/compose/material3/ColorScheme."getSecondary-0d7_KjU":()J
+      25: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      28: ifeq          38
+      31: aload_0
+      32: invokevirtual #261                // Method androidx/compose/material3/ColorScheme."getOnSecondary-0d7_KjU":()J
+      35: goto          332
+      38: lload_3
+      39: aload_0
+      40: invokevirtual #262                // Method androidx/compose/material3/ColorScheme."getTertiary-0d7_KjU":()J
+      43: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      46: ifeq          56
+      49: aload_0
+      50: invokevirtual #263                // Method androidx/compose/material3/ColorScheme."getOnTertiary-0d7_KjU":()J
+      53: goto          332
+      56: lload_3
+      57: aload_0
+      58: invokevirtual #264                // Method androidx/compose/material3/ColorScheme."getBackground-0d7_KjU":()J
+      61: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      64: ifeq          74
+      67: aload_0
+      68: invokevirtual #265                // Method androidx/compose/material3/ColorScheme."getOnBackground-0d7_KjU":()J
+      71: goto          332
+      74: lload_3
+      75: aload_0
+      76: invokevirtual #266                // Method androidx/compose/material3/ColorScheme."getError-0d7_KjU":()J
+      79: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      82: ifeq          92
+      85: aload_0
+      86: invokevirtual #267                // Method androidx/compose/material3/ColorScheme."getOnError-0d7_KjU":()J
+      89: goto          332
+      92: lload_3
+      93: aload_0
+      94: invokevirtual #268                // Method androidx/compose/material3/ColorScheme."getPrimaryContainer-0d7_KjU":()J
+      97: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     100: ifeq          110
+     103: aload_0
+     104: invokevirtual #269                // Method androidx/compose/material3/ColorScheme."getOnPrimaryContainer-0d7_KjU":()J
+     107: goto          332
+     110: lload_3
+     111: aload_0
+     112: invokevirtual #270                // Method androidx/compose/material3/ColorScheme."getSecondaryContainer-0d7_KjU":()J
+     115: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     118: ifeq          128
+     121: aload_0
+     122: invokevirtual #271                // Method androidx/compose/material3/ColorScheme."getOnSecondaryContainer-0d7_KjU":()J
+     125: goto          332
+     128: lload_3
+     129: aload_0
+     130: invokevirtual #272                // Method androidx/compose/material3/ColorScheme."getTertiaryContainer-0d7_KjU":()J
+     133: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     136: ifeq          146
+     139: aload_0
+     140: invokevirtual #273                // Method androidx/compose/material3/ColorScheme."getOnTertiaryContainer-0d7_KjU":()J
+     143: goto          332
+     146: lload_3
+     147: aload_0
+     148: invokevirtual #274                // Method androidx/compose/material3/ColorScheme."getErrorContainer-0d7_KjU":()J
+     151: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     154: ifeq          164
+     157: aload_0
+     158: invokevirtual #275                // Method androidx/compose/material3/ColorScheme."getOnErrorContainer-0d7_KjU":()J
+     161: goto          332
+     164: lload_3
+     165: aload_0
+     166: invokevirtual #276                // Method androidx/compose/material3/ColorScheme."getInverseSurface-0d7_KjU":()J
+     169: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     172: ifeq          182
+     175: aload_0
+     176: invokevirtual #277                // Method androidx/compose/material3/ColorScheme."getInverseOnSurface-0d7_KjU":()J
+     179: goto          332
+     182: lload_3
+     183: aload_0
+     184: invokevirtual #278                // Method androidx/compose/material3/ColorScheme."getSurface-0d7_KjU":()J
+     187: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     190: ifeq          200
+     193: aload_0
+     194: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     197: goto          332
+     200: lload_3
+     201: aload_0
+     202: invokevirtual #280                // Method androidx/compose/material3/ColorScheme."getSurfaceVariant-0d7_KjU":()J
+     205: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     208: ifeq          218
+     211: aload_0
+     212: invokevirtual #281                // Method androidx/compose/material3/ColorScheme."getOnSurfaceVariant-0d7_KjU":()J
+     215: goto          332
+     218: lload_3
+     219: aload_0
+     220: invokevirtual #282                // Method androidx/compose/material3/ColorScheme."getSurfaceBright-0d7_KjU":()J
+     223: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     226: ifeq          236
+     229: aload_0
+     230: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     233: goto          332
+     236: lload_3
+     237: aload_0
+     238: invokevirtual #283                // Method androidx/compose/material3/ColorScheme."getSurfaceContainer-0d7_KjU":()J
+     241: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     244: ifeq          254
+     247: aload_0
+     248: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     251: goto          332
+     254: lload_3
+     255: aload_0
+     256: invokevirtual #284                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerHigh-0d7_KjU":()J
+     259: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     262: ifeq          272
+     265: aload_0
+     266: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     269: goto          332
+     272: lload_3
+     273: aload_0
+     274: invokevirtual #285                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerHighest-0d7_KjU":()J
+     277: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     280: ifeq          290
+     283: aload_0
+     284: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     287: goto          332
+     290: lload_3
+     291: aload_0
+     292: invokevirtual #286                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerLow-0d7_KjU":()J
+     295: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     298: ifeq          308
+     301: aload_0
+     302: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     305: goto          332
+     308: lload_3
+     309: aload_0
+     310: invokevirtual #287                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerLowest-0d7_KjU":()J
+     313: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+     316: ifeq          326
+     319: aload_0
+     320: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     323: goto          332
+     326: getstatic     #291                // Field androidx/compose/ui/graphics/Color.Companion:Landroidx/compose/ui/graphics/Color$Companion;
+     329: invokevirtual #296                // Method androidx/compose/ui/graphics/Color$Companion."getUnspecified-0d7_KjU":()J
+     332: lreturn
+
+  public static final long contentColorFor-ek8zF_U(long, androidx.compose.runtime.Composer, int);
+    Code:
+       0: aload_2
+       1: ldc_w         #305                // int 509589638
+       4: ldc_w         #307                // String C(contentColorFor)P(0:c#ui.graphics.Color)*823@36848L11,824@36932L7:ColorScheme.kt#uh7d8r
+       7: invokestatic  #313                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart:(Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+      10: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+      13: ifeq          27
+      16: ldc_w         #305                // int 509589638
+      19: iload_3
+      20: iconst_m1
+      21: ldc_w         #319                // String androidx.compose.material3.contentColorFor (ColorScheme.kt:823)
+      24: invokestatic  #323                // Method androidx/compose/runtime/ComposerKt.traceEventStart:(IIILjava/lang/String;)V
+      27: getstatic     #328                // Field androidx/compose/material3/MaterialTheme.INSTANCE:Landroidx/compose/material3/MaterialTheme;
+      30: aload_2
+      31: bipush        6
+      33: invokevirtual #332                // Method androidx/compose/material3/MaterialTheme.getColorScheme:(Landroidx/compose/runtime/Composer;I)Landroidx/compose/material3/ColorScheme;
+      36: lload_0
+      37: invokestatic  #334                // Method "contentColorFor-4WTKRHQ":(Landroidx/compose/material3/ColorScheme;J)J
+      40: lstore        6
+      42: iconst_0
+      43: istore        8
+      45: lload         6
+      47: lstore        9
+      49: iconst_0
+      50: istore        11
+      52: lload         9
+      54: getstatic     #291                // Field androidx/compose/ui/graphics/Color.Companion:Landroidx/compose/ui/graphics/Color$Companion;
+      57: invokevirtual #296                // Method androidx/compose/ui/graphics/Color$Companion."getUnspecified-0d7_KjU":()J
+      60: lcmp
+      61: ifeq          68
+      64: iconst_1
+      65: goto          69
+      68: iconst_0
+      69: ifeq          77
+      72: lload         6
+      74: goto          128
+      77: iconst_0
+      78: istore        12
+      80: invokestatic  #340                // Method androidx/compose/material3/ContentColorKt.getLocalContentColor:()Landroidx/compose/runtime/ProvidableCompositionLocal;
+      83: checkcast     #342                // class androidx/compose/runtime/CompositionLocal
+      86: astore        13
+      88: bipush        6
+      90: istore        14
+      92: iconst_0
+      93: istore        15
+      95: aload_2
+      96: ldc_w         #343                // int 2023513938
+      99: ldc_w         #345                // String CC:CompositionLocal.kt#9igjgp
+     102: invokestatic  #313                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart:(Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+     105: aload_2
+     106: aload         13
+     108: invokeinterface #351,  2          // InterfaceMethod androidx/compose/runtime/Composer.consume:(Landroidx/compose/runtime/CompositionLocal;)Ljava/lang/Object;
+     113: astore        16
+     115: aload_2
+     116: invokestatic  #355                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd:(Landroidx/compose/runtime/Composer;)V
+     119: aload         16
+     121: checkcast     #254                // class androidx/compose/ui/graphics/Color
+     124: invokevirtual #358                // Method androidx/compose/ui/graphics/Color."unbox-impl":()J
+     127: nop
+     128: lstore        4
+     130: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+     133: ifeq          139
+     136: invokestatic  #362                // Method androidx/compose/runtime/ComposerKt.traceEventEnd:()V
+     139: aload_2
+     140: invokestatic  #355                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd:(Landroidx/compose/runtime/Composer;)V
+     143: lload         4
+     145: lreturn
+
+  public static final long applyTonalElevation-RFCenO8(androidx.compose.material3.ColorScheme, long, float, androidx.compose.runtime.Composer, int);
+    Code:
+       0: aload         4
+       2: ldc_w         #378                // int -1610977682
+       5: ldc_w         #380                // String C(applyTonalElevation)P(0:c#ui.graphics.Color,1:c#ui.unit.Dp)842@37787L7:ColorScheme.kt#uh7d8r
+       8: invokestatic  #313                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart:(Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+      11: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+      14: ifeq          29
+      17: ldc_w         #378                // int -1610977682
+      20: iload         5
+      22: iconst_m1
+      23: ldc_w         #382                // String androidx.compose.material3.applyTonalElevation (ColorScheme.kt:841)
+      26: invokestatic  #323                // Method androidx/compose/runtime/ComposerKt.traceEventStart:(IIILjava/lang/String;)V
+      29: getstatic     #386                // Field LocalTonalElevationEnabled:Landroidx/compose/runtime/ProvidableCompositionLocal;
+      32: checkcast     #342                // class androidx/compose/runtime/CompositionLocal
+      35: astore        7
+      37: bipush        6
+      39: istore        8
+      41: iconst_0
+      42: istore        9
+      44: aload         4
+      46: ldc_w         #343                // int 2023513938
+      49: ldc_w         #345                // String CC:CompositionLocal.kt#9igjgp
+      52: invokestatic  #313                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart:(Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+      55: aload         4
+      57: aload         7
+      59: invokeinterface #351,  2          // InterfaceMethod androidx/compose/runtime/Composer.consume:(Landroidx/compose/runtime/CompositionLocal;)Ljava/lang/Object;
+      64: astore        10
+      66: aload         4
+      68: invokestatic  #355                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd:(Landroidx/compose/runtime/Composer;)V
+      71: aload         10
+      73: checkcast     #388                // class java/lang/Boolean
+      76: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+      79: istore        6
+      81: lload_1
+      82: aload_0
+      83: invokevirtual #278                // Method androidx/compose/material3/ColorScheme."getSurface-0d7_KjU":()J
+      86: invokestatic  #258                // Method androidx/compose/ui/graphics/Color."equals-impl0":(JJ)Z
+      89: ifeq          105
+      92: iload         6
+      94: ifeq          105
+      97: aload_0
+      98: fload_3
+      99: invokestatic  #395                // Method "surfaceColorAtElevation-3ABfNKs":(Landroidx/compose/material3/ColorScheme;F)J
+     102: goto          106
+     105: lload_1
+     106: lstore        7
+     108: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+     111: ifeq          117
+     114: invokestatic  #362                // Method androidx/compose/runtime/ComposerKt.traceEventEnd:()V
+     117: aload         4
+     119: invokestatic  #355                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd:(Landroidx/compose/runtime/Composer;)V
+     122: lload         7
+     124: lreturn
+
+  public static final long surfaceColorAtElevation-3ABfNKs(androidx.compose.material3.ColorScheme, float);
+    Code:
+       0: fload_1
+       1: iconst_0
+       2: istore_2
+       3: iconst_0
+       4: istore_3
+       5: iload_2
+       6: i2f
+       7: invokestatic  #406                // Method androidx/compose/ui/unit/Dp."constructor-impl":(F)F
+      10: invokestatic  #409                // Method androidx/compose/ui/unit/Dp."equals-impl0":(FF)Z
+      13: ifeq          21
+      16: aload_0
+      17: invokevirtual #278                // Method androidx/compose/material3/ColorScheme."getSurface-0d7_KjU":()J
+      20: lreturn
+      21: ldc_w         #410                // float 4.5f
+      24: fload_1
+      25: iconst_1
+      26: i2f
+      27: fadd
+      28: f2d
+      29: invokestatic  #416                // Method java/lang/Math.log:(D)D
+      32: d2f
+      33: fmul
+      34: fconst_2
+      35: fadd
+      36: ldc_w         #417                // float 100.0f
+      39: fdiv
+      40: fstore_2
+      41: aload_0
+      42: invokevirtual #420                // Method androidx/compose/material3/ColorScheme."getSurfaceTint-0d7_KjU":()J
+      45: fload_2
+      46: fconst_0
+      47: fconst_0
+      48: fconst_0
+      49: bipush        14
+      51: aconst_null
+      52: invokestatic  #424                // Method androidx/compose/ui/graphics/Color."copy-wmQWz5c$default":(JFFFFILjava/lang/Object;)J
+      55: aload_0
+      56: invokevirtual #278                // Method androidx/compose/material3/ColorScheme."getSurface-0d7_KjU":()J
+      59: invokestatic  #430                // Method androidx/compose/ui/graphics/ColorKt."compositeOver--OWjLjI":(JJ)J
+      62: lreturn
+
+  public static final long fromToken(androidx.compose.material3.ColorScheme, androidx.compose.material3.tokens.ColorSchemeKeyTokens);
+    Code:
+       0: aload_1
+       1: getstatic     #442                // Field androidx/compose/material3/ColorSchemeKt$WhenMappings.$EnumSwitchMapping$0:[I
+       4: swap
+       5: invokevirtual #448                // Method androidx/compose/material3/tokens/ColorSchemeKeyTokens.ordinal:()I
+       8: iaload
+       9: tableswitch   { // 1 to 36
+                     1: 168
+                     2: 175
+                     3: 182
+                     4: 189
+                     5: 196
+                     6: 203
+                     7: 210
+                     8: 217
+                     9: 224
+                    10: 231
+                    11: 238
+                    12: 245
+                    13: 252
+                    14: 259
+                    15: 266
+                    16: 273
+                    17: 280
+                    18: 287
+                    19: 294
+                    20: 301
+                    21: 308
+                    22: 315
+                    23: 322
+                    24: 329
+                    25: 336
+                    26: 343
+                    27: 350
+                    28: 357
+                    29: 364
+                    30: 371
+                    31: 378
+                    32: 385
+                    33: 392
+                    34: 399
+                    35: 406
+                    36: 413
+               default: 420
+          }
+     168: aload_0
+     169: invokevirtual #264                // Method androidx/compose/material3/ColorScheme."getBackground-0d7_KjU":()J
+     172: goto          426
+     175: aload_0
+     176: invokevirtual #266                // Method androidx/compose/material3/ColorScheme."getError-0d7_KjU":()J
+     179: goto          426
+     182: aload_0
+     183: invokevirtual #274                // Method androidx/compose/material3/ColorScheme."getErrorContainer-0d7_KjU":()J
+     186: goto          426
+     189: aload_0
+     190: invokevirtual #277                // Method androidx/compose/material3/ColorScheme."getInverseOnSurface-0d7_KjU":()J
+     193: goto          426
+     196: aload_0
+     197: invokevirtual #449                // Method androidx/compose/material3/ColorScheme."getInversePrimary-0d7_KjU":()J
+     200: goto          426
+     203: aload_0
+     204: invokevirtual #276                // Method androidx/compose/material3/ColorScheme."getInverseSurface-0d7_KjU":()J
+     207: goto          426
+     210: aload_0
+     211: invokevirtual #265                // Method androidx/compose/material3/ColorScheme."getOnBackground-0d7_KjU":()J
+     214: goto          426
+     217: aload_0
+     218: invokevirtual #267                // Method androidx/compose/material3/ColorScheme."getOnError-0d7_KjU":()J
+     221: goto          426
+     224: aload_0
+     225: invokevirtual #275                // Method androidx/compose/material3/ColorScheme."getOnErrorContainer-0d7_KjU":()J
+     228: goto          426
+     231: aload_0
+     232: invokevirtual #259                // Method androidx/compose/material3/ColorScheme."getOnPrimary-0d7_KjU":()J
+     235: goto          426
+     238: aload_0
+     239: invokevirtual #269                // Method androidx/compose/material3/ColorScheme."getOnPrimaryContainer-0d7_KjU":()J
+     242: goto          426
+     245: aload_0
+     246: invokevirtual #261                // Method androidx/compose/material3/ColorScheme."getOnSecondary-0d7_KjU":()J
+     249: goto          426
+     252: aload_0
+     253: invokevirtual #271                // Method androidx/compose/material3/ColorScheme."getOnSecondaryContainer-0d7_KjU":()J
+     256: goto          426
+     259: aload_0
+     260: invokevirtual #279                // Method androidx/compose/material3/ColorScheme."getOnSurface-0d7_KjU":()J
+     263: goto          426
+     266: aload_0
+     267: invokevirtual #281                // Method androidx/compose/material3/ColorScheme."getOnSurfaceVariant-0d7_KjU":()J
+     270: goto          426
+     273: aload_0
+     274: invokevirtual #420                // Method androidx/compose/material3/ColorScheme."getSurfaceTint-0d7_KjU":()J
+     277: goto          426
+     280: aload_0
+     281: invokevirtual #263                // Method androidx/compose/material3/ColorScheme."getOnTertiary-0d7_KjU":()J
+     284: goto          426
+     287: aload_0
+     288: invokevirtual #273                // Method androidx/compose/material3/ColorScheme."getOnTertiaryContainer-0d7_KjU":()J
+     291: goto          426
+     294: aload_0
+     295: invokevirtual #450                // Method androidx/compose/material3/ColorScheme."getOutline-0d7_KjU":()J
+     298: goto          426
+     301: aload_0
+     302: invokevirtual #451                // Method androidx/compose/material3/ColorScheme."getOutlineVariant-0d7_KjU":()J
+     305: goto          426
+     308: aload_0
+     309: invokevirtual #252                // Method androidx/compose/material3/ColorScheme."getPrimary-0d7_KjU":()J
+     312: goto          426
+     315: aload_0
+     316: invokevirtual #268                // Method androidx/compose/material3/ColorScheme."getPrimaryContainer-0d7_KjU":()J
+     319: goto          426
+     322: aload_0
+     323: invokevirtual #452                // Method androidx/compose/material3/ColorScheme."getScrim-0d7_KjU":()J
+     326: goto          426
+     329: aload_0
+     330: invokevirtual #260                // Method androidx/compose/material3/ColorScheme."getSecondary-0d7_KjU":()J
+     333: goto          426
+     336: aload_0
+     337: invokevirtual #270                // Method androidx/compose/material3/ColorScheme."getSecondaryContainer-0d7_KjU":()J
+     340: goto          426
+     343: aload_0
+     344: invokevirtual #278                // Method androidx/compose/material3/ColorScheme."getSurface-0d7_KjU":()J
+     347: goto          426
+     350: aload_0
+     351: invokevirtual #280                // Method androidx/compose/material3/ColorScheme."getSurfaceVariant-0d7_KjU":()J
+     354: goto          426
+     357: aload_0
+     358: invokevirtual #282                // Method androidx/compose/material3/ColorScheme."getSurfaceBright-0d7_KjU":()J
+     361: goto          426
+     364: aload_0
+     365: invokevirtual #283                // Method androidx/compose/material3/ColorScheme."getSurfaceContainer-0d7_KjU":()J
+     368: goto          426
+     371: aload_0
+     372: invokevirtual #284                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerHigh-0d7_KjU":()J
+     375: goto          426
+     378: aload_0
+     379: invokevirtual #285                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerHighest-0d7_KjU":()J
+     382: goto          426
+     385: aload_0
+     386: invokevirtual #286                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerLow-0d7_KjU":()J
+     389: goto          426
+     392: aload_0
+     393: invokevirtual #287                // Method androidx/compose/material3/ColorScheme."getSurfaceContainerLowest-0d7_KjU":()J
+     396: goto          426
+     399: aload_0
+     400: invokevirtual #453                // Method androidx/compose/material3/ColorScheme."getSurfaceDim-0d7_KjU":()J
+     403: goto          426
+     406: aload_0
+     407: invokevirtual #262                // Method androidx/compose/material3/ColorScheme."getTertiary-0d7_KjU":()J
+     410: goto          426
+     413: aload_0
+     414: invokevirtual #272                // Method androidx/compose/material3/ColorScheme."getTertiaryContainer-0d7_KjU":()J
+     417: goto          426
+     420: getstatic     #291                // Field androidx/compose/ui/graphics/Color.Companion:Landroidx/compose/ui/graphics/Color$Companion;
+     423: invokevirtual #296                // Method androidx/compose/ui/graphics/Color$Companion."getUnspecified-0d7_KjU":()J
+     426: lreturn
+
+  public static final androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.material3.ColorScheme> getLocalColorScheme();
+    Code:
+       0: getstatic     #461                // Field LocalColorScheme:Landroidx/compose/runtime/ProvidableCompositionLocal;
+       3: areturn
+
+  public static final androidx.compose.runtime.ProvidableCompositionLocal<java.lang.Boolean> getLocalTonalElevationEnabled();
+    Code:
+       0: getstatic     #386                // Field LocalTonalElevationEnabled:Landroidx/compose/runtime/ProvidableCompositionLocal;
+       3: areturn
+
+  public static final long getValue(androidx.compose.material3.tokens.ColorSchemeKeyTokens, androidx.compose.runtime.Composer, int);
+    Code:
+       0: aload_1
+       1: ldc_w         #468                // int -810780884
+       4: ldc_w         #470                // String C945@42076L11:ColorScheme.kt#uh7d8r
+       7: invokestatic  #313                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerStart:(Landroidx/compose/runtime/Composer;ILjava/lang/String;)V
+      10: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+      13: ifeq          27
+      16: ldc_w         #468                // int -810780884
+      19: iload_2
+      20: iconst_m1
+      21: ldc_w         #472                // String androidx.compose.material3.<get-value> (ColorScheme.kt:945)
+      24: invokestatic  #323                // Method androidx/compose/runtime/ComposerKt.traceEventStart:(IIILjava/lang/String;)V
+      27: getstatic     #328                // Field androidx/compose/material3/MaterialTheme.INSTANCE:Landroidx/compose/material3/MaterialTheme;
+      30: aload_1
+      31: bipush        6
+      33: invokevirtual #332                // Method androidx/compose/material3/MaterialTheme.getColorScheme:(Landroidx/compose/runtime/Composer;I)Landroidx/compose/material3/ColorScheme;
+      36: aload_0
+      37: invokestatic  #474                // Method fromToken:(Landroidx/compose/material3/ColorScheme;Landroidx/compose/material3/tokens/ColorSchemeKeyTokens;)J
+      40: lstore_3
+      41: invokestatic  #317                // Method androidx/compose/runtime/ComposerKt.isTraceInProgress:()Z
+      44: ifeq          50
+      47: invokestatic  #362                // Method androidx/compose/runtime/ComposerKt.traceEventEnd:()V
+      50: aload_1
+      51: invokestatic  #355                // Method androidx/compose/runtime/ComposerKt.sourceInformationMarkerEnd:(Landroidx/compose/runtime/Composer;)V
+      54: lload_3
+      55: lreturn
+
+  static {};
+    Code:
+       0: getstatic     #481                // Field androidx/compose/material3/ColorSchemeKt$LocalColorScheme$1.INSTANCE:Landroidx/compose/material3/ColorSchemeKt$LocalColorScheme$1;
+       3: checkcast     #483                // class kotlin/jvm/functions/Function0
+       6: invokestatic  #489                // Method androidx/compose/runtime/CompositionLocalKt.staticCompositionLocalOf:(Lkotlin/jvm/functions/Function0;)Landroidx/compose/runtime/ProvidableCompositionLocal;
+       9: putstatic     #461                // Field LocalColorScheme:Landroidx/compose/runtime/ProvidableCompositionLocal;
+      12: getstatic     #494                // Field androidx/compose/material3/ColorSchemeKt$LocalTonalElevationEnabled$1.INSTANCE:Landroidx/compose/material3/ColorSchemeKt$LocalTonalElevationEnabled$1;
+      15: checkcast     #483                // class kotlin/jvm/functions/Function0
+      18: invokestatic  #489                // Method androidx/compose/runtime/CompositionLocalKt.staticCompositionLocalOf:(Lkotlin/jvm/functions/Function0;)Landroidx/compose/runtime/ProvidableCompositionLocal;
+      21: putstatic     #386                // Field LocalTonalElevationEnabled:Landroidx/compose/runtime/ProvidableCompositionLocal;
+      24: return
+}

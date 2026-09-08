@@ -1,0 +1,781 @@
+Compiled from "TypeScaleTokens.kt"
+public final class androidx.compose.material3.tokens.TypeScaleTokens {
+  public static final androidx.compose.material3.tokens.TypeScaleTokens INSTANCE;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily BodyLargeFont;
+
+  private static final long BodyLargeLineHeight;
+
+  private static final long BodyLargeSize;
+
+  private static final long BodyLargeTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight BodyLargeWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily BodyMediumFont;
+
+  private static final long BodyMediumLineHeight;
+
+  private static final long BodyMediumSize;
+
+  private static final long BodyMediumTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight BodyMediumWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily BodySmallFont;
+
+  private static final long BodySmallLineHeight;
+
+  private static final long BodySmallSize;
+
+  private static final long BodySmallTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight BodySmallWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily DisplayLargeFont;
+
+  private static final long DisplayLargeLineHeight;
+
+  private static final long DisplayLargeSize;
+
+  private static final long DisplayLargeTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight DisplayLargeWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily DisplayMediumFont;
+
+  private static final long DisplayMediumLineHeight;
+
+  private static final long DisplayMediumSize;
+
+  private static final long DisplayMediumTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight DisplayMediumWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily DisplaySmallFont;
+
+  private static final long DisplaySmallLineHeight;
+
+  private static final long DisplaySmallSize;
+
+  private static final long DisplaySmallTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight DisplaySmallWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily HeadlineLargeFont;
+
+  private static final long HeadlineLargeLineHeight;
+
+  private static final long HeadlineLargeSize;
+
+  private static final long HeadlineLargeTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight HeadlineLargeWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily HeadlineMediumFont;
+
+  private static final long HeadlineMediumLineHeight;
+
+  private static final long HeadlineMediumSize;
+
+  private static final long HeadlineMediumTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight HeadlineMediumWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily HeadlineSmallFont;
+
+  private static final long HeadlineSmallLineHeight;
+
+  private static final long HeadlineSmallSize;
+
+  private static final long HeadlineSmallTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight HeadlineSmallWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily LabelLargeFont;
+
+  private static final long LabelLargeLineHeight;
+
+  private static final long LabelLargeSize;
+
+  private static final long LabelLargeTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight LabelLargeWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily LabelMediumFont;
+
+  private static final long LabelMediumLineHeight;
+
+  private static final long LabelMediumSize;
+
+  private static final long LabelMediumTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight LabelMediumWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily LabelSmallFont;
+
+  private static final long LabelSmallLineHeight;
+
+  private static final long LabelSmallSize;
+
+  private static final long LabelSmallTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight LabelSmallWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily TitleLargeFont;
+
+  private static final long TitleLargeLineHeight;
+
+  private static final long TitleLargeSize;
+
+  private static final long TitleLargeTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight TitleLargeWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily TitleMediumFont;
+
+  private static final long TitleMediumLineHeight;
+
+  private static final long TitleMediumSize;
+
+  private static final long TitleMediumTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight TitleMediumWeight;
+
+  private static final androidx.compose.ui.text.font.GenericFontFamily TitleSmallFont;
+
+  private static final long TitleSmallLineHeight;
+
+  private static final long TitleSmallSize;
+
+  private static final long TitleSmallTracking;
+
+  private static final androidx.compose.ui.text.font.FontWeight TitleSmallWeight;
+
+  public static final int $stable;
+
+  private androidx.compose.material3.tokens.TypeScaleTokens();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getBodyLargeFont();
+    Code:
+       0: getstatic     #17                 // Field BodyLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getBodyLargeLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #23                 // Field BodyLargeLineHeight:J
+       3: lreturn
+
+  public final long getBodyLargeSize-XSAIIZE();
+    Code:
+       0: getstatic     #27                 // Field BodyLargeSize:J
+       3: lreturn
+
+  public final long getBodyLargeTracking-XSAIIZE();
+    Code:
+       0: getstatic     #31                 // Field BodyLargeTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getBodyLargeWeight();
+    Code:
+       0: getstatic     #37                 // Field BodyLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getBodyMediumFont();
+    Code:
+       0: getstatic     #41                 // Field BodyMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getBodyMediumLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #45                 // Field BodyMediumLineHeight:J
+       3: lreturn
+
+  public final long getBodyMediumSize-XSAIIZE();
+    Code:
+       0: getstatic     #49                 // Field BodyMediumSize:J
+       3: lreturn
+
+  public final long getBodyMediumTracking-XSAIIZE();
+    Code:
+       0: getstatic     #53                 // Field BodyMediumTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getBodyMediumWeight();
+    Code:
+       0: getstatic     #57                 // Field BodyMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getBodySmallFont();
+    Code:
+       0: getstatic     #61                 // Field BodySmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getBodySmallLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #65                 // Field BodySmallLineHeight:J
+       3: lreturn
+
+  public final long getBodySmallSize-XSAIIZE();
+    Code:
+       0: getstatic     #69                 // Field BodySmallSize:J
+       3: lreturn
+
+  public final long getBodySmallTracking-XSAIIZE();
+    Code:
+       0: getstatic     #73                 // Field BodySmallTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getBodySmallWeight();
+    Code:
+       0: getstatic     #77                 // Field BodySmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getDisplayLargeFont();
+    Code:
+       0: getstatic     #81                 // Field DisplayLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getDisplayLargeLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #85                 // Field DisplayLargeLineHeight:J
+       3: lreturn
+
+  public final long getDisplayLargeSize-XSAIIZE();
+    Code:
+       0: getstatic     #89                 // Field DisplayLargeSize:J
+       3: lreturn
+
+  public final long getDisplayLargeTracking-XSAIIZE();
+    Code:
+       0: getstatic     #93                 // Field DisplayLargeTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getDisplayLargeWeight();
+    Code:
+       0: getstatic     #97                 // Field DisplayLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getDisplayMediumFont();
+    Code:
+       0: getstatic     #101                // Field DisplayMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getDisplayMediumLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #105                // Field DisplayMediumLineHeight:J
+       3: lreturn
+
+  public final long getDisplayMediumSize-XSAIIZE();
+    Code:
+       0: getstatic     #109                // Field DisplayMediumSize:J
+       3: lreturn
+
+  public final long getDisplayMediumTracking-XSAIIZE();
+    Code:
+       0: getstatic     #113                // Field DisplayMediumTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getDisplayMediumWeight();
+    Code:
+       0: getstatic     #117                // Field DisplayMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getDisplaySmallFont();
+    Code:
+       0: getstatic     #121                // Field DisplaySmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getDisplaySmallLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #125                // Field DisplaySmallLineHeight:J
+       3: lreturn
+
+  public final long getDisplaySmallSize-XSAIIZE();
+    Code:
+       0: getstatic     #129                // Field DisplaySmallSize:J
+       3: lreturn
+
+  public final long getDisplaySmallTracking-XSAIIZE();
+    Code:
+       0: getstatic     #133                // Field DisplaySmallTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getDisplaySmallWeight();
+    Code:
+       0: getstatic     #137                // Field DisplaySmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getHeadlineLargeFont();
+    Code:
+       0: getstatic     #141                // Field HeadlineLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getHeadlineLargeLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #145                // Field HeadlineLargeLineHeight:J
+       3: lreturn
+
+  public final long getHeadlineLargeSize-XSAIIZE();
+    Code:
+       0: getstatic     #149                // Field HeadlineLargeSize:J
+       3: lreturn
+
+  public final long getHeadlineLargeTracking-XSAIIZE();
+    Code:
+       0: getstatic     #153                // Field HeadlineLargeTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getHeadlineLargeWeight();
+    Code:
+       0: getstatic     #157                // Field HeadlineLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getHeadlineMediumFont();
+    Code:
+       0: getstatic     #161                // Field HeadlineMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getHeadlineMediumLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #165                // Field HeadlineMediumLineHeight:J
+       3: lreturn
+
+  public final long getHeadlineMediumSize-XSAIIZE();
+    Code:
+       0: getstatic     #169                // Field HeadlineMediumSize:J
+       3: lreturn
+
+  public final long getHeadlineMediumTracking-XSAIIZE();
+    Code:
+       0: getstatic     #173                // Field HeadlineMediumTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getHeadlineMediumWeight();
+    Code:
+       0: getstatic     #177                // Field HeadlineMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getHeadlineSmallFont();
+    Code:
+       0: getstatic     #181                // Field HeadlineSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getHeadlineSmallLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #185                // Field HeadlineSmallLineHeight:J
+       3: lreturn
+
+  public final long getHeadlineSmallSize-XSAIIZE();
+    Code:
+       0: getstatic     #189                // Field HeadlineSmallSize:J
+       3: lreturn
+
+  public final long getHeadlineSmallTracking-XSAIIZE();
+    Code:
+       0: getstatic     #193                // Field HeadlineSmallTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getHeadlineSmallWeight();
+    Code:
+       0: getstatic     #197                // Field HeadlineSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getLabelLargeFont();
+    Code:
+       0: getstatic     #201                // Field LabelLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getLabelLargeLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #205                // Field LabelLargeLineHeight:J
+       3: lreturn
+
+  public final long getLabelLargeSize-XSAIIZE();
+    Code:
+       0: getstatic     #209                // Field LabelLargeSize:J
+       3: lreturn
+
+  public final long getLabelLargeTracking-XSAIIZE();
+    Code:
+       0: getstatic     #213                // Field LabelLargeTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getLabelLargeWeight();
+    Code:
+       0: getstatic     #217                // Field LabelLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getLabelMediumFont();
+    Code:
+       0: getstatic     #221                // Field LabelMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getLabelMediumLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #225                // Field LabelMediumLineHeight:J
+       3: lreturn
+
+  public final long getLabelMediumSize-XSAIIZE();
+    Code:
+       0: getstatic     #229                // Field LabelMediumSize:J
+       3: lreturn
+
+  public final long getLabelMediumTracking-XSAIIZE();
+    Code:
+       0: getstatic     #233                // Field LabelMediumTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getLabelMediumWeight();
+    Code:
+       0: getstatic     #237                // Field LabelMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getLabelSmallFont();
+    Code:
+       0: getstatic     #241                // Field LabelSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getLabelSmallLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #245                // Field LabelSmallLineHeight:J
+       3: lreturn
+
+  public final long getLabelSmallSize-XSAIIZE();
+    Code:
+       0: getstatic     #249                // Field LabelSmallSize:J
+       3: lreturn
+
+  public final long getLabelSmallTracking-XSAIIZE();
+    Code:
+       0: getstatic     #253                // Field LabelSmallTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getLabelSmallWeight();
+    Code:
+       0: getstatic     #257                // Field LabelSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getTitleLargeFont();
+    Code:
+       0: getstatic     #261                // Field TitleLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getTitleLargeLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #265                // Field TitleLargeLineHeight:J
+       3: lreturn
+
+  public final long getTitleLargeSize-XSAIIZE();
+    Code:
+       0: getstatic     #269                // Field TitleLargeSize:J
+       3: lreturn
+
+  public final long getTitleLargeTracking-XSAIIZE();
+    Code:
+       0: getstatic     #273                // Field TitleLargeTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getTitleLargeWeight();
+    Code:
+       0: getstatic     #277                // Field TitleLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getTitleMediumFont();
+    Code:
+       0: getstatic     #281                // Field TitleMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getTitleMediumLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #285                // Field TitleMediumLineHeight:J
+       3: lreturn
+
+  public final long getTitleMediumSize-XSAIIZE();
+    Code:
+       0: getstatic     #289                // Field TitleMediumSize:J
+       3: lreturn
+
+  public final long getTitleMediumTracking-XSAIIZE();
+    Code:
+       0: getstatic     #293                // Field TitleMediumTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getTitleMediumWeight();
+    Code:
+       0: getstatic     #297                // Field TitleMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  public final androidx.compose.ui.text.font.GenericFontFamily getTitleSmallFont();
+    Code:
+       0: getstatic     #301                // Field TitleSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+       3: areturn
+
+  public final long getTitleSmallLineHeight-XSAIIZE();
+    Code:
+       0: getstatic     #305                // Field TitleSmallLineHeight:J
+       3: lreturn
+
+  public final long getTitleSmallSize-XSAIIZE();
+    Code:
+       0: getstatic     #309                // Field TitleSmallSize:J
+       3: lreturn
+
+  public final long getTitleSmallTracking-XSAIIZE();
+    Code:
+       0: getstatic     #313                // Field TitleSmallTracking:J
+       3: lreturn
+
+  public final androidx.compose.ui.text.font.FontWeight getTitleSmallWeight();
+    Code:
+       0: getstatic     #317                // Field TitleSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+       3: areturn
+
+  static {};
+    Code:
+       0: new           #2                  // class androidx/compose/material3/tokens/TypeScaleTokens
+       3: dup
+       4: invokespecial #319                // Method "<init>":()V
+       7: putstatic     #322                // Field INSTANCE:Landroidx/compose/material3/tokens/TypeScaleTokens;
+      10: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+      13: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+      16: putstatic     #17                 // Field BodyLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+      19: ldc2_w        #331                // double 24.0d
+      22: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+      25: putstatic     #23                 // Field BodyLargeLineHeight:J
+      28: bipush        16
+      30: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+      33: putstatic     #27                 // Field BodyLargeSize:J
+      36: ldc2_w        #342                // double 0.5d
+      39: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+      42: putstatic     #31                 // Field BodyLargeTracking:J
+      45: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+      48: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+      51: putstatic     #37                 // Field BodyLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+      54: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+      57: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+      60: putstatic     #41                 // Field BodyMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+      63: ldc2_w        #347                // double 20.0d
+      66: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+      69: putstatic     #45                 // Field BodyMediumLineHeight:J
+      72: bipush        14
+      74: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+      77: putstatic     #49                 // Field BodyMediumSize:J
+      80: ldc2_w        #349                // double 0.2d
+      83: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+      86: putstatic     #53                 // Field BodyMediumTracking:J
+      89: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+      92: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+      95: putstatic     #57                 // Field BodyMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+      98: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     101: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     104: putstatic     #61                 // Field BodySmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     107: ldc2_w        #351                // double 16.0d
+     110: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     113: putstatic     #65                 // Field BodySmallLineHeight:J
+     116: bipush        12
+     118: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     121: putstatic     #69                 // Field BodySmallSize:J
+     124: ldc2_w        #353                // double 0.4d
+     127: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     130: putstatic     #73                 // Field BodySmallTracking:J
+     133: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     136: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     139: putstatic     #77                 // Field BodySmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+     142: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     145: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     148: putstatic     #81                 // Field DisplayLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     151: ldc2_w        #358                // double 64.0d
+     154: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     157: putstatic     #85                 // Field DisplayLargeLineHeight:J
+     160: bipush        57
+     162: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     165: putstatic     #89                 // Field DisplayLargeSize:J
+     168: ldc2_w        #349                // double 0.2d
+     171: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     174: lstore_0
+     175: iconst_0
+     176: istore_2
+     177: lload_0
+     178: invokestatic  #363                // Method androidx/compose/ui/unit/TextUnitKt."checkArithmetic--R2X_6o":(J)V
+     181: lload_0
+     182: invokestatic  #369                // Method androidx/compose/ui/unit/TextUnit."getRawType-impl":(J)J
+     185: lload_0
+     186: invokestatic  #373                // Method androidx/compose/ui/unit/TextUnit."getValue-impl":(J)F
+     189: fneg
+     190: invokestatic  #377                // Method androidx/compose/ui/unit/TextUnitKt.pack:(JF)J
+     193: putstatic     #93                 // Field DisplayLargeTracking:J
+     196: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     199: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     202: putstatic     #97                 // Field DisplayLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+     205: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     208: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     211: putstatic     #101                // Field DisplayMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     214: ldc2_w        #378                // double 52.0d
+     217: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     220: putstatic     #105                // Field DisplayMediumLineHeight:J
+     223: bipush        45
+     225: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     228: putstatic     #109                // Field DisplayMediumSize:J
+     231: dconst_0
+     232: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     235: putstatic     #113                // Field DisplayMediumTracking:J
+     238: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     241: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     244: putstatic     #117                // Field DisplayMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+     247: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     250: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     253: putstatic     #121                // Field DisplaySmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     256: ldc2_w        #380                // double 44.0d
+     259: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     262: putstatic     #125                // Field DisplaySmallLineHeight:J
+     265: bipush        36
+     267: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     270: putstatic     #129                // Field DisplaySmallSize:J
+     273: dconst_0
+     274: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     277: putstatic     #133                // Field DisplaySmallTracking:J
+     280: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     283: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     286: putstatic     #137                // Field DisplaySmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+     289: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     292: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     295: putstatic     #141                // Field HeadlineLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     298: ldc2_w        #382                // double 40.0d
+     301: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     304: putstatic     #145                // Field HeadlineLargeLineHeight:J
+     307: bipush        32
+     309: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     312: putstatic     #149                // Field HeadlineLargeSize:J
+     315: dconst_0
+     316: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     319: putstatic     #153                // Field HeadlineLargeTracking:J
+     322: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     325: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     328: putstatic     #157                // Field HeadlineLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+     331: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     334: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     337: putstatic     #161                // Field HeadlineMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     340: ldc2_w        #384                // double 36.0d
+     343: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     346: putstatic     #165                // Field HeadlineMediumLineHeight:J
+     349: bipush        28
+     351: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     354: putstatic     #169                // Field HeadlineMediumSize:J
+     357: dconst_0
+     358: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     361: putstatic     #173                // Field HeadlineMediumTracking:J
+     364: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     367: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     370: putstatic     #177                // Field HeadlineMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+     373: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     376: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     379: putstatic     #181                // Field HeadlineSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     382: ldc2_w        #386                // double 32.0d
+     385: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     388: putstatic     #185                // Field HeadlineSmallLineHeight:J
+     391: bipush        24
+     393: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     396: putstatic     #189                // Field HeadlineSmallSize:J
+     399: dconst_0
+     400: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     403: putstatic     #193                // Field HeadlineSmallTracking:J
+     406: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     409: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     412: putstatic     #197                // Field HeadlineSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+     415: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     418: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     421: putstatic     #201                // Field LabelLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     424: ldc2_w        #347                // double 20.0d
+     427: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     430: putstatic     #205                // Field LabelLargeLineHeight:J
+     433: bipush        14
+     435: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     438: putstatic     #209                // Field LabelLargeSize:J
+     441: ldc2_w        #388                // double 0.1d
+     444: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     447: putstatic     #213                // Field LabelLargeTracking:J
+     450: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     453: invokevirtual #392                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightMedium:()Landroidx/compose/ui/text/font/FontWeight;
+     456: putstatic     #217                // Field LabelLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+     459: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     462: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     465: putstatic     #221                // Field LabelMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     468: ldc2_w        #351                // double 16.0d
+     471: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     474: putstatic     #225                // Field LabelMediumLineHeight:J
+     477: bipush        12
+     479: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     482: putstatic     #229                // Field LabelMediumSize:J
+     485: ldc2_w        #342                // double 0.5d
+     488: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     491: putstatic     #233                // Field LabelMediumTracking:J
+     494: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     497: invokevirtual #392                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightMedium:()Landroidx/compose/ui/text/font/FontWeight;
+     500: putstatic     #237                // Field LabelMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+     503: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     506: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     509: putstatic     #241                // Field LabelSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     512: ldc2_w        #351                // double 16.0d
+     515: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     518: putstatic     #245                // Field LabelSmallLineHeight:J
+     521: bipush        11
+     523: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     526: putstatic     #249                // Field LabelSmallSize:J
+     529: ldc2_w        #342                // double 0.5d
+     532: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     535: putstatic     #253                // Field LabelSmallTracking:J
+     538: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     541: invokevirtual #392                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightMedium:()Landroidx/compose/ui/text/font/FontWeight;
+     544: putstatic     #257                // Field LabelSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+     547: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     550: invokevirtual #357                // Method androidx/compose/material3/tokens/TypefaceTokens.getBrand:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     553: putstatic     #261                // Field TitleLargeFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     556: ldc2_w        #393                // double 28.0d
+     559: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     562: putstatic     #265                // Field TitleLargeLineHeight:J
+     565: bipush        22
+     567: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     570: putstatic     #269                // Field TitleLargeSize:J
+     573: dconst_0
+     574: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     577: putstatic     #273                // Field TitleLargeTracking:J
+     580: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     583: invokevirtual #346                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightRegular:()Landroidx/compose/ui/text/font/FontWeight;
+     586: putstatic     #277                // Field TitleLargeWeight:Landroidx/compose/ui/text/font/FontWeight;
+     589: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     592: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     595: putstatic     #281                // Field TitleMediumFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     598: ldc2_w        #331                // double 24.0d
+     601: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     604: putstatic     #285                // Field TitleMediumLineHeight:J
+     607: bipush        16
+     609: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     612: putstatic     #289                // Field TitleMediumSize:J
+     615: ldc2_w        #349                // double 0.2d
+     618: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     621: putstatic     #293                // Field TitleMediumTracking:J
+     624: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     627: invokevirtual #392                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightMedium:()Landroidx/compose/ui/text/font/FontWeight;
+     630: putstatic     #297                // Field TitleMediumWeight:Landroidx/compose/ui/text/font/FontWeight;
+     633: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     636: invokevirtual #330                // Method androidx/compose/material3/tokens/TypefaceTokens.getPlain:()Landroidx/compose/ui/text/font/GenericFontFamily;
+     639: putstatic     #301                // Field TitleSmallFont:Landroidx/compose/ui/text/font/GenericFontFamily;
+     642: ldc2_w        #347                // double 20.0d
+     645: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     648: putstatic     #305                // Field TitleSmallLineHeight:J
+     651: bipush        14
+     653: invokestatic  #341                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(I)J
+     656: putstatic     #309                // Field TitleSmallSize:J
+     659: ldc2_w        #388                // double 0.1d
+     662: invokestatic  #338                // Method androidx/compose/ui/unit/TextUnitKt.getSp:(D)J
+     665: putstatic     #313                // Field TitleSmallTracking:J
+     668: getstatic     #327                // Field androidx/compose/material3/tokens/TypefaceTokens.INSTANCE:Landroidx/compose/material3/tokens/TypefaceTokens;
+     671: invokevirtual #392                // Method androidx/compose/material3/tokens/TypefaceTokens.getWeightMedium:()Landroidx/compose/ui/text/font/FontWeight;
+     674: putstatic     #317                // Field TitleSmallWeight:Landroidx/compose/ui/text/font/FontWeight;
+     677: return
+}

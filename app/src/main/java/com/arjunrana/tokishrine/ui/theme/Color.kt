@@ -46,3 +46,16 @@ internal val NocturneAccent2Ramp900 = Color(0xFF2B293A)
 internal val NocturneSection = Color(0xFF262A60)
 internal val NocturneSectionGlow = Color(0xFF353B80)
 internal val NocturneSectionGhost = Color(0xFF4C5397)
+
+// Error family — derived, not authored in styles.css (Nocturne names no error
+// colour). Built the way the system builds its own ramps: OKLCH on the shared
+// lightness scale, warm-red hue 25 (the hue of the mocks' #8B0000 typo marks),
+// chroma in the accent's own range. error sits at the accent's L 0.66 / C 0.125;
+// container and on-container mirror the accent-800 / accent-100 steps.
+internal val NocturneError = Color(0xFFD4716B) // oklch(0.660 0.125 25)
+internal val NocturneErrorContainer = Color(0xFF612421) // oklch(0.350 0.090 25)
+internal val NocturneOnErrorContainer = Color(0xFFFFEBE8) // oklch(0.960 0.030 25)
+
+// Scrim — the .dialog-backdrop value from the CSS component layer:
+// color-mix(in srgb, neutral-900 50%, transparent).
+internal val NocturneScrim = Color(0x80292B31)

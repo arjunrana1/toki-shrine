@@ -1,0 +1,501 @@
+Compiled from "ColorDarkTokens.kt"
+public final class androidx.compose.material3.tokens.ColorDarkTokens {
+  public static final androidx.compose.material3.tokens.ColorDarkTokens INSTANCE;
+
+  private static final long Background;
+
+  private static final long Error;
+
+  private static final long ErrorContainer;
+
+  private static final long InverseOnSurface;
+
+  private static final long InversePrimary;
+
+  private static final long InverseSurface;
+
+  private static final long OnBackground;
+
+  private static final long OnError;
+
+  private static final long OnErrorContainer;
+
+  private static final long OnPrimary;
+
+  private static final long OnPrimaryContainer;
+
+  private static final long OnPrimaryFixed;
+
+  private static final long OnPrimaryFixedVariant;
+
+  private static final long OnSecondary;
+
+  private static final long OnSecondaryContainer;
+
+  private static final long OnSecondaryFixed;
+
+  private static final long OnSecondaryFixedVariant;
+
+  private static final long OnSurface;
+
+  private static final long OnSurfaceVariant;
+
+  private static final long OnTertiary;
+
+  private static final long OnTertiaryContainer;
+
+  private static final long OnTertiaryFixed;
+
+  private static final long OnTertiaryFixedVariant;
+
+  private static final long Outline;
+
+  private static final long OutlineVariant;
+
+  private static final long Primary;
+
+  private static final long PrimaryContainer;
+
+  private static final long PrimaryFixed;
+
+  private static final long PrimaryFixedDim;
+
+  private static final long Scrim;
+
+  private static final long Secondary;
+
+  private static final long SecondaryContainer;
+
+  private static final long SecondaryFixed;
+
+  private static final long SecondaryFixedDim;
+
+  private static final long Surface;
+
+  private static final long SurfaceBright;
+
+  private static final long SurfaceContainer;
+
+  private static final long SurfaceContainerHigh;
+
+  private static final long SurfaceContainerHighest;
+
+  private static final long SurfaceContainerLow;
+
+  private static final long SurfaceContainerLowest;
+
+  private static final long SurfaceDim;
+
+  private static final long SurfaceTint;
+
+  private static final long SurfaceVariant;
+
+  private static final long Tertiary;
+
+  private static final long TertiaryContainer;
+
+  private static final long TertiaryFixed;
+
+  private static final long TertiaryFixedDim;
+
+  public static final int $stable;
+
+  private androidx.compose.material3.tokens.ColorDarkTokens();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public final long getBackground-0d7_KjU();
+    Code:
+       0: getstatic     #16                 // Field Background:J
+       3: lreturn
+
+  public final long getError-0d7_KjU();
+    Code:
+       0: getstatic     #20                 // Field Error:J
+       3: lreturn
+
+  public final long getErrorContainer-0d7_KjU();
+    Code:
+       0: getstatic     #24                 // Field ErrorContainer:J
+       3: lreturn
+
+  public final long getInverseOnSurface-0d7_KjU();
+    Code:
+       0: getstatic     #28                 // Field InverseOnSurface:J
+       3: lreturn
+
+  public final long getInversePrimary-0d7_KjU();
+    Code:
+       0: getstatic     #32                 // Field InversePrimary:J
+       3: lreturn
+
+  public final long getInverseSurface-0d7_KjU();
+    Code:
+       0: getstatic     #36                 // Field InverseSurface:J
+       3: lreturn
+
+  public final long getOnBackground-0d7_KjU();
+    Code:
+       0: getstatic     #40                 // Field OnBackground:J
+       3: lreturn
+
+  public final long getOnError-0d7_KjU();
+    Code:
+       0: getstatic     #44                 // Field OnError:J
+       3: lreturn
+
+  public final long getOnErrorContainer-0d7_KjU();
+    Code:
+       0: getstatic     #48                 // Field OnErrorContainer:J
+       3: lreturn
+
+  public final long getOnPrimary-0d7_KjU();
+    Code:
+       0: getstatic     #52                 // Field OnPrimary:J
+       3: lreturn
+
+  public final long getOnPrimaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #56                 // Field OnPrimaryContainer:J
+       3: lreturn
+
+  public final long getOnPrimaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #60                 // Field OnPrimaryFixed:J
+       3: lreturn
+
+  public final long getOnPrimaryFixedVariant-0d7_KjU();
+    Code:
+       0: getstatic     #64                 // Field OnPrimaryFixedVariant:J
+       3: lreturn
+
+  public final long getOnSecondary-0d7_KjU();
+    Code:
+       0: getstatic     #68                 // Field OnSecondary:J
+       3: lreturn
+
+  public final long getOnSecondaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #72                 // Field OnSecondaryContainer:J
+       3: lreturn
+
+  public final long getOnSecondaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #76                 // Field OnSecondaryFixed:J
+       3: lreturn
+
+  public final long getOnSecondaryFixedVariant-0d7_KjU();
+    Code:
+       0: getstatic     #80                 // Field OnSecondaryFixedVariant:J
+       3: lreturn
+
+  public final long getOnSurface-0d7_KjU();
+    Code:
+       0: getstatic     #84                 // Field OnSurface:J
+       3: lreturn
+
+  public final long getOnSurfaceVariant-0d7_KjU();
+    Code:
+       0: getstatic     #88                 // Field OnSurfaceVariant:J
+       3: lreturn
+
+  public final long getOnTertiary-0d7_KjU();
+    Code:
+       0: getstatic     #92                 // Field OnTertiary:J
+       3: lreturn
+
+  public final long getOnTertiaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #96                 // Field OnTertiaryContainer:J
+       3: lreturn
+
+  public final long getOnTertiaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #100                // Field OnTertiaryFixed:J
+       3: lreturn
+
+  public final long getOnTertiaryFixedVariant-0d7_KjU();
+    Code:
+       0: getstatic     #104                // Field OnTertiaryFixedVariant:J
+       3: lreturn
+
+  public final long getOutline-0d7_KjU();
+    Code:
+       0: getstatic     #108                // Field Outline:J
+       3: lreturn
+
+  public final long getOutlineVariant-0d7_KjU();
+    Code:
+       0: getstatic     #112                // Field OutlineVariant:J
+       3: lreturn
+
+  public final long getPrimary-0d7_KjU();
+    Code:
+       0: getstatic     #116                // Field Primary:J
+       3: lreturn
+
+  public final long getPrimaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #120                // Field PrimaryContainer:J
+       3: lreturn
+
+  public final long getPrimaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #124                // Field PrimaryFixed:J
+       3: lreturn
+
+  public final long getPrimaryFixedDim-0d7_KjU();
+    Code:
+       0: getstatic     #128                // Field PrimaryFixedDim:J
+       3: lreturn
+
+  public final long getScrim-0d7_KjU();
+    Code:
+       0: getstatic     #132                // Field Scrim:J
+       3: lreturn
+
+  public final long getSecondary-0d7_KjU();
+    Code:
+       0: getstatic     #136                // Field Secondary:J
+       3: lreturn
+
+  public final long getSecondaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #140                // Field SecondaryContainer:J
+       3: lreturn
+
+  public final long getSecondaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #144                // Field SecondaryFixed:J
+       3: lreturn
+
+  public final long getSecondaryFixedDim-0d7_KjU();
+    Code:
+       0: getstatic     #148                // Field SecondaryFixedDim:J
+       3: lreturn
+
+  public final long getSurface-0d7_KjU();
+    Code:
+       0: getstatic     #152                // Field Surface:J
+       3: lreturn
+
+  public final long getSurfaceBright-0d7_KjU();
+    Code:
+       0: getstatic     #156                // Field SurfaceBright:J
+       3: lreturn
+
+  public final long getSurfaceContainer-0d7_KjU();
+    Code:
+       0: getstatic     #160                // Field SurfaceContainer:J
+       3: lreturn
+
+  public final long getSurfaceContainerHigh-0d7_KjU();
+    Code:
+       0: getstatic     #164                // Field SurfaceContainerHigh:J
+       3: lreturn
+
+  public final long getSurfaceContainerHighest-0d7_KjU();
+    Code:
+       0: getstatic     #168                // Field SurfaceContainerHighest:J
+       3: lreturn
+
+  public final long getSurfaceContainerLow-0d7_KjU();
+    Code:
+       0: getstatic     #172                // Field SurfaceContainerLow:J
+       3: lreturn
+
+  public final long getSurfaceContainerLowest-0d7_KjU();
+    Code:
+       0: getstatic     #176                // Field SurfaceContainerLowest:J
+       3: lreturn
+
+  public final long getSurfaceDim-0d7_KjU();
+    Code:
+       0: getstatic     #180                // Field SurfaceDim:J
+       3: lreturn
+
+  public final long getSurfaceTint-0d7_KjU();
+    Code:
+       0: getstatic     #184                // Field SurfaceTint:J
+       3: lreturn
+
+  public final long getSurfaceVariant-0d7_KjU();
+    Code:
+       0: getstatic     #188                // Field SurfaceVariant:J
+       3: lreturn
+
+  public final long getTertiary-0d7_KjU();
+    Code:
+       0: getstatic     #192                // Field Tertiary:J
+       3: lreturn
+
+  public final long getTertiaryContainer-0d7_KjU();
+    Code:
+       0: getstatic     #196                // Field TertiaryContainer:J
+       3: lreturn
+
+  public final long getTertiaryFixed-0d7_KjU();
+    Code:
+       0: getstatic     #200                // Field TertiaryFixed:J
+       3: lreturn
+
+  public final long getTertiaryFixedDim-0d7_KjU();
+    Code:
+       0: getstatic     #204                // Field TertiaryFixedDim:J
+       3: lreturn
+
+  static {};
+    Code:
+       0: new           #2                  // class androidx/compose/material3/tokens/ColorDarkTokens
+       3: dup
+       4: invokespecial #206                // Method "<init>":()V
+       7: putstatic     #209                // Field INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+      10: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      13: invokevirtual #217                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral10-0d7_KjU":()J
+      16: putstatic     #16                 // Field Background:J
+      19: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      22: invokevirtual #220                // Method androidx/compose/material3/tokens/PaletteTokens."getError80-0d7_KjU":()J
+      25: putstatic     #20                 // Field Error:J
+      28: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      31: invokevirtual #223                // Method androidx/compose/material3/tokens/PaletteTokens."getError30-0d7_KjU":()J
+      34: putstatic     #24                 // Field ErrorContainer:J
+      37: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      40: invokevirtual #226                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral20-0d7_KjU":()J
+      43: putstatic     #28                 // Field InverseOnSurface:J
+      46: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      49: invokevirtual #229                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary40-0d7_KjU":()J
+      52: putstatic     #32                 // Field InversePrimary:J
+      55: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      58: invokevirtual #232                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral90-0d7_KjU":()J
+      61: putstatic     #36                 // Field InverseSurface:J
+      64: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      67: invokevirtual #232                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral90-0d7_KjU":()J
+      70: putstatic     #40                 // Field OnBackground:J
+      73: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      76: invokevirtual #235                // Method androidx/compose/material3/tokens/PaletteTokens."getError20-0d7_KjU":()J
+      79: putstatic     #44                 // Field OnError:J
+      82: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      85: invokevirtual #238                // Method androidx/compose/material3/tokens/PaletteTokens."getError90-0d7_KjU":()J
+      88: putstatic     #48                 // Field OnErrorContainer:J
+      91: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+      94: invokevirtual #241                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary20-0d7_KjU":()J
+      97: putstatic     #52                 // Field OnPrimary:J
+     100: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     103: invokevirtual #244                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary90-0d7_KjU":()J
+     106: putstatic     #56                 // Field OnPrimaryContainer:J
+     109: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     112: invokevirtual #247                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary10-0d7_KjU":()J
+     115: putstatic     #60                 // Field OnPrimaryFixed:J
+     118: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     121: invokevirtual #250                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary30-0d7_KjU":()J
+     124: putstatic     #64                 // Field OnPrimaryFixedVariant:J
+     127: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     130: invokevirtual #253                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary20-0d7_KjU":()J
+     133: putstatic     #68                 // Field OnSecondary:J
+     136: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     139: invokevirtual #256                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary90-0d7_KjU":()J
+     142: putstatic     #72                 // Field OnSecondaryContainer:J
+     145: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     148: invokevirtual #259                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary10-0d7_KjU":()J
+     151: putstatic     #76                 // Field OnSecondaryFixed:J
+     154: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     157: invokevirtual #262                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary30-0d7_KjU":()J
+     160: putstatic     #80                 // Field OnSecondaryFixedVariant:J
+     163: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     166: invokevirtual #232                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral90-0d7_KjU":()J
+     169: putstatic     #84                 // Field OnSurface:J
+     172: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     175: invokevirtual #265                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutralVariant80-0d7_KjU":()J
+     178: putstatic     #88                 // Field OnSurfaceVariant:J
+     181: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     184: invokevirtual #268                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary20-0d7_KjU":()J
+     187: putstatic     #92                 // Field OnTertiary:J
+     190: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     193: invokevirtual #271                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary90-0d7_KjU":()J
+     196: putstatic     #96                 // Field OnTertiaryContainer:J
+     199: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     202: invokevirtual #274                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary10-0d7_KjU":()J
+     205: putstatic     #100                // Field OnTertiaryFixed:J
+     208: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     211: invokevirtual #277                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary30-0d7_KjU":()J
+     214: putstatic     #104                // Field OnTertiaryFixedVariant:J
+     217: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     220: invokevirtual #280                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutralVariant60-0d7_KjU":()J
+     223: putstatic     #108                // Field Outline:J
+     226: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     229: invokevirtual #283                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutralVariant30-0d7_KjU":()J
+     232: putstatic     #112                // Field OutlineVariant:J
+     235: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     238: invokevirtual #286                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary80-0d7_KjU":()J
+     241: putstatic     #116                // Field Primary:J
+     244: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     247: invokevirtual #250                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary30-0d7_KjU":()J
+     250: putstatic     #120                // Field PrimaryContainer:J
+     253: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     256: invokevirtual #244                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary90-0d7_KjU":()J
+     259: putstatic     #124                // Field PrimaryFixed:J
+     262: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     265: invokevirtual #286                // Method androidx/compose/material3/tokens/PaletteTokens."getPrimary80-0d7_KjU":()J
+     268: putstatic     #128                // Field PrimaryFixedDim:J
+     271: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     274: invokevirtual #289                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral0-0d7_KjU":()J
+     277: putstatic     #132                // Field Scrim:J
+     280: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     283: invokevirtual #292                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary80-0d7_KjU":()J
+     286: putstatic     #136                // Field Secondary:J
+     289: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     292: invokevirtual #262                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary30-0d7_KjU":()J
+     295: putstatic     #140                // Field SecondaryContainer:J
+     298: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     301: invokevirtual #256                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary90-0d7_KjU":()J
+     304: putstatic     #144                // Field SecondaryFixed:J
+     307: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     310: invokevirtual #292                // Method androidx/compose/material3/tokens/PaletteTokens."getSecondary80-0d7_KjU":()J
+     313: putstatic     #148                // Field SecondaryFixedDim:J
+     316: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     319: invokevirtual #217                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral10-0d7_KjU":()J
+     322: putstatic     #152                // Field Surface:J
+     325: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     328: invokevirtual #295                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral24-0d7_KjU":()J
+     331: putstatic     #156                // Field SurfaceBright:J
+     334: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     337: invokevirtual #298                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral12-0d7_KjU":()J
+     340: putstatic     #160                // Field SurfaceContainer:J
+     343: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     346: invokevirtual #301                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral17-0d7_KjU":()J
+     349: putstatic     #164                // Field SurfaceContainerHigh:J
+     352: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     355: invokevirtual #304                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral22-0d7_KjU":()J
+     358: putstatic     #168                // Field SurfaceContainerHighest:J
+     361: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     364: invokevirtual #217                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral10-0d7_KjU":()J
+     367: putstatic     #172                // Field SurfaceContainerLow:J
+     370: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     373: invokevirtual #307                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral4-0d7_KjU":()J
+     376: putstatic     #176                // Field SurfaceContainerLowest:J
+     379: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     382: invokevirtual #310                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutral6-0d7_KjU":()J
+     385: putstatic     #180                // Field SurfaceDim:J
+     388: getstatic     #209                // Field INSTANCE:Landroidx/compose/material3/tokens/ColorDarkTokens;
+     391: pop
+     392: getstatic     #116                // Field Primary:J
+     395: putstatic     #184                // Field SurfaceTint:J
+     398: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     401: invokevirtual #283                // Method androidx/compose/material3/tokens/PaletteTokens."getNeutralVariant30-0d7_KjU":()J
+     404: putstatic     #188                // Field SurfaceVariant:J
+     407: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     410: invokevirtual #313                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary80-0d7_KjU":()J
+     413: putstatic     #192                // Field Tertiary:J
+     416: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     419: invokevirtual #277                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary30-0d7_KjU":()J
+     422: putstatic     #196                // Field TertiaryContainer:J
+     425: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     428: invokevirtual #271                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary90-0d7_KjU":()J
+     431: putstatic     #200                // Field TertiaryFixed:J
+     434: getstatic     #214                // Field androidx/compose/material3/tokens/PaletteTokens.INSTANCE:Landroidx/compose/material3/tokens/PaletteTokens;
+     437: invokevirtual #313                // Method androidx/compose/material3/tokens/PaletteTokens."getTertiary80-0d7_KjU":()J
+     440: putstatic     #204                // Field TertiaryFixedDim:J
+     443: return
+}

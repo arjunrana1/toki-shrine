@@ -40,6 +40,10 @@ val NocturneTypography = Typography(
     headlineMedium = heading(20),
     headlineSmall = heading(16),
     titleLarge = heading(16),
+    // M3's titleMedium defaults to 16sp; the Nocturne size at 16px is h5,
+    // so the slot takes the h5 heading style (same metrics as titleLarge —
+    // Nocturne has fewer distinct sizes than M3 has slots).
+    titleMedium = heading(16),
     titleSmall = heading(13).copy(
         letterSpacing = 13.sp * 0.08f,
     ),
