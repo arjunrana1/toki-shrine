@@ -65,6 +65,26 @@ _(append below)_
 
 ---
 
+## Phase 2 — Block list and create flow
+
+- **Hand-rolled navigation (Phase 2).** A sealed-route back stack in `MainActivity` with `BackHandler`; no `androidx.navigation` dependency (rule 8: no new dependencies without asking — five routes don't justify one). New routes push; back pops; the create flow keeps its own step state.
+- **Phosphor icons as a bundled glyph font (Phase 2).** `Phosphor-Regular.ttf` (v2.1.1) is bundled in `res/font` and glyphs render as text by codepoint (`ui/icons/Phosphor.kt`, constants extracted from the official CSS). No icon dependency added; codepoints are compile-time constants so a glyph typo fails visibly in review, not silently.
+- **Database provider (Phase 2).** `TokiApplication` owns the Room database lazily, with `fallbackToDestructiveMigration()`: no builds leave this device yet, so a dev-phase schema bump rebuilds instead of crashing a stale install. **Revisit before any distribution.**
+- **One UI dialog freeze — clear focus before any dialog (Phase 2).** Raising a Compose Dialog while the soft keyboard is up and focused on this S23 Ultra / One UI build wedges the process's frame pipeline: composition completes, no frame is ever scheduled, the UI freezes (main thread idle in epoll, no ANR, no crash). Reproduced three ways (in-place overlay, stripped overlay, `Dialog` window). Fix: `focusManager.clearFocus(force = true)` before setting the conflict state, plus the sheet lives in its own `Dialog` window. Any future dialog raised from a text-field context must do the same.
+- **Conflict dialog on its own window (Phase 2).** `androidx.compose.ui.window.Dialog` with `usePlatformDefaultWidth = false`; scrim tap = *Leave it where it is* (declining, per PRD §4). Scrim colour `0x8C0D0E16` is the mock HTML's backdrop value (#0d0e16 at 55%) — mock-scene value, not a styles.css token; the hex grep (which requires a `#` prefix) stays clean.
+- **Conflict resolution is deferred to save (Phase 2).** The editor adds a *moved* target to its draft; the reassignment happens inside the `createBlock`/`updateBlock` transaction (repository now moves targets held elsewhere instead of failing). Abandoning the flow after choosing *Move it here* leaves the old block untouched. `createBlock` normalizes its draft (in-draft duplicates collapse); the unique index remains the storage backstop.
+- **Repository grew editor APIs (Phase 2).** `appHoldingBlock`/`siteHoldingBlock` (for the dialog), `updateBlock(id, draft)` (transactional field + target-list sync). The raw `updateBlock(Block)` from Phase 1 was replaced. Instrumented tests updated: the Phase 1 rollback regression became a normalization/move test (a rejected save is no longer reachable through the API), plus a full edit-sync test.
+- **Typing-cost estimate is 0.3 s/char (Phase 2).** The acceptance-pinned point (100 chars ≈ 30 s) fixes the rate; `formatEstimate` renders minutes above 60 s. The PRD's prose "300 around two and a half minutes" is inconsistent with its own 20-wpm basis — the tested constant wins (300 → ~1 min 30 sec). Change `SECONDS_PER_CHAR` only with the owner.
+- **Edit reuses the create flow (Phase 2).** Same four steps, prefilled, appbar title "Edit block" (mock only titles the create case). Saves via `updateBlock`; `block_edited` carries `fields_changed` compared **before** the write. Create-mode telemetry (started/step/abandoned) does not fire during edits.
+- **Toggle-off is ungated in Phase 2 (Phase 2).** Turning OFF via the list/detail toggle happens immediately and logs `block_turned_off`. The typing gate (screen 22) is Phase 5 per the phase plan; until then turning a block off is frictionless. Toggle ON always routes to the turn-on confirmation.
+- **App picker (Phase 2).** Manifest `<queries>` with MAIN/LAUNCHER (no `QUERY_ALL_PACKAGES`); Toki Shrine excluded by package; labels resolved at display time via `PackageManager` with package-name fallback for uninstalls. Search matches label or package, case-insensitive, with match count.
+- **Name step validation (Phase 2).** Next is disabled while the name is blank — minimal guard against a degenerate nameless block; not in the mock but clearly intended. Step 1 Next stays enabled even with zero targets (mock-faithful; a block that covers nothing simply blocks nothing).
+- **Stats / Settings / Share feedback are inert (Phase 2).** The home-screen controls exist per screen 6 but their destinations are Phase 3 (settings) and Phase 7 (stats, feedback); they navigate nowhere until then.
+- **The instrumented-test harness resets app data (Phase 2).** After every `connectedDebugAndroidTest` run the device app is gone (AGP uninstalls both APKs), so any manually created fixture blocks disappear on next launch. Restore pattern that worked: checkpoint the DB locally (`PRAGMA wal_checkpoint`), `adb push` + `run-as cp` back into `databases/`. Keep this in mind when manually verifying against seeded data.
+- **Visual conformance (Phase 2).** Judge pass vs `design/screens` renders: 11/11 pairs after two repairs (conflict-sheet grammar "An app", body as a single annotated paragraph). Shadow carry-forward: the conflict sheet is the first dialog consumer; its scrim/sheet matched the render directly.
+
+---
+
 ## Open questions
 
 _Anything blocking. Write the question here, report it, and wait for an answer rather than guessing._

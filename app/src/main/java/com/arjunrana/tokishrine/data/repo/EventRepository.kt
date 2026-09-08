@@ -92,5 +92,17 @@ class EventRepository(
         // target_type values, aligned with §10's trigger_type (app | site).
         const val TARGET_TYPE_APP = "app"
         const val TARGET_TYPE_SITE = "site"
+
+        // Block-management events (§10) fired by the list/create/edit flows.
+        const val EVENT_BLOCK_CREATE_STARTED = "block_create_started"
+        const val EVENT_BLOCK_CREATE_STEP_COMPLETED = "block_create_step_completed"
+        const val EVENT_BLOCK_CREATE_ABANDONED = "block_create_abandoned"
+        const val EVENT_BLOCK_CREATED = "block_created"
+        const val EVENT_BLOCK_EDITED = "block_edited"
+        const val EVENT_BLOCK_DELETED = "block_deleted"
+        const val EVENT_BLOCK_CONFLICT_SHOWN = "block_conflict_shown"
+        const val EVENT_BLOCK_CONFLICT_RESOLVED = "block_conflict_resolved"
+        const val EVENT_BLOCK_TURNED_ON = "block_turned_on"
+        const val EVENT_BLOCK_TURNED_OFF = "block_turned_off"
     }
 }

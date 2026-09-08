@@ -19,6 +19,9 @@ sealed interface AddTargetResult {
     data class Conflict(val holdingBlockId: Long, val holdingBlockName: String) : AddTargetResult
 }
 
+// Which block currently holds a target, for the editor's conflict dialog.
+data class TargetHolding(val blockId: Long, val blockName: String)
+
 data class BlockDraft(
     val name: String,
     val appPackageNames: List<String>,
@@ -38,10 +41,10 @@ class BlockRepository(private val db: TokiDatabase) {
     // PRD §4: a new block is saved OFF and does nothing until turned on —
     // enabled is forced false regardless of any draft state.
     //
-    // One transaction for the parent row and every child, so a rejected save
-    // (e.g. a duplicate reaching the unique index) rolls back completely: no
-    // half-built block, no reserved targets. The create flow resolves
-    // conflicts in the editor before saving; the index stays as the backstop.
+    // One transaction for the parent row and every child. Targets the user
+    // explicitly chose to move are reassigned inside the same transaction; any
+    // other failure (or cancellation) rolls back completely: no half-built
+    // block, no reserved targets.
     suspend fun createBlock(draft: BlockDraft): Long = db.withTransaction {
         val id = dao.insertBlock(
             Block(
@@ -55,9 +58,63 @@ class BlockRepository(private val db: TokiDatabase) {
                 enabled = false,
             ),
         )
-        draft.appPackageNames.forEach { dao.insertApp(BlockedApp(blockId = id, packageName = it)) }
-        draft.siteDomains.forEach { dao.insertSite(BlockedSite(blockId = id, domain = canonicalDomain(it))) }
+        draft.appPackageNames.forEach { packageName ->
+            val existing = dao.findAppByPackageName(packageName)
+            if (existing == null) {
+                dao.insertApp(BlockedApp(blockId = id, packageName = packageName))
+            } else if (existing.blockId != id) {
+                dao.moveAppToBlock(packageName, id)
+            }
+        }
+        draft.siteDomains.map { canonicalDomain(it) }.forEach { domain ->
+            val existing = dao.findSiteByDomain(domain)
+            if (existing == null) {
+                dao.insertSite(BlockedSite(blockId = id, domain = domain))
+            } else if (existing.blockId != id) {
+                dao.moveSiteToBlock(domain, id)
+            }
+        }
         id
+    }
+
+    // Edit (block OFF only, enforced by the UI): rewrites the row and syncs
+    // the target lists atomically — removals drop rows, additions insert,
+    // targets moved from other blocks are reassigned here.
+    suspend fun updateBlock(id: Long, draft: BlockDraft) = db.withTransaction {
+        val current = dao.getBlockWithContents(id) ?: error("Block $id does not exist")
+        dao.updateBlock(
+            current.block.copy(
+                name = draft.name,
+                frictionType = draft.frictionType,
+                pauseMinutes = draft.pauseMinutes,
+                pauseChars = draft.pauseChars,
+                turnoffChars = draft.turnoffChars,
+                countdownSeconds = draft.countdownSeconds,
+                showTypos = draft.showTypos,
+            ),
+        )
+        val draftApps = draft.appPackageNames.toSet()
+        current.apps.filter { it.packageName !in draftApps }.forEach {
+            dao.deleteAppByPackageName(it.packageName)
+        }
+        draftApps.forEach { packageName ->
+            val existing = dao.findAppByPackageName(packageName)
+            when {
+                existing == null -> dao.insertApp(BlockedApp(blockId = id, packageName = packageName))
+                existing.blockId != id -> dao.moveAppToBlock(packageName, id)
+            }
+        }
+        val draftSites = draft.siteDomains.map { canonicalDomain(it) }.toSet()
+        current.sites.filter { it.domain !in draftSites }.forEach {
+            dao.deleteSiteByDomain(it.domain)
+        }
+        draftSites.forEach { domain ->
+            val existing = dao.findSiteByDomain(domain)
+            when {
+                existing == null -> dao.insertSite(BlockedSite(blockId = id, domain = domain))
+                existing.blockId != id -> dao.moveSiteToBlock(domain, id)
+            }
+        }
     }
 
     suspend fun getBlockWithContents(id: Long): BlockWithContents? = dao.getBlockWithContents(id)
@@ -66,11 +123,17 @@ class BlockRepository(private val db: TokiDatabase) {
 
     fun observeBlocksWithContents(): Flow<List<BlockWithContents>> = dao.observeBlocksWithContents()
 
-    suspend fun updateBlock(block: Block) = dao.updateBlock(block)
-
     suspend fun setEnabled(id: Long, enabled: Boolean) = dao.setEnabled(id, enabled)
 
     suspend fun deleteBlock(id: Long) = dao.deleteBlock(id)
+
+    // The editor asks who holds a target before adding it to a draft; the
+    // conflict dialog then offers move-or-leave (PRD §4).
+    suspend fun appHoldingBlock(packageName: String): TargetHolding? =
+        dao.findAppByPackageName(packageName)?.let { TargetHolding(it.blockId, holdingName(it.blockId)) }
+
+    suspend fun siteHoldingBlock(domain: String): TargetHolding? =
+        dao.findSiteByDomain(canonicalDomain(domain))?.let { TargetHolding(it.blockId, holdingName(it.blockId)) }
 
     suspend fun addApp(blockId: Long, packageName: String): AddTargetResult {
         val existing = dao.findAppByPackageName(packageName)

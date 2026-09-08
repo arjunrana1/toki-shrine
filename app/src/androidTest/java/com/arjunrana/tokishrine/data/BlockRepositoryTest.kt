@@ -157,31 +157,82 @@ class BlockRepositoryTest {
         assertNull(dao.findSiteByDomain("reddit.com"))
     }
 
-    // P1 fix: a save rejected mid-way (duplicate reaching the unique index)
-    // must roll back completely — no half-built block, no reserved targets.
+    // P1 fix, adjusted for the Phase 2 editor: a target the user chose to
+    // move is reassigned inside the create transaction. The old block loses
+    // it, the new one gains it, all-or-nothing.
     @Test
-    fun failedCreateBlockLeavesNothingBehind() = runBlocking {
+    fun creatingWithTargetHeldElsewhereMovesItInsideTheTransaction() = runBlocking {
         val existing = repo.createBlock(draft("Existing", apps = listOf("com.instagram.android")))
 
-        assertThrows(SQLiteConstraintException::class.java) {
-            runBlocking {
-                repo.createBlock(
-                    draft("Failed", apps = listOf("com.reddit.frontpage", "com.instagram.android")),
-                )
-            }
-        }
-
-        // Only the original block survives, intact; nothing from the failed
-        // save was persisted, including the app inserted before the failure.
-        val blocks = repo.getBlocksWithContents()
-        assertEquals(1, blocks.size)
-        assertEquals(existing, blocks[0].block.id)
-        assertEquals("Existing", blocks[0].block.name)
-        assertEquals(
-            listOf("com.instagram.android"),
-            blocks[0].apps.map { it.packageName },
+        val created = repo.createBlock(
+            draft("New", apps = listOf("com.reddit.frontpage", "com.instagram.android")),
         )
-        assertNull(dao.findAppByPackageName("com.reddit.frontpage"))
+
+        assertEquals(created, dao.findAppByPackageName("com.instagram.android")?.blockId)
+        val old = repo.getBlockWithContents(existing)!!
+        assertEquals(0, old.apps.size)
+    }
+
+    // P1 fix, adjusted for the Phase 2 editor: createBlock normalizes its
+    // draft (duplicates collapse, held targets move) inside one transaction,
+    // so no partial state can ever persist. The unique index remains as the
+    // storage-level backstop.
+    @Test
+    fun duplicateTargetsAndHeldOnesNormalizeInsideTheTransaction() = runBlocking {
+        val existing = repo.createBlock(draft("Existing", apps = listOf("com.instagram.android")))
+
+        val created = repo.createBlock(
+            draft(
+                "New",
+                apps = listOf("com.reddit.frontpage", "com.reddit.frontpage", "com.instagram.android"),
+                sites = listOf("news.siteexample.com", "news.siteexample.com"),
+            ),
+        )
+
+        val read = repo.getBlockWithContents(created)!!
+        assertEquals(
+            setOf("com.reddit.frontpage", "com.instagram.android"),
+            read.apps.map { it.packageName }.toSet(),
+        )
+        assertEquals(listOf("news.siteexample.com"), read.sites.map { it.domain })
+        // The held target moved; nothing was duplicated.
+        assertEquals(created, dao.findAppByPackageName("com.instagram.android")?.blockId)
+        assertEquals(0, repo.getBlockWithContents(existing)!!.apps.size)
+    }
+
+    // Phase 2 edit path: updateBlock syncs fields and target lists in one
+    // transaction — removals drop rows, additions insert, moves reassign.
+    @Test
+    fun updateBlockSyncsFieldsAndTargetsAtomically() = runBlocking {
+        val social = repo.createBlock(draft("Social", apps = listOf("com.instagram.android", "com.reddit.frontpage"), sites = listOf("reddit.com")))
+        val news = repo.createBlock(draft("News", apps = listOf("com.apple.news")))
+
+        repo.updateBlock(
+            social,
+            BlockDraft(
+                name = "Social renamed",
+                appPackageNames = listOf("com.reddit.frontpage", "com.apple.news"),
+                siteDomains = listOf("news.siteexample.com"),
+                frictionType = FrictionType.DELAY,
+                pauseMinutes = 30,
+                pauseChars = 120,
+                turnoffChars = 320,
+                countdownSeconds = 45,
+                showTypos = false,
+            ),
+        )
+
+        val updated = repo.getBlockWithContents(social)!!
+        assertEquals("Social renamed", updated.block.name)
+        assertEquals(FrictionType.DELAY, updated.block.frictionType)
+        assertEquals(30, updated.block.pauseMinutes)
+        // Instagram dropped, Apple News moved over from News.
+        assertEquals(setOf("com.reddit.frontpage", "com.apple.news"), updated.apps.map { it.packageName }.toSet())
+        assertEquals(setOf("news.siteexample.com"), updated.sites.map { it.domain }.toSet())
+        assertNull(dao.findAppByPackageName("com.instagram.android"))
+        val newsBlock = repo.getBlockWithContents(news)!!
+        assertEquals(0, newsBlock.apps.size)
+        assertEquals(false, updated.block.enabled)
     }
 
     // The conflict dialog's *Move it here*: the row reassigns and the conflict
