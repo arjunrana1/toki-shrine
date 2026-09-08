@@ -61,6 +61,8 @@ _(append below)_
 - **Events carry `target_type` (Phase 1, verifier finding).** The per-app leaderboard must exclude websites (PRD §9), but packages and domains both contain dots — shape cannot decide. The event table gains a nullable `target_type` column (`app` | `site`, values aligned with §10's `trigger_type`); `log()` requires it whenever `target` is set (loud `require`, since a kind-less target would silently vanish from the leaderboard), and the leaderboard query filters on it. Global walk-away totals and the rate stay inclusive of both kinds. DB version bumped 1 → 2; no migration ships because no production database exists yet (nothing outside tests builds `TokiDatabase`) — the Phase 2 database provider must decide the migration story deliberately.
 - **Test-quality note applied (Phase 1, verifier note).** The params round-trip check now parses `params_json` with `JSONObject` and asserts the actual key/values via JUnit assertions, replacing a bare Kotlin `assert` (which is JVM `-ea`-conditional). A `logRejectsTargetWithoutType` test pins the new `require` contract. Suite after fixes: 7 JVM + 14 instrumented, all passing.
 
+- **Phase 1 closed (9 September 2026, a78f877).** Independent re-verification PASS: all three blockers resolved; fresh run passed 7 JVM and 14 device tests with no failures. GLM may begin Phase 2, block list and create flow. Short record: `Verification Feedback/phase-1-reverification/REPORT.md`.
+
 ---
 
 ## Open questions
