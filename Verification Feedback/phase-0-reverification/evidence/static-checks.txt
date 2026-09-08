@@ -1,0 +1,4 @@
+Typography: 15/15 explicit slots, each uses Inter via heading/body.
+Previously omitted color roles: 8/8 now explicit.
+Canonical root tokens: 51; 35 literal colors match, divider, spacing, radii checked; fonts/shadows unchanged.
+Prescribed hex grep: zero matches, grep exit 1 as expected.

@@ -1,0 +1,10 @@
+Performing Streamed Install
+Success
+Starting: Intent { cmp=com.arjunrana.tokishrine/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.arjunrana.tokishrine/.MainActivity
+TotalTime: 510
+WaitTime: 512
+Complete
+  mCurrentFocus=Window{92c52ff u0 com.arjunrana.tokishrine/com.arjunrana.tokishrine.MainActivity}

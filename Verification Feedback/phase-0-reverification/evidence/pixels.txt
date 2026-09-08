@@ -1,0 +1,1 @@
+Screenshot 720x1544; rectangle (20,100,700,1444); all 913920 pixels are RGB(22,24,38) = #161826. System bars and edge handle excluded.
