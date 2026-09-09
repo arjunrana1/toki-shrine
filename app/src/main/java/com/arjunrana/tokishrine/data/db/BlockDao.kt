@@ -59,10 +59,8 @@ interface BlockDao {
     @Query("SELECT * FROM blocked_apps WHERE package_name = :packageName")
     suspend fun findAppByPackageName(packageName: String): BlockedApp?
 
-    // The conflict dialog's *Move it here*: reassign in one statement so the
-    // global unique index is never in a violated intermediate state.
-    @Query("UPDATE blocked_apps SET block_id = :toBlockId WHERE package_name = :packageName")
-    suspend fun moveAppToBlock(packageName: String, toBlockId: Long)
+    @Query("SELECT * FROM blocked_apps")
+    suspend fun getAllApps(): List<BlockedApp>
 
     @Query("DELETE FROM blocked_apps WHERE package_name = :packageName")
     suspend fun deleteAppByPackageName(packageName: String)
@@ -75,10 +73,8 @@ interface BlockDao {
     @Query("SELECT * FROM blocked_sites WHERE domain = :domain")
     suspend fun findSiteByDomain(domain: String): BlockedSite?
 
-    // The conflict dialog's *Move it here*: reassign in one statement so the
-    // global unique index is never in a violated intermediate state.
-    @Query("UPDATE blocked_sites SET block_id = :toBlockId WHERE domain = :domain")
-    suspend fun moveSiteToBlock(domain: String, toBlockId: Long)
+    @Query("SELECT * FROM blocked_sites")
+    suspend fun getAllSites(): List<BlockedSite>
 
     @Query("DELETE FROM blocked_sites WHERE domain = :domain")
     suspend fun deleteSiteByDomain(domain: String)

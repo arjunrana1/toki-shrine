@@ -1,5 +1,6 @@
 package com.arjunrana.tokishrine.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,13 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arjunrana.tokishrine.data.apps.AppEntry
@@ -45,8 +40,8 @@ import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
+import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
 import com.arjunrana.tokishrine.data.repo.EventRepository
-import com.arjunrana.tokishrine.data.repo.TargetHolding
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
@@ -78,14 +73,6 @@ private const val TURNOFF_CHARS_MAX = 350
 private const val COUNTDOWN_MIN = 10
 private const val COUNTDOWN_MAX = 300
 private const val COUNTDOWN_STEP = 5
-
-data class ConflictInfo(
-    val targetLabel: String,
-    val canonical: String,
-    val isApp: Boolean,
-    val holding: TargetHolding,
-    val entry: AppEntry? = null,
-)
 
 // Draft state for the four-step create/edit flow.
 class CreateFlowState(val editBlockId: Long?) {
@@ -127,16 +114,6 @@ fun CreateFlowScreen(
 ) {
     val scope = rememberCoroutineScope()
     val state = remember { CreateFlowState(editBlockId) }
-    var conflict by remember { mutableStateOf<ConflictInfo?>(null) }
-    // One UI quirk (see DECISIONS.md): raising a dialog window while the
-    // soft keyboard is up and focused wedges this process's frame pipeline —
-    // composition runs, no frame is ever scheduled, the UI freezes. The
-    // keyboard is therefore retracted BEFORE any conflict dialog is raised.
-    val focusManager = LocalFocusManager.current
-    fun raiseConflict(info: ConflictInfo) {
-        focusManager.clearFocus(force = true)
-        conflict = info
-    }
 
     // Edit mode: prefill the draft from the stored block.
     LaunchedEffect(editBlockId) {
@@ -184,9 +161,8 @@ fun CreateFlowScreen(
         }
     }
 
-    fun save() {
-        scope.launch {
-            val draft = state.draft()
+    suspend fun persist(draft: BlockDraft) {
+        run {
             if (editBlockId == null) {
                 val id = blockRepo.createBlock(draft)
                 eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED, params = mapOf("step" to 4))
@@ -212,7 +188,33 @@ fun CreateFlowScreen(
                     params = mapOf("fields_changed" to changed),
                 )
             }
+        }
+    }
+
+    fun save() {
+        scope.launch {
+            val draft = state.draft()
+            try {
+                persist(draft)
+            } catch (e: ConflictingOwnershipException) {
+                // The picker blocks owned targets, so this means ownership
+                // changed while the editor was open. The repository rolled
+                // the save back; closing shows the current reality.
+            }
             onClose()
+        }
+    }
+
+    // Android Back mirrors the appbar: app-search closes first, then the
+    // flow steps backwards, and only a Back on step 1 exits — routed through
+    // the abandonment logger exactly once (create mode). With the keyboard
+    // open the system consumes Back to dismiss it, so this handler runs only
+    // once the keyboard is down.
+    BackHandler {
+        when {
+            state.showSearch -> state.showSearch = false
+            state.step > 1 -> state.step -= 1
+            else -> abandonAndClose()
         }
     }
 
@@ -232,19 +234,14 @@ fun CreateFlowScreen(
                 state.showSearch -> AppSearchPane(
                     state = state,
                     blockRepo = blockRepo,
-                    eventRepo = eventRepo,
                     appsRepo = appsRepo,
-                    onConflict = ::raiseConflict,
                     onClose = { state.showSearch = false },
                 )
                 state.step == 1 -> StepContents(
                     state,
                     blockRepo,
-                    eventRepo,
-                    scope,
                     onBack = ::abandonAndClose,
                     onNext = { stepCompleted(1); state.step = 2 },
-                    onConflict = ::raiseConflict,
                 )
                 state.step == 2 -> StepName(state, onBack = { state.step = 1 }, onNext = { stepCompleted(2); state.step = 3 })
                 state.step == 3 -> StepFriction(state, onBack = { state.step = 2 }, onNext = { stepCompleted(3); state.step = 4 })
@@ -252,38 +249,6 @@ fun CreateFlowScreen(
             }
         }
 
-        conflict?.let { info ->
-            ConflictSheet(
-                info = info,
-                onMove = {
-                    scope.launch {
-                        eventRepo.log(
-                            EventRepository.EVENT_BLOCK_CONFLICT_RESOLVED,
-                            params = mapOf("resolution" to "moved"),
-                        )
-                    }
-                    // *Move it here*: the target joins the draft; the
-                    // reassignment happens inside the save transaction.
-                    if (info.isApp) {
-                        val entry = info.entry
-                            ?: AppEntry(info.canonical, info.targetLabel, null)
-                        if (state.apps.none { it.packageName == info.canonical }) state.apps.add(entry)
-                    } else if (state.sites.none { it == info.canonical }) {
-                        state.sites.add(info.canonical)
-                    }
-                    conflict = null
-                },
-                onKeep = {
-                    scope.launch {
-                        eventRepo.log(
-                            EventRepository.EVENT_BLOCK_CONFLICT_RESOLVED,
-                            params = mapOf("resolution" to "kept"),
-                        )
-                    }
-                    conflict = null
-                },
-            )
-        }
     }
 }
 
@@ -314,13 +279,21 @@ private suspend fun changedFields(
 private fun StepContents(
     state: CreateFlowState,
     blockRepo: BlockRepository,
-    eventRepo: EventRepository,
-    scope: kotlinx.coroutines.CoroutineScope,
     onBack: () -> Unit,
     onNext: () -> Unit,
-    onConflict: (ConflictInfo) -> Unit,
 ) {
     var siteInput by remember { mutableStateOf("") }
+    var siteOwnerships by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+
+    LaunchedEffect(Unit) {
+        siteOwnerships = blockRepo.siteOwnerships()
+    }
+
+    // A domain owned by another block cannot be added: the entry shows
+    // Already added to a block (owner decision — no owner name, no dialog).
+    val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
+    val inputHeldElsewhere = canonicalInput.isNotEmpty() &&
+        siteOwnerships[canonicalInput]?.let { it != state.editBlockId } == true
 
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
@@ -374,32 +347,31 @@ private fun StepContents(
                     "Add",
                     variant = ButtonVariant.SECONDARY,
                     height = 38.dp,
-                    enabled = siteInput.isNotBlank() && !siteInput.contains(' '),
+                    enabled = siteInput.isNotBlank() && !siteInput.contains(' ') && !inputHeldElsewhere,
                     onClick = {
+                        if (inputHeldElsewhere) return@NocturneButton
                         val domain = siteInput.trim().trimEnd('.').lowercase()
                         siteInput = ""
-                        scope.launch {
-                            val holding = blockRepo.siteHoldingBlock(domain)
-                            if (holding == null) {
-                                if (state.sites.none { it == domain }) state.sites.add(domain)
-                            } else {
-                                eventRepo.log(
-                                    EventRepository.EVENT_BLOCK_CONFLICT_SHOWN,
-                                    params = mapOf("target" to domain, "existing_block_id" to holding.blockId),
-                                )
-                                onConflict(ConflictInfo(domain, domain, isApp = false, holding = holding))
-                            }
-                        }
+                        if (state.sites.none { it == domain }) state.sites.add(domain)
                     },
                 )
             }
             Spacer(Modifier.height(6.dp))
-            Text(
-                "Type a full domain. Works in Chrome and other supported browsers.",
-                fontSize = 11.5.sp,
-                lineHeight = 17.sp,
-                color = NocturneTheme.colors.neutral.step500,
-            )
+            if (inputHeldElsewhere) {
+                Text(
+                    "Already added to a block",
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = NocturneTheme.colors.neutral.step300,
+                )
+            } else {
+                Text(
+                    "Type a full domain. Works in Chrome and other supported browsers.",
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = NocturneTheme.colors.neutral.step500,
+                )
+            }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -464,17 +436,16 @@ private fun SelectedRow(label: String, glyph: Int, onRemove: () -> Unit) {
 private fun AppSearchPane(
     state: CreateFlowState,
     blockRepo: BlockRepository,
-    eventRepo: EventRepository,
     appsRepo: InstalledAppsRepository,
-    onConflict: (ConflictInfo) -> Unit,
     onClose: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
     val allApps = remember { mutableStateListOf<AppEntry>() }
+    var ownerships by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
 
     LaunchedEffect(Unit) {
         allApps.addAll(appsRepo.loadApps())
+        ownerships = blockRepo.appOwnerships()
     }
 
     val filtered = if (query.isBlank()) {
@@ -517,10 +488,19 @@ private fun AppSearchPane(
         LazyColumn(Modifier.weight(1f)) {
             items(filtered, key = { it.packageName }) { entry ->
                 val selected = state.apps.any { it.packageName == entry.packageName }
+                // Owned by another block (ON or OFF): visible but not
+                // selectable, labelled without naming the owner block.
+                val heldElsewhere = ownerships[entry.packageName]?.let { it != state.editBlockId } == true
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable { scope.launch { toggleApp(state, blockRepo, eventRepo, entry, onConflict) } }
+                        .clickable(enabled = !heldElsewhere) {
+                            if (selected) {
+                                state.apps.removeAll { it.packageName == entry.packageName }
+                            } else {
+                                state.apps.add(entry)
+                            }
+                        }
                         .padding(vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -532,10 +512,10 @@ private fun AppSearchPane(
                         color = NocturneTheme.colors.text,
                         modifier = Modifier.weight(1f),
                     )
-                    if (selected) {
-                        AddedPill()
-                    } else {
-                        PhosphorIcon(Ph.PlusCircle, tint = NocturneTheme.colors.accentRamp.step300, size = 22)
+                    when {
+                        heldElsewhere -> HeldPill()
+                        selected -> AddedPill()
+                        else -> PhosphorIcon(Ph.PlusCircle, tint = NocturneTheme.colors.accentRamp.step300, size = 22)
                     }
                 }
                 Box(
@@ -549,29 +529,6 @@ private fun AppSearchPane(
 
         Spacer(Modifier.height(12.dp))
         NocturneButton("Done", onClick = onClose, block = true, height = 46.dp)
-    }
-}
-
-private suspend fun toggleApp(
-    state: CreateFlowState,
-    blockRepo: BlockRepository,
-    eventRepo: EventRepository,
-    entry: AppEntry,
-    onConflict: (ConflictInfo) -> Unit,
-) {
-    if (state.apps.any { it.packageName == entry.packageName }) {
-        state.apps.removeAll { it.packageName == entry.packageName }
-        return
-    }
-    val holding = blockRepo.appHoldingBlock(entry.packageName)
-    if (holding == null || holding.blockId == state.editBlockId) {
-        state.apps.add(entry)
-    } else {
-        eventRepo.log(
-            EventRepository.EVENT_BLOCK_CONFLICT_SHOWN,
-            params = mapOf("target" to entry.packageName, "existing_block_id" to holding.blockId),
-        )
-        onConflict(ConflictInfo(entry.label, entry.packageName, isApp = true, holding = holding, entry = entry))
     }
 }
 
@@ -597,6 +554,18 @@ private fun AddedPill() {
         Spacer(Modifier.width(4.dp))
         Text("Added", fontSize = 11.sp, color = NocturneTheme.colors.accentRamp.step200)
     }
+}
+
+@Composable
+private fun HeldPill() {
+    Text(
+        "Already added to a block",
+        fontSize = 11.sp,
+        color = NocturneTheme.colors.neutral.step100,
+        modifier = Modifier
+            .background(NocturneTheme.colors.neutral.step800, RoundedCornerShape(20.dp))
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+    )
 }
 
 // — Step 2: name —
@@ -899,63 +868,3 @@ private fun CostRow(glyph: Int, tint: Color, title: String, subtitle: String, ba
     }
 }
 
-// — Conflict dialog (screen 12): bottom sheet over a dimmed editor —
-
-@Composable
-private fun ConflictSheet(info: ConflictInfo, onMove: () -> Unit, onKeep: () -> Unit) {
-val colors = NocturneTheme.colors
-    val article = if (info.isApp) "An" else "A"
-    val noun = if (info.isApp) "app" else "site"
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color(0x8C0D0E16)),
-    ) {
-        Column(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(colors.surface, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                .padding(start = 22.dp, end = 22.dp, top = 24.dp, bottom = 26.dp),
-        ) {
-            Box(
-                Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .background(colors.neutral.step700, RoundedCornerShape(2.dp)),
-            )
-            Spacer(Modifier.height(18.dp))
-            Text(
-                "${info.targetLabel} is already in a block",
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 24.sp,
-                color = colors.text,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                buildAnnotatedString {
-                    append("It lives in ")
-                    withStyle(SpanStyle(color = colors.neutral.step200, fontWeight = FontWeight.Bold)) {
-                        append(info.holding.blockName)
-                    }
-                    append(". $article $noun can only be in one block at a time. Move it over here?")
-                },
-                fontSize = 13.5.sp,
-                lineHeight = 22.sp,
-                color = colors.neutral.step500,
-            )
-            Spacer(Modifier.height(20.dp))
-            NocturneButton("Move it here", block = true, height = 46.dp, onClick = onMove)
-            NocturneButton(
-                "Leave it where it is",
-                variant = ButtonVariant.SECONDARY,
-                block = true,
-                height = 44.dp,
-                onClick = onKeep,
-                modifier = Modifier.padding(top = 9.dp),
-            )
-        }
-    }
-}

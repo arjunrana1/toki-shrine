@@ -100,8 +100,6 @@ class EventRepository(
         const val EVENT_BLOCK_CREATED = "block_created"
         const val EVENT_BLOCK_EDITED = "block_edited"
         const val EVENT_BLOCK_DELETED = "block_deleted"
-        const val EVENT_BLOCK_CONFLICT_SHOWN = "block_conflict_shown"
-        const val EVENT_BLOCK_CONFLICT_RESOLVED = "block_conflict_resolved"
         const val EVENT_BLOCK_TURNED_ON = "block_turned_on"
         const val EVENT_BLOCK_TURNED_OFF = "block_turned_off"
     }
