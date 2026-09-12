@@ -682,10 +682,18 @@ private fun StepName(state: CreateFlowState, onBack: () -> Unit, onNext: () -> U
         )
         Spacer(Modifier.height(18.dp))
         // PRD §17 R7: single-line input, at most 20 characters. Display
-        // names may wrap to two lines; no ellipsis anywhere.
+        // names may wrap to two lines; no ellipsis anywhere. Paste (and the
+        // SetText path) can carry line breaks past singleLine, so they are
+        // stripped here; the 20-character cap truncates rather than
+        // rejecting the update, so the field always shows exactly the
+        // stored value.
         NocturneTextField(
             value = state.name,
-            onValueChange = { if (it.length <= NAME_MAX_CHARS) state.name = it },
+            onValueChange = { input ->
+                state.name = input
+                    .filterNot { it == '\n' || it == '\r' }
+                    .take(NAME_MAX_CHARS)
+            },
             hint = "Block name",
             fontSize = 17,
             minHeight = 48.dp,
