@@ -22,6 +22,7 @@ import com.arjunrana.tokishrine.data.db.BlockDao
 import com.arjunrana.tokishrine.data.db.EventDao
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.entity.BlockedApp
+import com.arjunrana.tokishrine.data.entity.Block
 import com.arjunrana.tokishrine.data.entity.Event
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
@@ -163,7 +164,12 @@ class CreateFlowScreenTest {
         showTypos = false,
     )
 
-    private fun showFlow(editBlockId: Long?, repo: BlockRepository = blockRepo, apps: InstalledAppsRepository = stubApps()): AtomicInteger {
+    private fun showFlow(
+        editBlockId: Long?,
+        repo: BlockRepository = blockRepo,
+        apps: InstalledAppsRepository = stubApps(),
+        initialStep: Int = 1,
+    ): AtomicInteger {
         val closeCount = AtomicInteger(0)
         compose.setContent {
             NocturneTheme {
@@ -173,10 +179,25 @@ class CreateFlowScreenTest {
                     eventRepo = eventRepo,
                     appsRepo = apps,
                     onClose = { closeCount.incrementAndGet() },
+                    initialStep = initialStep,
                 )
             }
         }
         return closeCount
+    }
+
+    // Drafts a free app through the picker. A holder block owning
+    // com.apple.news is created first so the picker's "Already added to a
+    // block" pill doubles as the ownership-loaded signal before the free app
+    // is tapped (rows stay inert until ownership is known).
+    private fun seedHolderAndPickFreeApp(freeApp: AppEntry) {
+        runBlocking { blockRepo.createBlock(draft("Holder", apps = listOf("com.apple.news"))) }
+        compose.onNodeWithText("Search your installed apps…").performClick()
+        awaitText("Already added to a block")
+        compose.onNodeWithText(freeApp.label).performClick()
+        compose.onNodeWithText("Added").assertExists()
+        compose.onNodeWithText("Done").performClick()
+        awaitText("1 selected")
     }
 
     private fun awaitText(text: String, timeoutMs: Long = 5_000) {
@@ -240,12 +261,18 @@ class CreateFlowScreenTest {
     // Two Save taps while the block_created write is suspended: the second
     // finds the guard taken and does nothing. Exactly one block, exactly one
     // block_created, exactly one navigation — and no abandonment after it.
+    // PRD §17 R8 made empty saves impossible, so the block carries a target.
     @Test
     fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
         eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
-        val closeCount = showFlow(editBlockId = null)
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
 
         awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
         next()
         typeBlockName("Evening lockout")
         next()
@@ -278,7 +305,7 @@ class CreateFlowScreenTest {
         assertEquals(listOf(1, 2, 3, 4), recorded.drop(1).take(4).map { JSONObject(it.paramsJson!!).getInt("step") })
         val created = recorded.last()
         val params = JSONObject(created.paramsJson!!)
-        assertEquals(0, params.getInt("app_count"))
+        assertEquals(1, params.getInt("app_count"))
         assertEquals(0, params.getInt("site_count"))
         assertEquals("typing", params.getString("friction_type"))
         assertEquals(15, params.getInt("pause_minutes"))
@@ -286,10 +313,12 @@ class CreateFlowScreenTest {
         assertEquals(300, params.getInt("turnoff_chars"))
         assertEquals(30, params.getInt("countdown_seconds"))
 
+        // The seeded holder plus exactly one new block.
         val blocks = runBlocking { blockRepo.getBlocksWithContents() }
-        assertEquals(1, blocks.size)
-        assertEquals("Evening lockout", blocks[0].block.name)
-        assertEquals(false, blocks[0].block.enabled)
+        assertEquals(2, blocks.size)
+        val saved = blocks.first { it.block.name == "Evening lockout" }
+        assertEquals(listOf("com.sleeper.app"), saved.apps.map { it.packageName })
+        assertEquals(false, saved.block.enabled)
         assertNoRetiredConflictEvents()
     }
 
@@ -447,16 +476,22 @@ class CreateFlowScreenTest {
     // — event-table evidence: create success/cancel, search/step Back, edit cancel —
 
     // Search Back and step Back never leave the flow, so they log nothing
-    // terminal; every Next logs its step; the save is the single terminal event.
+    // terminal; every Next logs its step; the save is the single terminal
+    // event. PRD §17 R8: the block carries a target — empty saves are gone.
     @Test
     fun searchBackAndStepBackLogExactSequence() {
-        val closeCount = showFlow(editBlockId = null)
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
 
         compose.onNodeWithText("Search your installed apps…").performClick()
         awaitText("Done")
         compose.onNodeWithText(BACK_GLYPH).performClick() // search exits, nothing logged
         awaitText("Search your installed apps…")
 
+        seedHolderAndPickFreeApp(freeApp)
         next() // step_completed(1)
         typeBlockName("Evening lockout")
         next() // step_completed(2)
@@ -506,5 +541,105 @@ class CreateFlowScreenTest {
         assertEquals(1, closeCount.get())
         assertEquals(0, runBlocking { eventDao.countAll() })
         assertNoRetiredConflictEvents()
+    }
+
+    // — PRD §17 refinements —
+
+    // R8: every target may be removed temporarily, but step 1 cannot be
+    // left (and nothing saved) while the selection is empty.
+    @Test
+    fun stepOneNextStaysDisabledUntilATargetIsSelected() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        compose.onNodeWithText("Next").assert(isNotEnabled())
+        compose.onNodeWithText("Next").performTouchInput { click() }
+        compose.onNodeWithText("Give it a name").assertDoesNotExist() // still step 1
+
+        seedHolderAndPickFreeApp(freeApp)
+        compose.onNodeWithText("Next").performClick()
+        awaitText("Give it a name")
+        assertNoRetiredConflictEvents()
+    }
+
+    // R7: the name field is single-line and stops accepting input at 20
+    // characters.
+    @Test
+    fun nameInputCapsAtTwentyCharacters() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("abcdefghijklmnopqrstuvwxyz")
+        compose.onNodeWithText("abcdefghijklmnopqrst").assertExists() // 20 chars kept
+        compose.onNodeWithText("uvwxyz", substring = true).assertDoesNotExist() // rest dropped
+    }
+
+    // R9: detail's THE FRICTION → Edit opens the editor directly at 3/4
+    // with the stored values loaded; Back at that entry step closes the
+    // flow (returning to detail in real navigation) without any event.
+    @Test
+    fun frictionEditEntersAtStepThreeAndBackClosesSilently() {
+        val socialId = runBlocking {
+            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+        }
+        val closeCount = showFlow(
+            editBlockId = socialId,
+            apps = stubApps(appEntry("com.instagram.android", "Instagram")),
+            initialStep = 3,
+        )
+
+        awaitText("3 / 4")
+        awaitText("Type to pause")
+        // Stored pauseChars (120, not the 100 default) proves the prefill
+        // landed; the nonempty draft may proceed from the friction step.
+        awaitText("120 characters")
+        compose.onNodeWithText("Next").assertHasClickAction()
+
+        compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits, not step 2
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+        assertTrue(events().isEmpty()) // edit cancellation stays silent
+    }
+
+    // R8: a legacy empty block (seeded directly — the repository now rejects
+    // empty drafts) opened at the friction step can neither advance nor
+    // save; Back still exits.
+    @Test
+    fun frictionEditOnAnEmptyBlockCannotAdvance() {
+        val emptyId = runBlocking {
+            dao.insertBlock(
+                Block(
+                    name = "Legacy empty",
+                    frictionType = FrictionType.TYPING,
+                    pauseMinutes = 25,
+                    pauseChars = 120,
+                    turnoffChars = 320,
+                    countdownSeconds = 45,
+                    showTypos = false,
+                    enabled = false,
+                ),
+            )
+        }
+        val closeCount = showFlow(editBlockId = emptyId, initialStep = 3)
+
+        awaitText("3 / 4")
+        compose.onNodeWithText("Next").assert(isNotEnabled())
+        compose.onNodeWithText("Next").performTouchInput { click() }
+        compose.onNodeWithText("4 / 4").assertDoesNotExist()
+
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+        assertTrue(events().isEmpty())
     }
 }

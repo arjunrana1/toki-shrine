@@ -121,8 +121,12 @@ fun NocturneSwitch(
     val colors = NocturneTheme.colors
     val track = if (checked) colors.accent else colors.neutral.step800
     val thumb = if (checked) colors.bg else colors.neutral.step500
+    // PRD §17 R13: the thumb stays visibly inside the track in both states —
+    // 3.dp inset from the ends, vertically centered — instead of running
+    // flush against the track edge when ON (the mock's 21dp/2dp geometry).
+    // Track dimensions are unchanged (.tgl: 42×25, radius 13).
     val thumbOffset by animateDpAsState(
-        targetValue = if (checked) (42.dp - 2.dp - 21.dp) else 0.dp,
+        targetValue = if (checked) (42.dp - 3.dp - 17.dp - 3.dp) else 0.dp,
         animationSpec = tween(durationMillis = 120),
         label = "switchThumb",
     )
@@ -131,12 +135,13 @@ fun NocturneSwitch(
             .size(width = 42.dp, height = 25.dp)
             .background(track, RoundedCornerShape(13.dp))
             .clickable { onCheckedChange(!checked) }
-            .padding(2.dp),
+            .padding(horizontal = 3.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         Box(
             Modifier
                 .offset(x = thumbOffset)
-                .size(21.dp)
+                .size(17.dp)
                 .background(thumb, CircleShape),
         )
     }
@@ -294,6 +299,7 @@ fun NocturneTextField(
     hint: String = "",
     fontSize: Int = 14,
     minHeight: Dp = 36.dp,
+    singleLine: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     readOnly: Boolean = false,
@@ -303,6 +309,7 @@ fun NocturneTextField(
         value = value,
         onValueChange = onValueChange,
         readOnly = readOnly,
+        singleLine = singleLine,
         textStyle = TextStyle(
             fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
             fontSize = fontSize.sp,

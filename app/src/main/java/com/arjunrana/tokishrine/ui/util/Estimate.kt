@@ -3,14 +3,14 @@ package com.arjunrana.tokishrine.ui.util
 import kotlin.math.roundToInt
 
 /*
- * Live typing-cost estimate (PRD §7.1). The acceptance-pinned point is
- * 100 characters ≈ 30 seconds, i.e. 0.3 s per character (~20 wpm on mobile
- * with autocorrect off and paste blocked). The PRD's prose figure of "300
- * around two and a half minutes" is inconsistent with that same basis; the
- * tested constant wins. Change RATE only with the owner.
+ * Live typing-cost estimate. PRD §17 R3 (12 September 2026) pins the rate at
+ * 0.4 seconds per character — 100 characters ≈ 40 seconds, 300 ≈ 120 — used
+ * consistently across configuration, review, detail and activation
+ * summaries. It supersedes the earlier 0.3 s/char constant. Change
+ * SECONDS_PER_CHAR only with the owner.
  */
 
-private const val SECONDS_PER_CHAR = 0.3
+private const val SECONDS_PER_CHAR = 0.4
 
 fun typingEstimateSeconds(chars: Int): Int = (chars * SECONDS_PER_CHAR).roundToInt()
 

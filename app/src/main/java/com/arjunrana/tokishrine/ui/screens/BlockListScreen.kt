@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -122,29 +121,28 @@ fun BlockListScreen(
             }
 
             if (!list.isNullOrEmpty()) {
-                NocturneButton(
-                    "Share feedback",
-                    variant = ButtonVariant.SECONDARY,
-                    block = true,
-                    height = 42.dp,
-                    fontSize = 13,
-                    onClick = { /* Feedback screen lands in Phase 7 */ },
-                    leading = { PhosphorIcon(Ph.ChatCircleText, tint = NocturneTheme.colors.neutral.step300, size = 16) },
-                )
-            }
-        }
-
-        if (!blocks.isNullOrEmpty()) {
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 18.dp, bottom = 20.dp)
-                    .size(54.dp)
-                    .background(NocturneTheme.colors.accent, CircleShape)
-                    .clickable { onCreate() },
-                contentAlignment = Alignment.Center,
-            ) {
-                PhosphorIcon(Ph.Plus, tint = NocturneTheme.colors.bg, size = 26)
+                // PRD §17 R11: one bottom action row — smaller Share feedback
+                // on the left, wider + New Block on the right — replacing the
+                // full-width button that the floating action button overlapped.
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    NocturneButton(
+                        "Share feedback",
+                        variant = ButtonVariant.SECONDARY,
+                        modifier = Modifier.weight(1f),
+                        height = 44.dp,
+                        fontSize = 13,
+                        onClick = { /* Feedback screen lands in Phase 7 */ },
+                        leading = { PhosphorIcon(Ph.ChatCircleText, tint = NocturneTheme.colors.neutral.step300, size = 16) },
+                    )
+                    NocturneButton(
+                        "New Block",
+                        modifier = Modifier.weight(1.5f),
+                        height = 44.dp,
+                        fontSize = 13,
+                        onClick = onCreate,
+                        leading = { PhosphorIcon(Ph.Plus, tint = NocturneTheme.colors.accent, size = 16) },
+                    )
+                }
             }
         }
     }

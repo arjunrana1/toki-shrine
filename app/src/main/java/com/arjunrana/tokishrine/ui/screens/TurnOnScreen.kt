@@ -39,9 +39,9 @@ import com.arjunrana.tokishrine.ui.util.formatEstimate
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
 
-// The commitment moment (screen 13). States both costs in plain language and
-// closes with "This is the last easy moment." The permission gate lands here
-// in Phase 3; Phase 2 turns the block straight on.
+// The commitment moment (screen 13). States both costs in plain language
+// under a Block Summary heading (PRD §17 R12). The permission gate lands
+// here in Phase 3; Phase 2 turns the block straight on.
 @Composable
 fun TurnOnScreen(
     blockId: Long,
@@ -88,12 +88,19 @@ fun TurnOnScreen(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "From now on, getting in will cost you something. Here's the deal you're making:",
+                "From now on, wasting your time on whatever's in this block won't be easy!",
                 fontSize = 13.5.sp,
                 lineHeight = 22.sp,
                 color = NocturneTheme.colors.neutral.step500,
             )
             Spacer(Modifier.height(24.dp))
+            Text(
+                "Block Summary:",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = NocturneTheme.colors.neutral.step400,
+            )
+            Spacer(Modifier.height(14.dp))
 
             Row {
                 PhosphorIcon(
@@ -151,13 +158,6 @@ fun TurnOnScreen(
                 }
             }
 
-            Text(
-                "This is the last easy moment. Take it if you want it.",
-                fontSize = 13.sp,
-                lineHeight = 21.sp,
-                color = NocturneTheme.colors.neutral.step300,
-                modifier = Modifier.padding(top = 26.dp),
-            )
             Spacer(Modifier.weight(1f))
 
             NocturneButton(

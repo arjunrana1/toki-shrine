@@ -45,6 +45,12 @@ open class BlockRepository(private val db: TokiDatabase) {
     // the parent row rolls back with the children, so a rejected save leaves
     // exactly the data that existed before it. Targets are never reassigned.
     suspend fun createBlock(draft: BlockDraft): Long = db.withTransaction {
+        // PRD §17 R8: a block always covers at least one target. The editor
+        // gates this in the UI; the boundary guards stale drafts and any
+        // other write path.
+        require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
+            "A block must contain at least one app or site"
+        }
         val id = dao.insertBlock(
             Block(
                 name = draft.name,
@@ -79,6 +85,11 @@ open class BlockRepository(private val db: TokiDatabase) {
     // edited block's own targets stay editable: re-adding one is a no-op,
     // removing one deletes it.
     suspend fun updateBlock(id: Long, draft: BlockDraft) = db.withTransaction {
+        // PRD §17 R8: an edit may not empty a block either — including a
+        // direct friction edit that never visited the contents step.
+        require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
+            "A block must contain at least one app or site"
+        }
         val current = dao.getBlockWithContents(id) ?: error("Block $id does not exist")
         dao.updateBlock(
             current.block.copy(

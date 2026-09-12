@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.components.NocturneChip
@@ -49,7 +52,9 @@ import kotlinx.coroutines.launch
 
 // Block detail & edit (screen 14). Editing is reachable only while the block
 // is OFF — when it is ON the edit actions are hidden and the screen says the
-// block must be turned off first (PRD §4).
+// block must be turned off first (PRD §4). The two Edit actions open the
+// shared editor at different steps (PRD §17 R9): contents at 1/4, friction
+// directly at 3/4.
 @Composable
 fun BlockDetailScreen(
     blockId: Long,
@@ -58,11 +63,13 @@ fun BlockDetailScreen(
     appsRepo: InstalledAppsRepository,
     onBack: () -> Unit,
     onTurnOn: (Long) -> Unit,
-    onEdit: (Long) -> Unit,
+    onEditContents: (Long) -> Unit,
+    onEditFriction: (Long) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var block by remember { mutableStateOf<BlockWithContents?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
+    var confirmDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(blockId, refresh) {
         block = blockRepo.getBlockWithContents(blockId)
@@ -76,6 +83,14 @@ fun BlockDetailScreen(
             blockRepo.setEnabled(blockId, false)
             eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_OFF, blockId = blockId)
             refresh++
+        }
+    }
+
+    fun delete() {
+        scope.launch {
+            blockRepo.deleteBlock(blockId)
+            eventRepo.log(EventRepository.EVENT_BLOCK_DELETED, blockId = blockId)
+            onBack()
         }
     }
 
@@ -96,24 +111,21 @@ fun BlockDetailScreen(
                 onBack = onBack,
                 trailing = {
                     if (isOff) {
+                        // PRD §17 R14: deleting asks first — Confirm is the
+                        // only path that removes anything.
                         PhosphorIcon(
                             Ph.Trash,
                             tint = NocturneTheme.colors.neutral.step500,
                             size = 19,
-                            modifier = Modifier.clickable {
-                                scope.launch {
-                                    blockRepo.deleteBlock(blockId)
-                                    eventRepo.log(EventRepository.EVENT_BLOCK_DELETED, blockId = blockId)
-                                    onBack()
-                                }
-                            },
+                            modifier = Modifier.clickable { confirmDelete = true },
                         )
                     }
                 },
             )
 
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                // Status card.
+                // Status card. PRD §17 R10: the switch is the sole activation
+                // control — no separate Turn on button.
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -137,9 +149,6 @@ fun BlockDetailScreen(
                             fontSize = 11.5.sp,
                             color = NocturneTheme.colors.neutral.step500,
                         )
-                    }
-                    if (isOff) {
-                        NocturneButton("Turn on", height = 38.dp, onClick = { onTurnOn(blockId) })
                     }
                 }
 
@@ -178,7 +187,7 @@ fun BlockDetailScreen(
                             "Edit",
                             fontSize = 11.5.sp,
                             color = NocturneTheme.colors.accentRamp.step300,
-                            modifier = Modifier.clickable { onEdit(blockId) },
+                            modifier = Modifier.clickable { onEditContents(blockId) },
                         )
                     }
                 })
@@ -200,7 +209,7 @@ fun BlockDetailScreen(
                             "Edit",
                             fontSize = 11.5.sp,
                             color = NocturneTheme.colors.accentRamp.step300,
-                            modifier = Modifier.clickable { onEdit(blockId) },
+                            modifier = Modifier.clickable { onEditFriction(blockId) },
                         )
                     }
                 })
@@ -222,6 +231,47 @@ fun BlockDetailScreen(
                         label = "Pause lasts",
                         value = "${loaded.block.pauseMinutes} minutes",
                     )
+                }
+            }
+        }
+
+        // PRD §17 R14: deleting an OFF block asks first. Go back (or tapping
+        // outside) leaves everything untouched; only Confirm deletes. The
+        // detail screen has no text field, so the One UI keyboard+dialog
+        // freeze guidance does not apply here.
+        if (confirmDelete) {
+            Dialog(onDismissRequest = { confirmDelete = false }) {
+                Column(
+                    Modifier
+                        .widthIn(min = 280.dp)
+                        .background(NocturneTheme.colors.surface, RoundedCornerShape(14.dp))
+                        .padding(20.dp),
+                ) {
+                    Text(
+                        "Are you sure?",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = NocturneTheme.colors.text,
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NocturneButton(
+                            "Confirm",
+                            modifier = Modifier.weight(1f),
+                            height = 42.dp,
+                            onClick = {
+                                confirmDelete = false
+                                delete()
+                            },
+                        )
+                        NocturneButton(
+                            "Go back",
+                            variant = ButtonVariant.SECONDARY,
+                            modifier = Modifier.weight(1f),
+                            height = 42.dp,
+                            onClick = { confirmDelete = false },
+                        )
+                    }
                 }
             }
         }

@@ -363,12 +363,39 @@ class BlockRepositoryTest {
 
     @Test
     fun setEnabledTogglesWithoutTouchingOtherFields() = runBlocking {
-        val id = repo.createBlock(draft("Social"))
+        val id = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
         repo.setEnabled(id, true)
 
         val on = repo.getBlockWithContents(id)!!
         assertEquals(true, on.block.enabled)
         assertEquals("Social", on.block.name)
         assertEquals(25, on.block.pauseMinutes)
+    }
+
+    // PRD §17 R8: a block must cover at least one target — the boundary
+    // guards every write path, not just the editor's own gating.
+    @Test
+    fun createBlockRejectsEmptyDraftAndWritesNothing() = runBlocking {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { repo.createBlock(draft("Empty")) }
+        }
+
+        assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    @Test
+    fun updateBlockRejectsEmptyDraftAndChangesNothing() = runBlocking {
+        val social = repo.createBlock(
+            draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com")),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { repo.updateBlock(social, draft("Emptied")) }
+        }
+
+        val unchanged = repo.getBlockWithContents(social)!!
+        assertEquals("Social", unchanged.block.name)
+        assertEquals(listOf("com.instagram.android"), unchanged.apps.map { it.packageName })
+        assertEquals(listOf("reddit.com"), unchanged.sites.map { it.domain })
     }
 }

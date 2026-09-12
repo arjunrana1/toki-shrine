@@ -26,7 +26,10 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 // AndroidX/Compose only, nothing added without asking).
 private sealed interface Route {
     data object BlockList : Route
-    data class Create(val editBlockId: Long? = null) : Route
+    // startStep: the create flow's entry step (PRD §17 R9) — 1 for the
+    // contents editor, 3 when detail's THE FRICTION → Edit opens it directly
+    // at configuration.
+    data class Create(val editBlockId: Long? = null, val startStep: Int = 1) : Route
     data class TurnOn(val blockId: Long) : Route
     data class Detail(val blockId: Long) : Route
 }
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity() {
                             eventRepo = app.eventRepository,
                             appsRepo = app.installedAppsRepository,
                             onClose = { stack.removeAt(stack.lastIndex) },
+                            initialStep = route.startStep,
                         )
 
                         is Route.TurnOn -> TurnOnScreen(
@@ -82,7 +86,8 @@ class MainActivity : ComponentActivity() {
                             appsRepo = app.installedAppsRepository,
                             onBack = { stack.removeAt(stack.lastIndex) },
                             onTurnOn = { stack.add(Route.TurnOn(it)) },
-                            onEdit = { stack.add(Route.Create(it)) },
+                            onEditContents = { stack.add(Route.Create(editBlockId = it)) },
+                            onEditFriction = { stack.add(Route.Create(editBlockId = it, startStep = 3)) },
                         )
                     }
                 }
