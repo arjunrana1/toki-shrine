@@ -31,7 +31,9 @@ data class BlockDraft(
     val showTypos: Boolean,
 )
 
-class BlockRepository(private val db: TokiDatabase) {
+// open only so instrumented UI tests can gate the async reads the create
+// flow performs; production code always uses this class directly.
+open class BlockRepository(private val db: TokiDatabase) {
 
     private val dao: BlockDao = db.blockDao()
 
@@ -126,10 +128,10 @@ class BlockRepository(private val db: TokiDatabase) {
     // Ownership maps for the picker: package name / canonical domain →
     // owning block id. The UI marks targets held by another block as
     // unavailable; the persistence guards above remain the real boundary.
-    suspend fun appOwnerships(): Map<String, Long> =
+    open suspend fun appOwnerships(): Map<String, Long> =
         dao.getAllApps().associate { it.packageName to it.blockId }
 
-    suspend fun siteOwnerships(): Map<String, Long> =
+    open suspend fun siteOwnerships(): Map<String, Long> =
         dao.getAllSites().associate { it.domain to it.blockId }
 
     // Domains are case-insensitive in DNS; identity is the lowercased,

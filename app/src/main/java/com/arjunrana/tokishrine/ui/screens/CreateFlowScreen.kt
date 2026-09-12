@@ -91,6 +91,28 @@ class CreateFlowState(val editBlockId: Long?) {
     var countdownSeconds by mutableStateOf(30)
     var showTypos by mutableStateOf(true)
 
+    // Set when a save was rejected for conflicting ownership: the draft is
+    // kept and the review step explains inline (owner decision — no owner
+    // name, no dialog, no transfer).
+    var saveRejected by mutableStateOf(false)
+
+    // One-shot guard for the flow's single terminal transition (save or
+    // abandon). It is taken synchronously, before any async work starts, so
+    // repeated Back/Save input while an event write is in flight can neither
+    // enqueue a second terminal event nor navigate twice. A rejected save
+    // releases it, because the flow stays open.
+    private var terminalTaken = false
+
+    fun takeTerminal(): Boolean {
+        if (terminalTaken) return false
+        terminalTaken = true
+        return true
+    }
+
+    fun releaseTerminal() {
+        terminalTaken = false
+    }
+
     fun draft() = BlockDraft(
         name = name.trim(),
         appPackageNames = apps.map { it.packageName },
@@ -148,11 +170,16 @@ fun CreateFlowScreen(
     }
 
     fun abandonAndClose() {
+        // Capture the exit step and take the guard synchronously, before the
+        // async event write, so any Back/appbar input queued while that write
+        // is suspended finds the guard taken and does nothing.
+        val exitStep = state.step
+        if (!state.takeTerminal()) return
         if (editBlockId == null) {
             scope.launch {
                 eventRepo.log(
                     EventRepository.EVENT_BLOCK_CREATE_ABANDONED,
-                    params = mapOf("step" to state.step),
+                    params = mapOf("step" to exitStep),
                 )
                 onClose()
             }
@@ -192,14 +219,22 @@ fun CreateFlowScreen(
     }
 
     fun save() {
+        // Same terminal guard as abandon: while a save is in flight, Back and
+        // further Save taps are no-ops, so exactly one of the two terminal
+        // outcomes can ever run.
+        if (!state.takeTerminal()) return
+        state.saveRejected = false
         scope.launch {
             val draft = state.draft()
             try {
                 persist(draft)
             } catch (e: ConflictingOwnershipException) {
-                // The picker blocks owned targets, so this means ownership
-                // changed while the editor was open. The repository rolled
-                // the save back; closing shows the current reality.
+                // Ownership changed while the editor was open — a stale draft.
+                // The repository rolled the save back; keep the draft and
+                // explain inline instead of silently discarding the work.
+                state.releaseTerminal()
+                state.saveRejected = true
+                return@launch
             }
             onClose()
         }
@@ -245,7 +280,14 @@ fun CreateFlowScreen(
                 )
                 state.step == 2 -> StepName(state, onBack = { state.step = 1 }, onNext = { stepCompleted(2); state.step = 3 })
                 state.step == 3 -> StepFriction(state, onBack = { state.step = 2 }, onNext = { stepCompleted(3); state.step = 4 })
-                else -> StepReview(state, onBack = { state.step = 3 }, onSave = ::save)
+                else -> StepReview(
+                    state,
+                    onBack = {
+                        state.saveRejected = false
+                        state.step = 3
+                    },
+                    onSave = ::save,
+                )
             }
         }
 
@@ -283,7 +325,7 @@ private fun StepContents(
     onNext: () -> Unit,
 ) {
     var siteInput by remember { mutableStateOf("") }
-    var siteOwnerships by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    var siteOwnerships by remember { mutableStateOf<Map<String, Long>?>(null) }
 
     LaunchedEffect(Unit) {
         siteOwnerships = blockRepo.siteOwnerships()
@@ -291,9 +333,13 @@ private fun StepContents(
 
     // A domain owned by another block cannot be added: the entry shows
     // Already added to a block (owner decision — no owner name, no dialog).
+    // Nothing can be added until ownership finishes loading, so a target can
+    // never enter the draft unchecked.
+    val ownerships = siteOwnerships
     val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
-    val inputHeldElsewhere = canonicalInput.isNotEmpty() &&
-        siteOwnerships[canonicalInput]?.let { it != state.editBlockId } == true
+    val inputHeldElsewhere = ownerships != null &&
+        canonicalInput.isNotEmpty() &&
+        ownerships[canonicalInput]?.let { it != state.editBlockId } == true
 
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
@@ -347,9 +393,12 @@ private fun StepContents(
                     "Add",
                     variant = ButtonVariant.SECONDARY,
                     height = 38.dp,
-                    enabled = siteInput.isNotBlank() && !siteInput.contains(' ') && !inputHeldElsewhere,
+                    enabled = ownerships != null &&
+                        siteInput.isNotBlank() &&
+                        !siteInput.contains(' ') &&
+                        !inputHeldElsewhere,
                     onClick = {
-                        if (inputHeldElsewhere) return@NocturneButton
+                        if (ownerships == null || inputHeldElsewhere) return@NocturneButton
                         val domain = siteInput.trim().trimEnd('.').lowercase()
                         siteInput = ""
                         if (state.sites.none { it == domain }) state.sites.add(domain)
@@ -441,7 +490,7 @@ private fun AppSearchPane(
 ) {
     var query by remember { mutableStateOf("") }
     val allApps = remember { mutableStateListOf<AppEntry>() }
-    var ownerships by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    var ownerships by remember { mutableStateOf<Map<String, Long>?>(null) }
 
     LaunchedEffect(Unit) {
         allApps.addAll(appsRepo.loadApps())
@@ -489,12 +538,15 @@ private fun AppSearchPane(
             items(filtered, key = { it.packageName }) { entry ->
                 val selected = state.apps.any { it.packageName == entry.packageName }
                 // Owned by another block (ON or OFF): visible but not
-                // selectable, labelled without naming the owner block.
-                val heldElsewhere = ownerships[entry.packageName]?.let { it != state.editBlockId } == true
+                // selectable, labelled without naming the owner block. Rows
+                // stay inert until the ownership read completes — selecting
+                // before it is known could admit a target the repository
+                // would later have to reject.
+                val heldElsewhere = ownerships?.get(entry.packageName)?.let { it != state.editBlockId } == true
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable(enabled = !heldElsewhere) {
+                        .clickable(enabled = ownerships != null && !heldElsewhere) {
                             if (selected) {
                                 state.apps.removeAll { it.packageName == entry.packageName }
                             } else {
@@ -846,6 +898,17 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
             )
         }
         Spacer(Modifier.weight(1f))
+        if (state.saveRejected) {
+            // A rejected save kept the draft; the exact owner wording, with
+            // no owner name, explains why the save did not go through.
+            Text(
+                "Already added to a block",
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = NocturneTheme.colors.neutral.step300,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
+        }
         NocturneButton("Save block", block = true, height = 46.dp, onClick = onSave)
     }
 }

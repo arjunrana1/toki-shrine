@@ -16,9 +16,11 @@ data class AppEntry(
 // manifest <queries> block (MAIN/LAUNCHER), so QUERY_ALL_PACKAGES is not
 // needed. Toki Shrine excludes itself: blocking the only screen that can
 // undo a block is not allowed (PRD §4).
-class InstalledAppsRepository(private val context: Context) {
+// open (loadApps/labelFor below) only so instrumented UI tests can supply a
+// deterministic app list; production code always uses this class directly.
+open class InstalledAppsRepository(private val context: Context) {
 
-    suspend fun loadApps(): List<AppEntry> = withContext(Dispatchers.IO) {
+    open suspend fun loadApps(): List<AppEntry> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         pm.queryIntentActivities(launcherIntent, 0)
@@ -39,7 +41,7 @@ class InstalledAppsRepository(private val context: Context) {
 
     // Label for a package that may or may not still be installed; falls back
     // to the package name so stored blocks stay readable after uninstalls.
-    fun labelFor(packageName: String): String {
+    open fun labelFor(packageName: String): String {
         val pm = context.packageManager
         return runCatching {
             pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()

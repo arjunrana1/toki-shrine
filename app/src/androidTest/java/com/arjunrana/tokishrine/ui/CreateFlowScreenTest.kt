@@ -1,0 +1,510 @@
+package com.arjunrana.tokishrine.ui
+
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.isNotEnabled
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.activity.ComponentActivity
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.arjunrana.tokishrine.data.apps.AppEntry
+import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
+import com.arjunrana.tokishrine.data.db.BlockDao
+import com.arjunrana.tokishrine.data.db.EventDao
+import com.arjunrana.tokishrine.data.db.TokiDatabase
+import com.arjunrana.tokishrine.data.entity.BlockedApp
+import com.arjunrana.tokishrine.data.entity.Event
+import com.arjunrana.tokishrine.data.entity.FrictionType
+import com.arjunrana.tokishrine.data.repo.BlockDraft
+import com.arjunrana.tokishrine.data.repo.BlockRepository
+import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.ui.screens.CreateFlowScreen
+import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+// Regressions for the Phase 2 code-review blockers: the terminal transition
+// (save/abandon) must happen exactly once, and no target may be selected or
+// saved before ownership is known — a rejected save keeps the draft. Drives
+// the real CreateFlowScreen against an in-memory Room database.
+@RunWith(AndroidJUnit4::class)
+class CreateFlowScreenTest {
+
+    companion object {
+        // Phosphor glyph text nodes (arrow-left appbar back, X remove). The
+        // glyph characters are the nodes' text content.
+        private const val BACK_GLYPH = "\ue058"
+        private const val REMOVE_GLYPH = "\ue4f6"
+
+        // Conflict shown/resolved telemetry is retired with the removed
+        // conflict flow; no flow may ever write these again.
+        private val RETIRED_CONFLICT_EVENTS = setOf("block_conflict_shown", "block_conflict_resolved")
+    }
+
+    @get:Rule
+    val compose = createAndroidComposeRule<ComponentActivity>()
+
+    private lateinit var db: TokiDatabase
+    private lateinit var dao: BlockDao
+    private lateinit var eventDao: EventDao
+    private lateinit var blockRepo: BlockRepository
+    private lateinit var eventRepo: GatedEventRepository
+
+    @Before
+    fun setUp() {
+        db = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            TokiDatabase::class.java,
+        ).build()
+        dao = db.blockDao()
+        eventDao = db.eventDao()
+        blockRepo = BlockRepository(db)
+        eventRepo = GatedEventRepository(db)
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
+    }
+
+    // — gates (suspending: the flow's coroutines run on the main dispatcher) —
+
+    private class SuspensionGate {
+        private val latch = CountDownLatch(1)
+
+        suspend fun await() {
+            withContext(Dispatchers.IO) { latch.await(10, TimeUnit.SECONDS) }
+        }
+
+        fun release() {
+            latch.countDown()
+        }
+    }
+
+    private class GatedEventRepository(db: TokiDatabase) : EventRepository(db.eventDao(), db.appMetaDao()) {
+        val gatedNames = mutableSetOf<String>()
+        val gate = SuspensionGate()
+
+        override suspend fun log(
+            name: String,
+            blockId: Long?,
+            target: String?,
+            targetType: String?,
+            params: Map<String, Any?>,
+        ) {
+            if (name in gatedNames) gate.await()
+            super.log(name, blockId, target, targetType, params)
+        }
+    }
+
+    private class GatedBlockRepository(db: TokiDatabase) : BlockRepository(db) {
+        var appGate: SuspensionGate? = null
+        var siteGate: SuspensionGate? = null
+
+        override suspend fun appOwnerships(): Map<String, Long> {
+            appGate?.let { it.await() }
+            return super.appOwnerships()
+        }
+
+        override suspend fun siteOwnerships(): Map<String, Long> {
+            siteGate?.let { it.await() }
+            return super.siteOwnerships()
+        }
+    }
+
+    private class StubAppsRepository(
+        private val entries: List<AppEntry>,
+    ) : InstalledAppsRepository(ApplicationProvider.getApplicationContext()) {
+        override suspend fun loadApps(): List<AppEntry> = entries
+        override fun labelFor(packageName: String): String =
+            entries.firstOrNull { it.packageName == packageName }?.label ?: packageName
+    }
+
+    // — helpers —
+
+    private fun stubApps(vararg entries: AppEntry) = StubAppsRepository(entries.toList())
+
+    private fun appEntry(pkg: String, label: String) = AppEntry(pkg, label, null)
+
+    private fun draft(
+        name: String,
+        apps: List<String> = emptyList(),
+        sites: List<String> = emptyList(),
+    ) = BlockDraft(
+        name = name,
+        appPackageNames = apps,
+        siteDomains = sites,
+        frictionType = FrictionType.TYPING,
+        pauseMinutes = 25,
+        pauseChars = 120,
+        turnoffChars = 320,
+        countdownSeconds = 45,
+        showTypos = false,
+    )
+
+    private fun showFlow(editBlockId: Long?, repo: BlockRepository = blockRepo, apps: InstalledAppsRepository = stubApps()): AtomicInteger {
+        val closeCount = AtomicInteger(0)
+        compose.setContent {
+            NocturneTheme {
+                CreateFlowScreen(
+                    editBlockId = editBlockId,
+                    blockRepo = repo,
+                    eventRepo = eventRepo,
+                    appsRepo = apps,
+                    onClose = { closeCount.incrementAndGet() },
+                )
+            }
+        }
+        return closeCount
+    }
+
+    private fun awaitText(text: String, timeoutMs: Long = 5_000) {
+        compose.waitUntil(timeoutMillis = timeoutMs) {
+            compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText(text).assertExists()
+    }
+
+    private fun typeBlockName(name: String) {
+        compose.onNode(hasSetTextAction()).performTextReplacement(name)
+    }
+
+    private fun next() {
+        compose.onNodeWithText("Next").performClick()
+    }
+
+    private fun events(): List<Event> = runBlocking { eventDao.getAll() }
+
+    private fun assertNoRetiredConflictEvents() {
+        assertTrue(
+            "retired conflict telemetry fired: " + events().map { it.name },
+            events().none { it.name in RETIRED_CONFLICT_EVENTS },
+        )
+    }
+
+    // — blocker 1: the terminal transition happens exactly once —
+
+    // Two appbar Backs while the abandonment write is suspended: the second
+    // finds the guard taken and does nothing. Exactly one
+    // block_create_abandoned(step=1), exactly one navigation.
+    @Test
+    fun repeatedBackWhileLoggingSuspendsLogsAbandonmentExactlyOnce() {
+        eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATE_ABANDONED)
+        val closeCount = showFlow(editBlockId = null)
+
+        awaitText("What should this cover?") // step 1
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+
+        // Still inside the suspended window: nothing recorded, nothing closed.
+        compose.waitForIdle()
+        assertEquals(0, closeCount.get())
+        assertEquals(0, runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATE_ABANDONED) })
+
+        eventRepo.gate.release()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        compose.waitForIdle()
+        assertEquals(1, closeCount.get())
+
+        val recorded = events()
+        assertEquals(
+            listOf(EventRepository.EVENT_BLOCK_CREATE_STARTED, EventRepository.EVENT_BLOCK_CREATE_ABANDONED),
+            recorded.map { it.name },
+        )
+        val abandoned = recorded.last()
+        assertEquals(1, JSONObject(abandoned.paramsJson!!).getInt("step"))
+        assertNoRetiredConflictEvents()
+    }
+
+    // Two Save taps while the block_created write is suspended: the second
+    // finds the guard taken and does nothing. Exactly one block, exactly one
+    // block_created, exactly one navigation — and no abandonment after it.
+    @Test
+    fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
+        eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
+        val closeCount = showFlow(editBlockId = null)
+
+        awaitText("What should this cover?")
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        next()
+        awaitText("4 / 4")
+        compose.onNodeWithText("Save block").performClick()
+        compose.onNodeWithText("Save block").performClick()
+
+        compose.waitForIdle()
+        assertEquals(0, closeCount.get())
+        assertEquals(0, runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATED) })
+
+        eventRepo.gate.release()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        compose.waitForIdle()
+        assertEquals(1, closeCount.get())
+
+        val recorded = events()
+        assertEquals(
+            listOf(
+                EventRepository.EVENT_BLOCK_CREATE_STARTED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATED,
+            ),
+            recorded.map { it.name },
+        )
+        assertEquals(listOf(1, 2, 3, 4), recorded.drop(1).take(4).map { JSONObject(it.paramsJson!!).getInt("step") })
+        val created = recorded.last()
+        val params = JSONObject(created.paramsJson!!)
+        assertEquals(0, params.getInt("app_count"))
+        assertEquals(0, params.getInt("site_count"))
+        assertEquals("typing", params.getString("friction_type"))
+        assertEquals(15, params.getInt("pause_minutes"))
+        assertEquals(100, params.getInt("pause_chars"))
+        assertEquals(300, params.getInt("turnoff_chars"))
+        assertEquals(30, params.getInt("countdown_seconds"))
+
+        val blocks = runBlocking { blockRepo.getBlocksWithContents() }
+        assertEquals(1, blocks.size)
+        assertEquals("Evening lockout", blocks[0].block.name)
+        assertEquals(false, blocks[0].block.enabled)
+        assertNoRetiredConflictEvents()
+    }
+
+    // — blocker 2: selection waits for ownership; rejected saves keep the draft —
+
+    // App rows render before the ownership read finishes; until it does they
+    // are inert, so nothing can enter the draft unchecked. Afterwards held
+    // rows stay unselectable and free rows work.
+    @Test
+    fun appSelectionIsDisabledUntilOwnershipLoads() {
+        val gate = SuspensionGate()
+        val gatedRepo = GatedBlockRepository(db).apply { appGate = gate }
+        runBlocking { gatedRepo.createBlock(draft("Holder", apps = listOf("com.instagram.android"))) }
+        val closeCount = showFlow(
+            editBlockId = null,
+            repo = gatedRepo,
+            apps = stubApps(appEntry("com.instagram.android", "Instagram"), appEntry("com.sleeper.app", "Sleeper")),
+        )
+
+        compose.onNodeWithText("Search your installed apps…").performClick()
+        awaitText("Sleeper")
+        compose.onNodeWithText("Already added to a block").assertDoesNotExist()
+
+        // Ownership unknown: rows exist but are disabled, so taps do nothing.
+        compose.onNodeWithText("Instagram").assert(isNotEnabled())
+        compose.onNodeWithText("Instagram").performTouchInput { click() }
+        compose.onNodeWithText("Sleeper").assert(isNotEnabled())
+        compose.onNodeWithText("Sleeper").performTouchInput { click() }
+        compose.onAllNodesWithText("Added").assertCountEquals(0)
+
+        gate.release()
+        awaitText("Already added to a block") // HeldPill for Instagram
+
+        compose.onNodeWithText("Instagram").performTouchInput { click() }
+        compose.onAllNodesWithText("Added").assertCountEquals(0)
+        compose.onNodeWithText("Sleeper").performClick()
+        compose.onNodeWithText("Added").assertExists()
+
+        compose.onNodeWithText("Done").performClick()
+        awaitText("1 selected")
+        compose.onNodeWithText("Sleeper").assertExists()
+        assertNoRetiredConflictEvents()
+    }
+
+    // The website field behaves the same: Add stays inert until ownership
+    // loads, a held domain shows the inline label with Add disabled, and a
+    // free domain adds normally.
+    @Test
+    fun siteAddIsDisabledUntilOwnershipLoads() {
+        val gate = SuspensionGate()
+        val gatedRepo = GatedBlockRepository(db).apply { siteGate = gate }
+        runBlocking { gatedRepo.createBlock(draft("Holder", sites = listOf("reddit.com"))) }
+        val closeCount = showFlow(editBlockId = null, repo = gatedRepo)
+
+        compose.onNodeWithText("Websites").performClick()
+        compose.onNode(hasSetTextAction()).performTextReplacement("reddit.com")
+
+        compose.onNodeWithText("Add").assert(isNotEnabled())
+        compose.onNodeWithText("Already added to a block").assertDoesNotExist()
+        compose.onNodeWithText("Add").performTouchInput { click() }
+        compose.onNodeWithText("0 selected").assertExists()
+
+        gate.release()
+        awaitText("Already added to a block")
+        compose.onNodeWithText("Add").assert(isNotEnabled())
+        compose.onNodeWithText("Add").performTouchInput { click() }
+        compose.onNodeWithText("0 selected").assertExists()
+
+        compose.onNode(hasSetTextAction()).performTextReplacement("free.example.com")
+        compose.onNodeWithText("Add").assertHasClickAction()
+        compose.onNodeWithText("Add").performClick()
+        awaitText("1 selected")
+        compose.onNodeWithText("free.example.com").assertExists()
+        assertNoRetiredConflictEvents()
+    }    // A stale draft (the drafted app was claimed by another block while the
+    // editor was open) is rejected at the repository: the flow stays open,
+    // the draft survives, the inline label shows without naming the owner,
+    // and nothing is written. Removing the held app then saves normally,
+    // proving the terminal guard was released for retries.
+    @Test
+    fun rejectedSaveRetainsDraftAndShowsInlineMessage() {
+        val socialId = runBlocking {
+            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com")))
+        }
+        val newsId = runBlocking {
+            blockRepo.createBlock(draft("News holder", apps = listOf("com.apple.news")))
+        }
+        val closeCount = showFlow(
+            editBlockId = socialId,
+            apps = stubApps(
+                appEntry("com.instagram.android", "Instagram"),
+                appEntry("com.apple.news", "Apple News"),
+                appEntry("com.sleeper.app", "Sleeper"),
+            ),
+        )
+
+        awaitText("Instagram") // edit prefill landed
+        compose.onNodeWithText("reddit.com").assertExists()
+
+        // Draft a still-free app through the picker.
+        compose.onNodeWithText("Search your installed apps…").performClick()
+        awaitText("Already added to a block") // Apple News pill: ownership has loaded
+        compose.onNodeWithText("Sleeper").performClick()
+        // Two pills: the edited block's own Instagram shows as Added already.
+        compose.onAllNodesWithText("Added").assertCountEquals(2)
+        compose.onNodeWithText("Done").performClick()
+        awaitText("3 selected")
+
+        // Out-of-band write claims the drafted app: the draft is now stale.
+        runBlocking { dao.insertApp(BlockedApp(blockId = newsId, packageName = "com.sleeper.app")) }
+
+        next()
+        next()
+        next()
+        awaitText("4 / 4")
+        compose.onNodeWithText("Sleeper").assertExists() // review chip: draft intact
+        compose.onNodeWithText("Save block").performClick()
+
+        awaitText("Already added to a block") // inline explanation on the review step
+        assertEquals(0, closeCount.get())
+        compose.onNodeWithText("4 / 4").assertExists()
+        compose.onNodeWithText("Sleeper").assertExists()
+
+        // Nothing persisted; the holder still owns the app.
+        val untouched = runBlocking { blockRepo.getBlockWithContents(socialId)!! }
+        assertEquals("Social", untouched.block.name)
+        assertEquals(listOf("com.instagram.android"), untouched.apps.map { it.packageName })
+        assertEquals(listOf("reddit.com"), untouched.sites.map { it.domain })
+        assertEquals(newsId, runBlocking { dao.findAppByPackageName("com.sleeper.app")?.blockId })
+        assertTrue(events().isEmpty()) // edit flow: no create telemetry, no block_edited
+        assertNoRetiredConflictEvents()
+
+        // Recovery: unwind, drop the held app, save again — the guard is free.
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        awaitText("What should this cover?")
+        // Selected rows: apps [Instagram, Sleeper] then sites [reddit.com].
+        compose.onAllNodesWithText(REMOVE_GLYPH)[1].performClick()
+        awaitText("2 selected")
+        next()
+        next()
+        next()
+        compose.onNodeWithText("Save block").performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+
+        assertEquals(listOf(EventRepository.EVENT_BLOCK_EDITED), events().map { it.name })
+        assertEquals("none", JSONObject(events().last().paramsJson!!).getString("fields_changed"))
+        val recovered = runBlocking { blockRepo.getBlockWithContents(socialId)!! }
+        assertEquals(listOf("com.instagram.android"), recovered.apps.map { it.packageName })
+        assertEquals(newsId, runBlocking { dao.findAppByPackageName("com.sleeper.app")?.blockId })
+    }
+
+    // — event-table evidence: create success/cancel, search/step Back, edit cancel —
+
+    // Search Back and step Back never leave the flow, so they log nothing
+    // terminal; every Next logs its step; the save is the single terminal event.
+    @Test
+    fun searchBackAndStepBackLogExactSequence() {
+        val closeCount = showFlow(editBlockId = null)
+
+        compose.onNodeWithText("Search your installed apps…").performClick()
+        awaitText("Done")
+        compose.onNodeWithText(BACK_GLYPH).performClick() // search exits, nothing logged
+        awaitText("Search your installed apps…")
+
+        next() // step_completed(1)
+        typeBlockName("Evening lockout")
+        next() // step_completed(2)
+        next() // step_completed(3)
+        compose.onNodeWithText(BACK_GLYPH).performClick() // 4 → 3, nothing logged
+        next() // step_completed(3) again
+        awaitText("4 / 4")
+        compose.onNodeWithText("Save block").performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+
+        assertEquals(
+            listOf(
+                EventRepository.EVENT_BLOCK_CREATE_STARTED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATED,
+            ),
+            events().map { it.name },
+        )
+        assertEquals(
+            listOf(1, 2, 3, 3, 4),
+            events().drop(1).take(5).map { JSONObject(it.paramsJson!!).getInt("step") },
+        )
+        assertNoRetiredConflictEvents()
+    }
+
+    // Cancelling an edit logs nothing at all: no create_started, no
+    // block_create_abandoned, no block_edited, no retired conflict events.
+    @Test
+    fun editCancellationLogsNothing() {
+        val socialId = runBlocking {
+            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+        }
+        val closeCount = showFlow(
+            editBlockId = socialId,
+            apps = stubApps(appEntry("com.instagram.android", "Instagram")),
+        )
+
+        awaitText("Instagram")
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        compose.waitForIdle()
+        assertEquals(1, closeCount.get())
+        assertEquals(0, runBlocking { eventDao.countAll() })
+        assertNoRetiredConflictEvents()
+    }
+}

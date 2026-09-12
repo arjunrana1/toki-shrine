@@ -252,6 +252,72 @@ class BlockRepositoryTest {
         assertEquals(news, dao.findAppByPackageName("com.apple.news")?.blockId)
     }
 
+    // Update ordering: the draft's app mutations (a removal and an insert)
+    // run before the site list is checked, so a site held by another block
+    // must abort AFTER writes have already happened — and the transaction
+    // must roll all of them back. Every stored field of every block, every
+    // target row, and the ownership maps are compared before vs after.
+    @Test
+    fun updateBlockSiteConflictAfterAppMutationsRollsBackEverything() = runBlocking {
+        val social = repo.createBlock(
+            draft(
+                "Social",
+                apps = listOf("com.instagram.android"),
+                sites = listOf("reddit.com"),
+                frictionType = FrictionType.TYPING,
+            ),
+        )
+        val news = repo.createBlock(
+            draft(
+                "News",
+                apps = listOf("com.apple.news"),
+                sites = listOf("news.siteexample.com"),
+                frictionType = FrictionType.DELAY,
+            ),
+        )
+        repo.setEnabled(social, true)
+
+        val beforeSocial = dao.getBlockWithContents(social)
+        val beforeNews = dao.getBlockWithContents(news)
+        val beforeAppOwners = repo.appOwnerships()
+        val beforeSiteOwners = repo.siteOwnerships()
+
+        val exception = assertThrows(ConflictingOwnershipException::class.java) {
+            runBlocking {
+                repo.updateBlock(
+                    social,
+                    BlockDraft(
+                        name = "Should never persist",
+                        // Free app: the delete of instagram and the insert of
+                        // com.reddit.frontpage both commit inside the
+                        // transaction BEFORE the site guard trips.
+                        appPackageNames = listOf("com.reddit.frontpage"),
+                        // The edited block's own site plus one held by News.
+                        siteDomains = listOf("reddit.com", "news.siteexample.com"),
+                        frictionType = FrictionType.DELAY,
+                        pauseMinutes = 60,
+                        pauseChars = 200,
+                        turnoffChars = 350,
+                        countdownSeconds = 30,
+                        showTypos = true,
+                    ),
+                )
+            }
+        }
+        assertEquals("news.siteexample.com", exception.target)
+        assertFalse(exception.isApp)
+
+        // Data-class equality covers every stored column: the block row
+        // (name, friction, pause/turn-off/countdown settings, show_typos,
+        // enabled) and each child row (block_id, package/domain).
+        assertEquals(beforeSocial, dao.getBlockWithContents(social))
+        assertEquals(beforeNews, dao.getBlockWithContents(news))
+        // The failing app mutation left nothing behind and nothing moved.
+        assertEquals(beforeAppOwners, repo.appOwnerships())
+        assertEquals(beforeSiteOwners, repo.siteOwnerships())
+        assertNull(dao.findAppByPackageName("com.reddit.frontpage"))
+    }
+
     // Re-adding one of the edited block's own sites under a different
     // spelling is a canonical no-op, not a conflict and not a duplicate.
     @Test

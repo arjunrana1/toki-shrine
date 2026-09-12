@@ -57,4 +57,11 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("junit:junit:4.13.2")
+    // Compose UI-test harness for the create-flow regression tests; both are
+    // AndroidX Compose artifacts versioned by the BOM, which must be applied
+    // to the test configurations explicitly.
+    androidTestImplementation(platform(composeBom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation(platform(composeBom))
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

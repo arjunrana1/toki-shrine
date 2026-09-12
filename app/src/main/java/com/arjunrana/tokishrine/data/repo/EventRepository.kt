@@ -18,13 +18,15 @@ data class StatsSnapshot(
     val mostWalkedAwayFrom: List<TargetCount>,
 )
 
-class EventRepository(
+// open (and log below) only so instrumented UI tests can gate event writes;
+// production code always uses this class directly.
+open class EventRepository(
     private val eventDao: EventDao,
     private val metaDao: AppMetaDao,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
-    suspend fun log(
+    open suspend fun log(
         name: String,
         blockId: Long? = null,
         target: String? = null,
