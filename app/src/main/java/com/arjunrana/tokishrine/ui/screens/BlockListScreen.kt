@@ -121,18 +121,19 @@ fun BlockListScreen(
             }
 
             if (!list.isNullOrEmpty()) {
-                // PRD §17 R11: one bottom action row — smaller Share feedback
-                // on the left, wider + New Block on the right — replacing the
-                // full-width button that the floating action button overlapped.
+                // PRD §17 R11 plus the 13 September addendum: one pinned
+                // bottom action row — smaller Feedback on the left (label
+                // only, per owner feedback), wider + New Block on the right
+                // — with padding above and below.
+                Spacer(Modifier.height(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     NocturneButton(
-                        "Share feedback",
+                        "Feedback",
                         variant = ButtonVariant.SECONDARY,
                         modifier = Modifier.weight(1f),
                         height = 44.dp,
                         fontSize = 13,
                         onClick = { /* Feedback screen lands in Phase 7 */ },
-                        leading = { PhosphorIcon(Ph.ChatCircleText, tint = NocturneTheme.colors.neutral.step300, size = 16) },
                     )
                     NocturneButton(
                         "New Block",

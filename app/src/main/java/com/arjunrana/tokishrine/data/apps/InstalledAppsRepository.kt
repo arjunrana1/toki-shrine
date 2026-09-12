@@ -47,4 +47,12 @@ open class InstalledAppsRepository(private val context: Context) {
             pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
         }.getOrDefault(packageName)
     }
+
+    // Icon for a stored package; null when the app is no longer installed,
+    // so target-list rows can fall back to a glyph.
+    open fun iconFor(packageName: String): Drawable? {
+        return runCatching {
+            context.packageManager.getApplicationIcon(packageName)
+        }.getOrNull()
+    }
 }

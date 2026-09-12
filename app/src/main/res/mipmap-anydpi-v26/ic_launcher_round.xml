@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive launcher icon (PRD addendum, 13 September 2026): the generated
+     torii+hourglass artwork from design/icon-final as a full-bleed foreground
+     over the brand background (#161826). The artwork carries its own shading,
+     so there is no monochrome layer until a vector redraw exists (see
+     design/icon-final/README.md). -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

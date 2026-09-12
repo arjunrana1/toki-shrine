@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -46,6 +45,7 @@ import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
+import com.arjunrana.tokishrine.ui.components.BoundedTargetList
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.components.NocturneSegmented
@@ -54,6 +54,7 @@ import com.arjunrana.tokishrine.ui.components.NocturneSwitch
 import com.arjunrana.tokishrine.ui.components.NocturneTextField
 import com.arjunrana.tokishrine.ui.components.ProgressDots
 import com.arjunrana.tokishrine.ui.components.SectionLabel
+import com.arjunrana.tokishrine.ui.components.TargetRow
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
@@ -75,12 +76,7 @@ private const val TURNOFF_CHARS_MAX = 350
 private const val COUNTDOWN_MIN = 10
 private const val COUNTDOWN_MAX = 300
 private const val COUNTDOWN_STEP = 5
-private const val NAME_MAX_CHARS = 20
-
-// Review target list (PRD §17 R6): vertical rows with dividers; four rows
-// are visible before the list scrolls internally.
-private val REVIEW_ROW_HEIGHT = 46.dp
-private val REVIEW_LIST_MAX_HEIGHT = REVIEW_ROW_HEIGHT * 4 + 3.dp
+private const val NAME_MAX_CHARS = 30
 
 // Draft state for the four-step create/edit flow. The flow may be entered
 // directly at the friction step (PRD §17 R9, detail → THE FRICTION → Edit);
@@ -451,7 +447,17 @@ private fun StepContents(
         Spacer(Modifier.height(16.dp))
         SectionLabel("SELECTED APPS AND SITES")
         Spacer(Modifier.height(8.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+        // Owner addendum, 13 September: the selected list scrolls on its
+        // own while the CTA row stays pinned and floating at the bottom
+        // (mirroring the friction step), so a long selection can never
+        // push Next below the fold.
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             state.apps.forEach { entry ->
                 SelectedRow(
                     label = entry.label,
@@ -468,7 +474,7 @@ private fun StepContents(
             }
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "${state.apps.size + state.sites.size} selected",
@@ -681,12 +687,12 @@ private fun StepName(state: CreateFlowState, onBack: () -> Unit, onNext: () -> U
             color = NocturneTheme.colors.neutral.step500,
         )
         Spacer(Modifier.height(18.dp))
-        // PRD §17 R7: single-line input, at most 20 characters. Display
-        // names may wrap to two lines; no ellipsis anywhere. Paste (and the
-        // SetText path) can carry line breaks past singleLine, so they are
-        // stripped here; the 20-character cap truncates rather than
-        // rejecting the update, so the field always shows exactly the
-        // stored value.
+        // PRD §17 R7 (cap raised 20 → 30 after device testing, 13 September):
+        // single-line input, at most 30 characters. Display names may wrap
+        // to two lines; no ellipsis anywhere. Paste (and the SetText path)
+        // can carry line breaks past singleLine, so they are stripped here;
+        // the cap truncates rather than rejecting the update, so the field
+        // always shows exactly the stored value.
         NocturneTextField(
             value = state.name,
             onValueChange = { input ->
@@ -960,69 +966,28 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
     }
 }
 
-// Vertical review list of everything the block covers (PRD §17 R6, after the
-// owner's reference image): icon + label rows with hairline dividers, apps
-// first then sites, bounded to four visible rows — longer lists scroll
-// inside the card. Labels wrap rather than overflow horizontally.
+// The review's vertical list of everything the block covers (PRD §17 R6 and
+// the 13 September addendum): the shared bounded target list — icon + label
+// rows with hairline dividers, four visible rows, internal scrolling with a
+// right-edge scrollbar beyond that.
 @Composable
 private fun ReviewTargetList(state: CreateFlowState) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(max = REVIEW_LIST_MAX_HEIGHT)
-            .verticalScroll(rememberScrollState())
-            .background(NocturneTheme.colors.surface, RoundedCornerShape(12.dp)),
-    ) {
-        state.apps.forEachIndexed { index, entry ->
-            if (index > 0) ReviewRowDivider()
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = REVIEW_ROW_HEIGHT)
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AppIcon(entry)
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    entry.label,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    color = NocturneTheme.colors.text,
-                    modifier = Modifier.weight(1f),
+    BoundedTargetList(
+        rows = buildList {
+            state.apps.forEach { entry ->
+                add(
+                    TargetRow(
+                        key = entry.packageName,
+                        label = entry.label,
+                        icon = entry.icon,
+                        glyph = Ph.SquaresFour,
+                    ),
                 )
             }
-        }
-        state.sites.forEachIndexed { index, domain ->
-            if (index > 0 || state.apps.isNotEmpty()) ReviewRowDivider()
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = REVIEW_ROW_HEIGHT)
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PhosphorIcon(Ph.Globe, tint = NocturneTheme.colors.neutral.step400, size = 22)
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    domain,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    color = NocturneTheme.colors.text,
-                    modifier = Modifier.weight(1f),
-                )
+            state.sites.forEach { domain ->
+                add(TargetRow(key = domain, label = domain, icon = null, glyph = Ph.Globe))
             }
-        }
-    }
-}
-
-@Composable
-private fun ReviewRowDivider() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(NocturneTheme.colors.divider),
+        },
     )
 }
 

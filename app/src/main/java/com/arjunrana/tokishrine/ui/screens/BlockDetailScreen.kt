@@ -38,11 +38,12 @@ import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
+import com.arjunrana.tokishrine.ui.components.BoundedTargetList
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
-import com.arjunrana.tokishrine.ui.components.NocturneChip
 import com.arjunrana.tokishrine.ui.components.NocturneSwitch
 import com.arjunrana.tokishrine.ui.components.SectionLabel
+import com.arjunrana.tokishrine.ui.components.TargetRow
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
@@ -192,14 +193,31 @@ fun BlockDetailScreen(
                     }
                 })
                 Spacer(Modifier.height(10.dp))
-                Row {
-                    loaded.apps.take(3).forEach { NocturneChip(appsRepo.labelFor(it.packageName)) }
-                    if (loaded.apps.size > 3) NocturneChip("+${loaded.apps.size - 3} apps")
-                    if (loaded.sites.size == 1) NocturneChip(loaded.sites[0].domain)
-                    if (loaded.sites.size > 1) NocturneChip("${loaded.sites.size} sites")
-                    if (loaded.apps.isEmpty() && loaded.sites.isEmpty()) {
-                        Text("Nothing in this block", fontSize = 12.5.sp, color = NocturneTheme.colors.neutral.step500)
-                    }
+                // Owner addendum, 13 September: the detail list matches the
+                // create-review list — vertical icon + label rows with
+                // dividers, four visible rows then a scrollbar.
+                if (loaded.apps.isEmpty() && loaded.sites.isEmpty()) {
+                    Text("Nothing in this block", fontSize = 12.5.sp, color = NocturneTheme.colors.neutral.step500)
+                } else {
+                    BoundedTargetList(
+                        rows = remember(loaded) {
+                            buildList {
+                                loaded.apps.forEach {
+                                    add(
+                                        TargetRow(
+                                            key = it.packageName,
+                                            label = appsRepo.labelFor(it.packageName),
+                                            icon = appsRepo.iconFor(it.packageName),
+                                            glyph = Ph.SquaresFour,
+                                        ),
+                                    )
+                                }
+                                loaded.sites.forEach {
+                                    add(TargetRow(key = it.domain, label = it.domain, icon = null, glyph = Ph.Globe))
+                                }
+                            }
+                        },
+                    )
                 }
                 Spacer(Modifier.height(20.dp))
 

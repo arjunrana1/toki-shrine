@@ -566,12 +566,13 @@ class CreateFlowScreenTest {
         assertNoRetiredConflictEvents()
     }
 
-    // R7: the name field is single-line with a 20-character cap. Normal and
-    // boundary-length input stores as typed; an over-limit update truncates
-    // to the first 20 characters; pasted line breaks are stripped before
-    // the cap is applied, so they can never reach the stored name.
+    // R7 (cap raised 20 → 30 after device testing): the name field is
+    // single-line with a 30-character cap. Normal and boundary-length input
+    // stores as typed; an over-limit update truncates to the first 30
+    // characters; pasted line breaks are stripped before the cap is applied,
+    // so they can never reach the stored name.
     @Test
-    fun nameInputStripsLineBreaksAndTruncatesAtTwentyCharacters() {
+    fun nameInputStripsLineBreaksAndTruncatesAtThirtyCharacters() {
         val freeApp = appEntry("com.sleeper.app", "Sleeper")
         showFlow(
             editBlockId = null,
@@ -586,24 +587,25 @@ class CreateFlowScreenTest {
         typeBlockName("Evening")
         compose.onNodeWithText("Evening").assertExists()
 
-        // Exactly 20 characters is accepted in full.
-        typeBlockName("abcdefghijklmnopqrst")
-        compose.onNodeWithText("abcdefghijklmnopqrst").assertExists()
+        // Exactly 30 characters is accepted in full.
+        val thirty = "abcdefghij".repeat(3)
+        typeBlockName(thirty)
+        compose.onNodeWithText(thirty).assertExists()
 
-        // Over-limit input is truncated to the first 20 characters — the
+        // Over-limit input is truncated to the first 30 characters — the
         // cap holds and the field shows exactly what is stored.
-        typeBlockName("abcdefghijklmnopqrstuvwxyz")
-        compose.onNodeWithText("abcdefghijklmnopqrstuvwxyz").assertDoesNotExist()
-        compose.onNodeWithText("abcdefghijklmnopqrst").assertExists()
+        typeBlockName(thirty + "abcde")
+        compose.onNodeWithText(thirty + "abcde").assertDoesNotExist()
+        compose.onNodeWithText(thirty).assertExists()
 
         // Pasted line breaks are stripped on their own…
         typeBlockName("ab\ncd\r\nef")
         compose.onNodeWithText("abcdef").assertExists()
 
-        // …and the cap applies to the single-line result: 23 raw characters
-        // with one break still truncate to 20.
-        typeBlockName("abcdefghijklmnopqrs\ntuv")
-        compose.onNodeWithText("abcdefghijklmnopqrst").assertExists()
+        // …and the cap applies to the single-line result: 33 raw characters
+        // with one break still truncate to 30.
+        typeBlockName(thirty + "\nabc")
+        compose.onNodeWithText(thirty).assertExists()
     }
 
     // R9: detail's THE FRICTION → Edit opens the editor directly at 3/4
