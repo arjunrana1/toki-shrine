@@ -2,7 +2,7 @@ package com.arjunrana.tokishrine.ui
 
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.isNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.click
@@ -152,6 +152,7 @@ class CreateFlowScreenTest {
         name: String,
         apps: List<String> = emptyList(),
         sites: List<String> = emptyList(),
+        showTypos: Boolean = false,
     ) = BlockDraft(
         name = name,
         appPackageNames = apps,
@@ -161,7 +162,7 @@ class CreateFlowScreenTest {
         pauseChars = 120,
         turnoffChars = 320,
         countdownSeconds = 45,
-        showTypos = false,
+        showTypos = showTypos,
     )
 
     private fun showFlow(
@@ -388,7 +389,7 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("0 selected").assertExists()
 
         compose.onNode(hasSetTextAction()).performTextReplacement("free.example.com")
-        compose.onNodeWithText("Add").assertHasClickAction()
+        compose.onNodeWithText("Add").assertIsEnabled()
         compose.onNodeWithText("Add").performClick()
         awaitText("1 selected")
         compose.onNodeWithText("free.example.com").assertExists()
@@ -401,7 +402,12 @@ class CreateFlowScreenTest {
     @Test
     fun rejectedSaveRetainsDraftAndShowsInlineMessage() {
         val socialId = runBlocking {
-            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com")))
+            // Always-on typos fixture: UI drafts force show_typos = true, so
+            // only an always-on seed keeps the recovery save's
+            // fields_changed genuinely "none".
+            blockRepo.createBlock(
+                draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com"), showTypos = true),
+            )
         }
         val newsId = runBlocking {
             blockRepo.createBlock(draft("News holder", apps = listOf("com.apple.news")))
@@ -494,11 +500,12 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("abcdef").assertExists()
         compose.onNodeWithText("Add").assert(isNotEnabled())
 
-        // A complete domain unlocks Add.
+        // A complete domain unlocks Add — wait for the enabled semantics,
+        // not merely a click action (Codex corrective finding).
         field.performTextReplacement("free.example.com")
         compose.waitUntil(timeoutMillis = 5_000) {
             try {
-                compose.onNodeWithText("Add").assertHasClickAction()
+                compose.onNodeWithText("Add").assertIsEnabled()
                 true
             } catch (e: AssertionError) {
                 false
@@ -507,6 +514,32 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Add").performClick()
         awaitText("1 selected")
         compose.onNodeWithText("free.example.com").assertExists()
+    }
+
+    // Always-on typos (Codex corrective finding, 13 September): saving any
+    // edit rewrites a legacy show_typos = false value to true, and the
+    // block_edited event reports that single change — never "none".
+    @Test
+    fun editRewritesLegacyShowTyposFalseToTrue() {
+        val socialId = runBlocking {
+            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android"), showTypos = false))
+        }
+        val closeCount = showFlow(
+            editBlockId = socialId,
+            apps = stubApps(appEntry("com.instagram.android", "Instagram")),
+        )
+
+        awaitText("Instagram") // edit prefill landed
+        next()
+        next()
+        next()
+        awaitText("4 / 4")
+        compose.onNodeWithText("Save block").performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+
+        assertEquals(listOf(EventRepository.EVENT_BLOCK_EDITED), events().map { it.name })
+        assertEquals("show_typos", JSONObject(events().last().paramsJson!!).getString("fields_changed"))
+        assertEquals(true, runBlocking { blockRepo.getBlockWithContents(socialId)!!.block.showTypos })
     }
 
     // — event-table evidence: create success/cancel, search/step Back, edit cancel —
@@ -663,7 +696,7 @@ class CreateFlowScreenTest {
         // Stored pauseChars (120, not the 100 default) proves the prefill
         // landed; the nonempty draft may proceed from the friction step.
         awaitText("120 characters")
-        compose.onNodeWithText("Next").assertHasClickAction()
+        compose.onNodeWithText("Next").assertIsEnabled()
 
         compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits, not step 2
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }

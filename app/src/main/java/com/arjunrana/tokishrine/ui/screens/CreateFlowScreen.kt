@@ -801,7 +801,7 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
             // former toggle was removed by owner decision (13 September).
             StepperField(
                 label = "Disable this block",
-                helper = "You'll need to type random words of this length to disable the block. You can edit or delete the block once it's disabled.",
+                helper = "You'll need to type random words of this length to disable this block. You can edit or delete this block once it's disabled.",
                 value = "${state.turnoffChars} characters",
                 onDecrement = { state.turnoffChars = (state.turnoffChars - CHARS_STEP).coerceAtLeast(TURNOFF_CHARS_MIN) },
                 onIncrement = { state.turnoffChars = (state.turnoffChars + CHARS_STEP).coerceAtMost(TURNOFF_CHARS_MAX) },
