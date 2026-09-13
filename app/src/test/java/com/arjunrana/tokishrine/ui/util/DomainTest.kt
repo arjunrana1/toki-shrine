@@ -30,11 +30,14 @@ class DomainTest {
 
     @Test
     fun rejectsSpacesAndLineBreaks() {
-        // The field strips line breaks and the repository would never see a
-        // space, but the validator must hold the line on its own too.
+        // The field keeps pasted line breaks in its value (owner
+        // clarification, 13 September — no silent merging); this validator
+        // must reject them in the raw form. Trimming happens upstream, so
+        // only strictly interior/space content fails here.
         assertFalse(isValidFullDomain("abc def.com"))
         assertFalse(isValidFullDomain("abc\ndef"))
         assertFalse(isValidFullDomain("reddit.com\nabdes"))
+        assertFalse(isValidFullDomain("reddit.com\n")) // raw, untrimmed
     }
 
     @Test

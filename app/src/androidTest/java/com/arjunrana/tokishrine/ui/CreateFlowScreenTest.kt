@@ -479,10 +479,11 @@ class CreateFlowScreenTest {
         assertEquals(newsId, runBlocking { dao.findAppByPackageName("com.sleeper.app")?.blockId })
     }
 
-    // Owner addendum, 13 September: the website field is single-line —
-    // pasted line breaks are stripped before the value lands — and Add
-    // stays unavailable until the text is a complete domain like
-    // reddit.com; bare words ("reddit") never pass.
+    // Owner addendum + clarification, 13 September: the website field is
+    // single-line, dot-less words are rejected, and pasted line breaks are
+    // NOT stripped — a multiline paste stays in the field and keeps Add
+    // disabled, so "reddit.com\nabdes" can never merge into an addable
+    // domain. Only removing the break re-enables Add.
     @Test
     fun siteAddRequiresACompleteSingleLineDomain() {
         showFlow(editBlockId = null)
@@ -495,14 +496,21 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Add").assert(isNotEnabled())
         awaitText("Enter a complete domain like reddit.com")
 
-        // Newlines never survive into the value (the owner's two-line case).
+        // Newlines are preserved, not stripped: the raw value stays and
+        // remains invalid.
         field.performTextReplacement("abc\ndef")
-        compose.onNodeWithText("abcdef").assertExists()
+        compose.onNodeWithText("abc\ndef").assertExists()
         compose.onNodeWithText("Add").assert(isNotEnabled())
 
-        // A complete domain unlocks Add — wait for the enabled semantics,
-        // not merely a click action (Codex corrective finding).
-        field.performTextReplacement("free.example.com")
+        // The owner's exact case: a domain plus a second line is never
+        // merged into a valid one.
+        field.performTextReplacement("reddit.com\nabdes")
+        compose.onNodeWithText("Add").assert(isNotEnabled())
+        awaitText("Enter a complete domain like reddit.com")
+
+        // A single complete domain — even copied with a trailing newline —
+        // unlocks Add and adds its canonical form.
+        field.performTextReplacement("free.example.com\n")
         compose.waitUntil(timeoutMillis = 5_000) {
             try {
                 compose.onNodeWithText("Add").assertIsEnabled()

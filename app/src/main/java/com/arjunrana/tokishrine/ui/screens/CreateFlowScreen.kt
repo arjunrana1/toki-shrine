@@ -356,8 +356,9 @@ private fun StepContents(
     // Already added to a block (owner decision — no owner name, no dialog).
     // Nothing can be added until ownership finishes loading, so a target can
     // never enter the draft unchecked. Input must also be a complete domain
-    // (owner addendum, 13 September): the field is single-line, line breaks
-    // never survive paste, and dot-less words like "reddit" are rejected.
+    // (owner addendum, 13 September): the field is single-line and pasted
+    // line breaks stay in the value, keeping it invalid — "reddit" or a
+    // multiline paste like "reddit.com\nabdes" is rejected, never merged.
     val ownerships = siteOwnerships
     val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
     val inputIsValidDomain = isValidFullDomain(canonicalInput)
@@ -407,11 +408,12 @@ private fun StepContents(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 NocturneTextField(
                     value = siteInput,
-                    onValueChange = { input ->
-                        // Single-line field: Enter inserts nothing and pasted
-                        // line breaks are stripped before the value lands.
-                        siteInput = input.filterNot { it == '\n' || it == '\r' }
-                    },
+                    // Single-line field: Enter inserts nothing. Pasted line
+                    // breaks are NOT stripped (owner clarification,
+                    // 13 September): the raw value stays and keeps Add
+                    // disabled — "reddit.com\nabdes" must never merge into
+                    // an addable domain. Only removing the break does.
+                    onValueChange = { siteInput = it },
                     hint = "example.com",
                     leading = { PhosphorIcon(Ph.Globe, tint = NocturneTheme.colors.neutral.step500) },
                     modifier = Modifier.weight(1f),
