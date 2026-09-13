@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Toki Shrine</string>
+    <!-- Shown by Android in the system accessibility settings page. Mirrors
+         the in-app explainer (PRD §6 screen 3): what the service does, and
+         the three things it never does. -->
+    <string name="accessibility_service_description">Toki Shrine uses this to tell which app or website is in front of you, and to read the address bar in supported browsers. It never reads the contents of any page, never logs or stores your browsing, and never sends anything off your phone.</string>
 </resources>

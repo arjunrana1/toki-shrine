@@ -83,12 +83,12 @@ fun BlockDetailScreen(
     val isOff = !loaded.block.enabled
 
     fun turnOff() {
-        // Owner addendum, 13 September: turning off confirms with the
-        // lighter haptic.
-        BlockHaptics.turnedOff(context)
         scope.launch {
             blockRepo.setEnabled(blockId, false)
             eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_OFF, blockId = blockId)
+            // Lighter confirmation haptic (owner addendum, 13 September),
+            // fired only after the write succeeds.
+            BlockHaptics.turnedOff(context)
             refresh++
         }
     }

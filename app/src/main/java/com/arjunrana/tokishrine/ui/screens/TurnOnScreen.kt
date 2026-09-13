@@ -42,13 +42,17 @@ import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
 
 // The commitment moment (screen 13). States both costs in plain language
-// under a Block Summary heading (PRD §17 R12). The permission gate lands
-// here in Phase 3; Phase 2 turns the block straight on.
+// under a Block Summary heading (PRD §17 R12). Activation is gated on
+// accessibility here too — the final confirmation re-checks before
+// persisting, so a permission revoked while this screen is open cannot
+// slip a block through (PRD §12, Phase 3).
 @Composable
 fun TurnOnScreen(
     blockId: Long,
     blockRepo: BlockRepository,
     eventRepo: EventRepository,
+    canActivate: () -> Boolean,
+    onPermissionsNeeded: () -> Unit,
     onClose: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -170,11 +174,18 @@ fun TurnOnScreen(
                 fontSize = 15,
                 onClick = {
                     // The one path that enables a block — both toggle entry
-                    // points route here — confirms with the stronger haptic.
-                    BlockHaptics.turnedOn(context)
+                    // points route here. A missing permission enables nothing
+                    // and opens the checklist instead; the success haptic
+                    // fires only after the gate, persistence and event write
+                    // have all succeeded (Codex checkpoint, 13 September).
+                    if (!canActivate()) {
+                        onPermissionsNeeded()
+                        return@NocturneButton
+                    }
                     scope.launch {
                         blockRepo.setEnabled(blockId, true)
                         eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_ON, blockId = blockId)
+                        BlockHaptics.turnedOn(context)
                         onClose()
                     }
                 },

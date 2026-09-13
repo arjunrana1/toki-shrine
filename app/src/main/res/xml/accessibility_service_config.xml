@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 3 prerequisite: the declaration that makes the service grantable
+     from system accessibility settings. No event types are subscribed yet —
+     the Phase 4 detection engine adds them — but window content retrieval
+     is already requested because address-bar reading needs it. -->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessibility_service_description"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:notificationTimeout="100"
+    android:canRetrieveWindowContent="true" />

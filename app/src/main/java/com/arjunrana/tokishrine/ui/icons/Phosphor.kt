@@ -21,6 +21,8 @@ internal val PhosphorFontFamily = FontFamily(Font(R.font.phosphor_regular))
 
 object Ph {
     const val ArrowLeft = 0xe058
+    const val BatteryCharging = 0xe0ba
+    const val Bell = 0xe0ce
     const val CaretLeft = 0xe138
     const val CaretRight = 0xe13a
     const val ChartBar = 0xe150
@@ -28,18 +30,24 @@ object Ph {
     const val Check = 0xe182
     const val CheckSquare = 0xe186
     const val ClockCountdown = 0xed2c
+    const val Eye = 0xe220
     const val GearSix = 0xe272
     const val Globe = 0xe288
+    const val Heartbeat = 0xe2ac
     const val Hourglass = 0xe2b2
+    const val HourglassMedium = 0xe2b8
     const val Info = 0xe2ce
     const val Keyboard = 0xe2d8
     const val LockKeyOpen = 0xe300
     const val MagnifyingGlass = 0xe30c
     const val Minus = 0xe32a
+    const val Moon = 0xe330
+    const val PaperPlaneTilt = 0xe398
     const val Plus = 0xe3d4
     const val PlusCircle = 0xe3d6
     const val ScribbleLoop = 0xe662
     const val Square = 0xe45e
+    const val SquareHalf = 0xe462
     const val SquaresFour = 0xe464
     const val Stack = 0xe466
     const val Timer = 0xe492

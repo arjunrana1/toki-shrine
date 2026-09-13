@@ -52,6 +52,7 @@ fun BlockListScreen(
     onCreate: () -> Unit,
     onOpenDetail: (Long) -> Unit,
     onTurnOn: (Long) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -82,12 +83,16 @@ fun BlockListScreen(
                     color = NocturneTheme.colors.text,
                     modifier = Modifier.weight(1f),
                 )
-                // Stats and Settings screens belong to later phases; the
-                // controls exist per the home-screen layout and stay inert
-                // until then.
+                // Stats belongs to Phase 7 and stays inert; Settings opens
+                // screen 24 (Phase 3).
                 PhosphorIcon(Ph.ChartBar, tint = NocturneTheme.colors.neutral.step300, size = 21)
                 Spacer(Modifier.width(16.dp))
-                PhosphorIcon(Ph.GearSix, tint = NocturneTheme.colors.neutral.step300, size = 21)
+                PhosphorIcon(
+                    Ph.GearSix,
+                    tint = NocturneTheme.colors.neutral.step300,
+                    size = 21,
+                    modifier = Modifier.clickable { onOpenSettings() },
+                )
             }
 
             val list = blocks
@@ -112,12 +117,13 @@ fun BlockListScreen(
                                 if (on) {
                                     onTurnOn(block.block.id)
                                 } else {
-                                    // Turning off confirms with the lighter
-                                    // haptic (owner addendum, 13 September).
-                                    BlockHaptics.turnedOff(context)
                                     scope.launch {
                                         blockRepo.setEnabled(block.block.id, false)
                                         eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_OFF, blockId = block.block.id)
+                                        // Lighter confirmation haptic (owner
+                                        // addendum, 13 September), fired only
+                                        // after the write succeeds.
+                                        BlockHaptics.turnedOff(context)
                                     }
                                 }
                             },

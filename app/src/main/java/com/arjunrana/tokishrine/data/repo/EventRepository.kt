@@ -77,6 +77,16 @@ open class EventRepository(
 
     suspend fun countAllEvents(): Int = eventDao.countAll()
 
+    // Onboarding completion flag (PRD §6 screen 2: persistent and resumable;
+    // the welcome screen returns until onboarding is completed). Written
+    // once, never overwritten, so repeated completions cannot re-trigger it.
+    suspend fun isOnboardingCompleted(): Boolean =
+        metaDao.get(AppMeta.KEY_ONBOARDING_COMPLETED_AT) != null
+
+    suspend fun markOnboardingCompleted() {
+        metaDao.putIfAbsent(AppMeta(AppMeta.KEY_ONBOARDING_COMPLETED_AT, clock().toString()))
+    }
+
     private suspend fun ensureFirstLaunchRecorded() {
         metaDao.putIfAbsent(AppMeta(AppMeta.KEY_FIRST_LAUNCH_AT, clock().toString()))
     }
@@ -104,5 +114,14 @@ open class EventRepository(
         const val EVENT_BLOCK_DELETED = "block_deleted"
         const val EVENT_BLOCK_TURNED_ON = "block_turned_on"
         const val EVENT_BLOCK_TURNED_OFF = "block_turned_off"
+
+        // Onboarding and settings events (§10) fired by the permission flow
+        // (Phase 3) and the Settings screen.
+        const val EVENT_ONBOARDING_STARTED = "onboarding_started"
+        const val EVENT_PERMISSION_REQUESTED = "permission_requested"
+        const val EVENT_PERMISSION_GRANTED = "permission_granted"
+        const val EVENT_PERMISSION_DENIED = "permission_denied"
+        const val EVENT_ONBOARDING_COMPLETED = "onboarding_completed"
+        const val EVENT_SETTINGS_VIEWED = "settings_viewed"
     }
 }

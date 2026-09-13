@@ -12,5 +12,6 @@ data class AppMeta(
 ) {
     companion object {
         const val KEY_FIRST_LAUNCH_AT = "first_launch_at"
+        const val KEY_ONBOARDING_COMPLETED_AT = "onboarding_completed_at"
     }
 }
