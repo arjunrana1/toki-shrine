@@ -50,7 +50,6 @@ import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.components.NocturneSegmented
 import com.arjunrana.tokishrine.ui.components.NocturneStepper
-import com.arjunrana.tokishrine.ui.components.NocturneSwitch
 import com.arjunrana.tokishrine.ui.components.NocturneTextField
 import com.arjunrana.tokishrine.ui.components.ProgressDots
 import com.arjunrana.tokishrine.ui.components.SectionLabel
@@ -60,6 +59,7 @@ import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.formatEstimate
+import com.arjunrana.tokishrine.ui.util.isValidFullDomain
 import com.arjunrana.tokishrine.ui.util.toImageBitmap
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
@@ -96,7 +96,6 @@ class CreateFlowState(val editBlockId: Long?, entryStep: Int = 1) {
     var pauseChars by mutableStateOf(100)
     var turnoffChars by mutableStateOf(300)
     var countdownSeconds by mutableStateOf(30)
-    var showTypos by mutableStateOf(true)
 
     // Set when a save was rejected for conflicting ownership: the draft is
     // kept and the review step explains inline (owner decision — no owner
@@ -129,7 +128,10 @@ class CreateFlowState(val editBlockId: Long?, entryStep: Int = 1) {
         pauseChars = pauseChars,
         turnoffChars = turnoffChars,
         countdownSeconds = countdownSeconds,
-        showTypos = showTypos,
+        // Typos are always shown now (owner decision, 13 September); the
+        // column is retained only to avoid a destructive wipe mid-testing —
+        // every save rewrites it to true.
+        showTypos = true,
     )
 }
 
@@ -155,7 +157,6 @@ fun CreateFlowScreen(
                 state.pauseChars = stored.block.pauseChars
                 state.turnoffChars = stored.block.turnoffChars
                 state.countdownSeconds = stored.block.countdownSeconds
-                state.showTypos = stored.block.showTypos
                 state.apps.addAll(
                     stored.apps.map { AppEntry(it.packageName, appsRepo.labelFor(it.packageName), null) },
                 )
@@ -355,9 +356,12 @@ private fun StepContents(
     // A domain owned by another block cannot be added: the entry shows
     // Already added to a block (owner decision — no owner name, no dialog).
     // Nothing can be added until ownership finishes loading, so a target can
-    // never enter the draft unchecked.
+    // never enter the draft unchecked. Input must also be a complete domain
+    // (owner addendum, 13 September): the field is single-line, line breaks
+    // never survive paste, and dot-less words like "reddit" are rejected.
     val ownerships = siteOwnerships
     val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
+    val inputIsValidDomain = isValidFullDomain(canonicalInput)
     val inputHeldElsewhere = ownerships != null &&
         canonicalInput.isNotEmpty() &&
         ownerships[canonicalInput]?.let { it != state.editBlockId } == true
@@ -404,38 +408,44 @@ private fun StepContents(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 NocturneTextField(
                     value = siteInput,
-                    onValueChange = { siteInput = it },
+                    onValueChange = { input ->
+                        // Single-line field: Enter inserts nothing and pasted
+                        // line breaks are stripped before the value lands.
+                        siteInput = input.filterNot { it == '\n' || it == '\r' }
+                    },
                     hint = "example.com",
                     leading = { PhosphorIcon(Ph.Globe, tint = NocturneTheme.colors.neutral.step500) },
                     modifier = Modifier.weight(1f),
+                    singleLine = true,
                 )
                 Spacer(Modifier.width(8.dp))
                 NocturneButton(
                     "Add",
                     variant = ButtonVariant.SECONDARY,
                     height = 38.dp,
-                    enabled = ownerships != null &&
-                        siteInput.isNotBlank() &&
-                        !siteInput.contains(' ') &&
-                        !inputHeldElsewhere,
+                    enabled = ownerships != null && inputIsValidDomain && !inputHeldElsewhere,
                     onClick = {
-                        if (ownerships == null || inputHeldElsewhere) return@NocturneButton
-                        val domain = siteInput.trim().trimEnd('.').lowercase()
+                        if (ownerships == null || !inputIsValidDomain || inputHeldElsewhere) return@NocturneButton
                         siteInput = ""
-                        if (state.sites.none { it == domain }) state.sites.add(domain)
+                        if (state.sites.none { it == canonicalInput }) state.sites.add(canonicalInput)
                     },
                 )
             }
             Spacer(Modifier.height(6.dp))
-            if (inputHeldElsewhere) {
-                Text(
+            when {
+                inputHeldElsewhere -> Text(
                     "Already added to a block",
                     fontSize = 11.5.sp,
                     lineHeight = 17.sp,
                     color = NocturneTheme.colors.neutral.step300,
                 )
-            } else {
-                Text(
+                siteInput.isNotBlank() && !inputIsValidDomain -> Text(
+                    "Enter a complete domain like reddit.com",
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = NocturneTheme.colors.neutral.step300,
+                )
+                else -> Text(
                     "Type a full domain. Works in Chrome and other supported browsers.",
                     fontSize = 11.5.sp,
                     lineHeight = 17.sp,
@@ -757,7 +767,7 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
             if (state.frictionType == FrictionType.TYPING) {
                 StepperField(
                     label = "Type to pause",
-                    helper = "You'll need to type this number of characters each time you want to pause the block.",
+                    helper = "You'll need to type random words of this length to pause the block.",
                     value = "${state.pauseChars} characters",
                     onDecrement = { state.pauseChars = (state.pauseChars - CHARS_STEP).coerceAtLeast(PAUSE_CHARS_MIN) },
                     onIncrement = { state.pauseChars = (state.pauseChars + CHARS_STEP).coerceAtMost(PAUSE_CHARS_MAX) },
@@ -788,28 +798,17 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
             )
 
             // Turning a block off is always a typed passage, so it is
-            // configured on both variants.
+            // configured on both variants. Typos are always shown — the
+            // former toggle was removed by owner decision (13 September).
             StepperField(
                 label = "Disable this block",
-                helper = "Type these many characters to disable the block completely. You can edit or delete it once it's off.",
+                helper = "You'll need to type random words of this length to disable the block. You can edit or delete the block once it's disabled.",
                 value = "${state.turnoffChars} characters",
                 onDecrement = { state.turnoffChars = (state.turnoffChars - CHARS_STEP).coerceAtLeast(TURNOFF_CHARS_MIN) },
                 onIncrement = { state.turnoffChars = (state.turnoffChars + CHARS_STEP).coerceAtMost(TURNOFF_CHARS_MAX) },
                 canDecrement = state.turnoffChars > TURNOFF_CHARS_MIN,
                 canIncrement = state.turnoffChars < TURNOFF_CHARS_MAX,
             )
-
-            if (state.frictionType == FrictionType.TYPING) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "Show where the typos are",
-                        fontSize = 13.5.sp,
-                        color = NocturneTheme.colors.text,
-                        modifier = Modifier.weight(1f),
-                    )
-                    NocturneSwitch(checked = state.showTypos, onCheckedChange = { state.showTypos = it })
-                }
-            }
         }
 
         // The live estimate stays pinned above Next while the passage length

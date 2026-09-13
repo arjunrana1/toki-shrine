@@ -19,6 +19,12 @@ class ConflictingOwnershipException(
     val isApp: Boolean,
 ) : IllegalStateException("Target '$target' is already owned by another block")
 
+// Owner addendum, 13 September 2026: the wait/countdown is capped. The
+// configuration stepper offers at most 5 minutes (300 s); storage accepts at
+// most 20 minutes (1200 s) so no write path — stale drafts included — can
+// persist an endless wait. The UI never mentions this bound.
+const val MAX_STORED_COUNTDOWN_SECONDS = 1200
+
 data class BlockDraft(
     val name: String,
     val appPackageNames: List<String>,
@@ -50,6 +56,10 @@ open class BlockRepository(private val db: TokiDatabase) {
         // other write path.
         require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
             "A block must contain at least one app or site"
+        }
+        // Owner addendum, 13 September: the stored wait is bounded at 20 min.
+        require(draft.countdownSeconds in 1..MAX_STORED_COUNTDOWN_SECONDS) {
+            "Countdown must be between 1 and $MAX_STORED_COUNTDOWN_SECONDS seconds"
         }
         val id = dao.insertBlock(
             Block(
@@ -89,6 +99,10 @@ open class BlockRepository(private val db: TokiDatabase) {
         // direct friction edit that never visited the contents step.
         require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
             "A block must contain at least one app or site"
+        }
+        // Owner addendum, 13 September: the stored wait is bounded at 20 min.
+        require(draft.countdownSeconds in 1..MAX_STORED_COUNTDOWN_SECONDS) {
+            "Countdown must be between 1 and $MAX_STORED_COUNTDOWN_SECONDS seconds"
         }
         val current = dao.getBlockWithContents(id) ?: error("Block $id does not exist")
         dao.updateBlock(

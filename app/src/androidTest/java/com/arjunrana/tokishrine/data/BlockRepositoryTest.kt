@@ -9,6 +9,7 @@ import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
+import com.arjunrana.tokishrine.data.repo.MAX_STORED_COUNTDOWN_SECONDS
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -48,6 +49,7 @@ class BlockRepositoryTest {
         apps: List<String> = emptyList(),
         sites: List<String> = emptyList(),
         frictionType: FrictionType = FrictionType.TYPING,
+        countdownSeconds: Int = 45,
     ) = BlockDraft(
         name = name,
         appPackageNames = apps,
@@ -56,7 +58,7 @@ class BlockRepositoryTest {
         pauseMinutes = 25,
         pauseChars = 120,
         turnoffChars = 320,
-        countdownSeconds = 45,
+        countdownSeconds = countdownSeconds,
         showTypos = false,
     )
 
@@ -397,5 +399,36 @@ class BlockRepositoryTest {
         assertEquals("Social", unchanged.block.name)
         assertEquals(listOf("com.instagram.android"), unchanged.apps.map { it.packageName })
         assertEquals(listOf("reddit.com"), unchanged.sites.map { it.domain })
+    }
+
+    // Owner addendum, 13 September: the UI offers waits up to 5 minutes;
+    // storage accepts at most 20 minutes (1200 s) on every write path.
+    @Test
+    fun createBlockRejectsCountdownBeyondTwentyMinutes() = runBlocking {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repo.createBlock(
+                    draft("Endless wait", apps = listOf("com.instagram.android"), countdownSeconds = 1205),
+                )
+            }
+        }
+
+        assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    @Test
+    fun updateBlockRejectsCountdownBeyondTwentyMinutesAndChangesNothing() = runBlocking {
+        val social = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repo.updateBlock(
+                    social,
+                    draft("Social", apps = listOf("com.instagram.android"), countdownSeconds = MAX_STORED_COUNTDOWN_SECONDS + 1),
+                )
+            }
+        }
+
+        assertEquals(45, repo.getBlockWithContents(social)!!.block.countdownSeconds)
     }
 }

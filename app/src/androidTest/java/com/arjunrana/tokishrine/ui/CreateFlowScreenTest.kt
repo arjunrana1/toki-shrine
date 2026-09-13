@@ -473,6 +473,42 @@ class CreateFlowScreenTest {
         assertEquals(newsId, runBlocking { dao.findAppByPackageName("com.sleeper.app")?.blockId })
     }
 
+    // Owner addendum, 13 September: the website field is single-line —
+    // pasted line breaks are stripped before the value lands — and Add
+    // stays unavailable until the text is a complete domain like
+    // reddit.com; bare words ("reddit") never pass.
+    @Test
+    fun siteAddRequiresACompleteSingleLineDomain() {
+        showFlow(editBlockId = null)
+
+        compose.onNodeWithText("Websites").performClick()
+        val field = compose.onNode(hasSetTextAction())
+
+        // A dot-less word is rejected with an explanation.
+        field.performTextReplacement("reddit")
+        compose.onNodeWithText("Add").assert(isNotEnabled())
+        awaitText("Enter a complete domain like reddit.com")
+
+        // Newlines never survive into the value (the owner's two-line case).
+        field.performTextReplacement("abc\ndef")
+        compose.onNodeWithText("abcdef").assertExists()
+        compose.onNodeWithText("Add").assert(isNotEnabled())
+
+        // A complete domain unlocks Add.
+        field.performTextReplacement("free.example.com")
+        compose.waitUntil(timeoutMillis = 5_000) {
+            try {
+                compose.onNodeWithText("Add").assertHasClickAction()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+        compose.onNodeWithText("Add").performClick()
+        awaitText("1 selected")
+        compose.onNodeWithText("free.example.com").assertExists()
+    }
+
     // — event-table evidence: create success/cancel, search/step Back, edit cancel —
 
     // Search Back and step Back never leave the flow, so they log nothing
