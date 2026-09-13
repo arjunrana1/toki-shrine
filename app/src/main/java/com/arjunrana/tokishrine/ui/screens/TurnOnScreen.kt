@@ -1,5 +1,6 @@
 package com.arjunrana.tokishrine.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,28 +19,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockRepository
-import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.BlockHaptics
+import com.arjunrana.tokishrine.ui.util.TerminalAction
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.formatEstimate
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
-import kotlinx.coroutines.launch
 
 // The commitment moment (screen 13). States both costs in plain language
 // under a Block Summary heading (PRD §17 R12). Activation is gated on
@@ -50,14 +51,23 @@ import kotlinx.coroutines.launch
 fun TurnOnScreen(
     blockId: Long,
     blockRepo: BlockRepository,
-    eventRepo: EventRepository,
     canActivate: () -> Boolean,
     onPermissionsNeeded: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var block by remember { mutableStateOf<BlockWithContents?>(null) }
+
+    // The accepted commit runs in the activity lifecycle scope and the
+    // terminal buttons disable against it, so Back / Not yet can neither
+    // cancel an accepted commit nor race a second route pop (review
+    // blocker 2).
+    val terminal = remember(lifecycleOwner) { TerminalAction(lifecycleOwner.lifecycleScope) }
+    BackHandler(enabled = terminal.busy) {
+        // A commit is in flight; system Back is absorbed so the single
+        // navigation result comes from the commit itself.
+    }
 
     LaunchedEffect(blockId) {
         block = blockRepo.getBlockWithContents(blockId)
@@ -172,28 +182,31 @@ fun TurnOnScreen(
                 block = true,
                 height = 48.dp,
                 fontSize = 15,
+                enabled = !terminal.busy,
                 onClick = {
                     // The one path that enables a block — both toggle entry
-                    // points route here. A missing permission enables nothing
-                    // and opens the checklist instead; the success haptic
-                    // fires only after the gate, persistence and event write
-                    // have all succeeded (Codex checkpoint, 13 September).
+                    // points route here. The final accessibility gate runs
+                    // immediately before the transaction; a missing
+                    // permission enables nothing and opens the checklist
+                    // instead. The commit pairs the state change with its
+                    // event in one transaction; the success haptic and the
+                    // single close run only after it succeeds.
                     if (!canActivate()) {
                         onPermissionsNeeded()
                         return@NocturneButton
                     }
-                    scope.launch {
-                        blockRepo.setEnabled(blockId, true)
-                        eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_ON, blockId = blockId)
-                        BlockHaptics.turnedOn(context)
-                        onClose()
-                    }
+                    terminal.run(
+                        commit = { blockRepo.setEnabledRecordingTransition(blockId, true) },
+                        onChanged = { BlockHaptics.turnedOn(context) },
+                        onCommitted = onClose,
+                    )
                 },
             )
             NocturneButton(
                 "Not yet",
                 variant = ButtonVariant.GHOST,
                 block = true,
+                enabled = !terminal.busy,
                 onClick = onClose,
                 modifier = Modifier.padding(top = 8.dp),
             )

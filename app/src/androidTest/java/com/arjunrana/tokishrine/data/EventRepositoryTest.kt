@@ -33,7 +33,7 @@ class EventRepositoryTest {
             TokiDatabase::class.java,
         ).build()
         now = System.currentTimeMillis()
-        repo = EventRepository(db.eventDao(), db.appMetaDao(), clock = { now })
+        repo = EventRepository(db, clock = { now })
     }
 
     @After

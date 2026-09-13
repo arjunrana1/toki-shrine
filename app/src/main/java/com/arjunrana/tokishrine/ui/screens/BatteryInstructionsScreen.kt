@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +54,10 @@ fun BatteryInstructionsScreen(
 ) {
     val colors = NocturneTheme.colors
     val detected = remember(detectedManufacturer) { OemBattery.detect(detectedManufacturer) }
-    var selected by remember { mutableStateOf(detected) }
+    // The override survives activity recreation while this screen is
+    // active (review blocker 1); enum values are Serializable, so the
+    // default saver handles them.
+    var selected by rememberSaveable { mutableStateOf(detected) }
     var pickerOpen by remember { mutableStateOf(false) }
     val instructions = OemBattery.instructionsFor(selected)
 

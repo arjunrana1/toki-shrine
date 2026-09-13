@@ -5,20 +5,33 @@ import com.arjunrana.tokishrine.data.repo.EventRepository
 /*
  * Tracks which permissions have an outstanding system request and settles
  * them against actual system state, emitting the §10 permission events:
- * permission_requested when a request is launched, permission_granted /
+ * permission_requested when a system UI is launched, permission_granted /
  * permission_denied when the outcome becomes observable.
  *
- * Pure logic over injected callbacks so the event sequences are pinned in
- * JVM tests; the activity shell supplies the real system-state reader and
- * the event-store writer.
+ * The pending list is injected so the shell can back it with a saveable
+ * snapshot list: outstanding request identities survive activity
+ * recreation (review blocker 1), and after restoration each settles
+ * exactly once from real system state. Call order is load-bearing —
+ * markPending happens synchronously before the system UI is launched,
+ * emitRequested durably records the request, and unmarkPending rolls the
+ * mark back when the record or the launch fails so no phantom outcome is
+ * ever settled. Pure logic over injected callbacks; the sequences are
+ * pinned in JVM tests.
  */
 class PermissionEventLogic(
+    private val pendingRequests: MutableList<AppPermission>,
     private val emitEvent: suspend (name: String, params: Map<String, Any?>) -> Unit,
 ) {
-    private val pendingRequests = LinkedHashSet<AppPermission>()
 
-    suspend fun requested(permission: AppPermission) {
-        pendingRequests.add(permission)
+    fun markPending(permission: AppPermission) {
+        if (!pendingRequests.contains(permission)) pendingRequests.add(permission)
+    }
+
+    fun unmarkPending(permission: AppPermission) {
+        pendingRequests.remove(permission)
+    }
+
+    suspend fun emitRequested(permission: AppPermission) {
         emitEvent(
             EventRepository.EVENT_PERMISSION_REQUESTED,
             mapOf("permission" to permission.eventValue),
@@ -26,8 +39,8 @@ class PermissionEventLogic(
     }
 
     // Immediate outcome path for the notifications runtime dialog, whose
-    // result arrives through the activity-result callback instead of an
-    // app resume. Emits only when a request is actually outstanding, so a
+    // result arrives through the activity-result callback instead of an app
+    // resume. Emits only when a request is actually outstanding, so a
     // stray callback cannot fabricate an outcome event.
     suspend fun resolve(permission: AppPermission, granted: Boolean) {
         if (!pendingRequests.remove(permission)) return

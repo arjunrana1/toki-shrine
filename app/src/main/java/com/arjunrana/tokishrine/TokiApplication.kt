@@ -21,7 +21,7 @@ class TokiApplication : Application() {
 
     val blockRepository: BlockRepository by lazy { BlockRepository(database) }
     val eventRepository: EventRepository by lazy {
-        EventRepository(database.eventDao(), database.appMetaDao())
+        EventRepository(database)
     }
     val installedAppsRepository: InstalledAppsRepository by lazy { InstalledAppsRepository(this) }
 }

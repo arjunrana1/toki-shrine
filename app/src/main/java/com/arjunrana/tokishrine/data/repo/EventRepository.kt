@@ -1,8 +1,10 @@
 package com.arjunrana.tokishrine.data.repo
 
+import androidx.room.withTransaction
 import com.arjunrana.tokishrine.data.db.AppMetaDao
 import com.arjunrana.tokishrine.data.db.EventDao
 import com.arjunrana.tokishrine.data.db.TargetCount
+import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.entity.AppMeta
 import com.arjunrana.tokishrine.data.entity.Event
 import com.arjunrana.tokishrine.data.stats.StatsCalculator
@@ -21,10 +23,15 @@ data class StatsSnapshot(
 // open (and log below) only so instrumented UI tests can gate event writes;
 // production code always uses this class directly.
 open class EventRepository(
-    private val eventDao: EventDao,
-    private val metaDao: AppMetaDao,
+    db: TokiDatabase,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+
+    // The whole event store shares one database; the handle stays reachable
+    // for the transactional completion below.
+    private val db: TokiDatabase = db
+    private val eventDao: EventDao = db.eventDao()
+    private val metaDao: AppMetaDao = db.appMetaDao()
 
     open suspend fun log(
         name: String,
@@ -78,13 +85,30 @@ open class EventRepository(
     suspend fun countAllEvents(): Int = eventDao.countAll()
 
     // Onboarding completion flag (PRD §6 screen 2: persistent and resumable;
-    // the welcome screen returns until onboarding is completed). Written
-    // once, never overwritten, so repeated completions cannot re-trigger it.
+    // the welcome screen returns until onboarding is completed).
     suspend fun isOnboardingCompleted(): Boolean =
         metaDao.get(AppMeta.KEY_ONBOARDING_COMPLETED_AT) != null
 
-    suspend fun markOnboardingCompleted() {
-        metaDao.putIfAbsent(AppMeta(AppMeta.KEY_ONBOARDING_COMPLETED_AT, clock().toString()))
+    // Onboarding completion is terminal: the §10 event and the one-way
+    // app_meta marker commit in one transaction and at most once, so a
+    // repeated or recreated Continue can produce neither a second
+    // onboarding_completed event nor an event/marker disagreement (review
+    // blocker 2). Returns whether this call recorded the completion.
+    open suspend fun completeOnboarding(grantedCount: Int): Boolean = db.withTransaction {
+        ensureFirstLaunchRecorded()
+        if (metaDao.get(AppMeta.KEY_ONBOARDING_COMPLETED_AT) != null) {
+            false
+        } else {
+            eventDao.insert(
+                Event(
+                    name = EVENT_ONBOARDING_COMPLETED,
+                    timestampUtc = clock(),
+                    paramsJson = JSONObject(mapOf("granted_count" to grantedCount)).toString(),
+                ),
+            )
+            metaDao.putIfAbsent(AppMeta(AppMeta.KEY_ONBOARDING_COMPLETED_AT, clock().toString()))
+            true
+        }
     }
 
     private suspend fun ensureFirstLaunchRecorded() {

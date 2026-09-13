@@ -6,13 +6,28 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 // Pins the §10 permission event sequences driven by the Phase 3 checklist:
-// requested → granted/denied exactly once per outstanding request.
+// requested → granted/denied exactly once per outstanding request —
+// including requests restored after activity recreation (review blocker 1),
+// where the pending list is rebuilt from its saved values.
 class PermissionEventLogicTest {
 
     private data class Emitted(val name: String, val params: Map<String, Any?>)
 
-    private fun logic(events: MutableList<Emitted>) = PermissionEventLogic { name, params ->
+    // The pending list is injected in production as a saveable snapshot
+    // list; tests drive both the fresh and the restored (pre-populated)
+    // shapes through the same constructor.
+    private fun logic(
+        events: MutableList<Emitted>,
+        pending: MutableList<AppPermission> = mutableListOf(),
+    ) = PermissionEventLogic(pending) { name, params ->
         events.add(Emitted(name, params))
+    }
+
+    // The call-site sequence used by MainActivity's requestPermission:
+    // synchronous mark, durable requested record, then the system UI.
+    private suspend fun request(logic: PermissionEventLogic, permission: AppPermission) {
+        logic.markPending(permission)
+        logic.emitRequested(permission)
     }
 
     @Test
@@ -20,7 +35,7 @@ class PermissionEventLogicTest {
         val events = mutableListOf<Emitted>()
         val logic = logic(events)
 
-        logic.requested(AppPermission.ACCESSIBILITY)
+        request(logic, AppPermission.ACCESSIBILITY)
         logic.settle { it == AppPermission.ACCESSIBILITY }
 
         assertEquals(
@@ -37,7 +52,7 @@ class PermissionEventLogicTest {
         val events = mutableListOf<Emitted>()
         val logic = logic(events)
 
-        logic.requested(AppPermission.OVERLAY)
+        request(logic, AppPermission.OVERLAY)
         logic.settle { false }
 
         assertEquals(
@@ -64,7 +79,7 @@ class PermissionEventLogicTest {
         val events = mutableListOf<Emitted>()
         val logic = logic(events)
 
-        logic.requested(AppPermission.NOTIFICATIONS)
+        request(logic, AppPermission.NOTIFICATIONS)
         logic.resolve(AppPermission.NOTIFICATIONS, granted = true)
         // The activity also resumes after the dialog; the request is
         // already settled and must not emit a second outcome.
@@ -94,8 +109,8 @@ class PermissionEventLogicTest {
         val events = mutableListOf<Emitted>()
         val logic = logic(events)
 
-        logic.requested(AppPermission.ACCESSIBILITY)
-        logic.requested(AppPermission.BATTERY)
+        request(logic, AppPermission.ACCESSIBILITY)
+        request(logic, AppPermission.BATTERY)
         logic.settle { it == AppPermission.ACCESSIBILITY }
 
         assertEquals(
@@ -114,11 +129,12 @@ class PermissionEventLogicTest {
         val events = mutableListOf<Emitted>()
         val logic = logic(events)
 
-        logic.requested(AppPermission.OVERLAY)
+        request(logic, AppPermission.OVERLAY)
         logic.settle { false }
+        // A second resume right after must not re-emit the outcome.
         logic.settle { true }
 
-        logic.requested(AppPermission.OVERLAY)
+        request(logic, AppPermission.OVERLAY)
         logic.settle { true }
 
         assertEquals(
@@ -127,6 +143,112 @@ class PermissionEventLogicTest {
                 Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "overlay")),
                 Emitted(EventRepository.EVENT_PERMISSION_REQUESTED, mapOf("permission" to "overlay")),
                 Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "overlay")),
+            ),
+            events,
+        )
+    }
+
+    // — restoration (review blocker 1): the pending list arrives
+    // pre-populated from its saved values —
+
+    @Test
+    fun restoredAccessibilityRequestSettlesExactlyOnceFromRealState() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        // Simulates recreation: the saveable list was restored with the
+        // outstanding accessibility request still pending.
+        val logic = logic(events, pending = mutableListOf(AppPermission.ACCESSIBILITY))
+
+        logic.settle { true }
+        logic.settle { true }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility")),
+            ),
+            events,
+        )
+    }
+
+    @Test
+    fun restoredRequestStillMissingSettlesDeniedOnce() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(events, pending = mutableListOf(AppPermission.BATTERY))
+
+        logic.settle { false }
+        logic.settle { false }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "battery")),
+            ),
+            events,
+        )
+    }
+
+    @Test
+    fun restoredRequestCannotEmitADuplicateResultAfterCallbackAndResume() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(events, pending = mutableListOf(AppPermission.NOTIFICATIONS))
+
+        logic.resolve(AppPermission.NOTIFICATIONS, granted = true)
+        logic.settle { true }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "notifications")),
+            ),
+            events,
+        )
+    }
+
+    @Test
+    fun multipleRestoredRequestsEachSettleOnce() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(
+            events,
+            pending = mutableListOf(AppPermission.ACCESSIBILITY, AppPermission.OVERLAY, AppPermission.BATTERY),
+        )
+
+        logic.settle { it == AppPermission.OVERLAY }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "accessibility")),
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "overlay")),
+                Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "battery")),
+            ),
+            events,
+        )
+    }
+
+    @Test
+    fun unmarkingARolledBackRequestPreventsAnyOutcome() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(events)
+
+        logic.markPending(AppPermission.OVERLAY)
+        // The requested record or the launch failed; the mark is rolled
+        // back, so no outcome may settle later.
+        logic.unmarkPending(AppPermission.OVERLAY)
+        logic.settle { true }
+
+        assertEquals(emptyList<Emitted>(), events)
+    }
+
+    @Test
+    fun markingTwiceStillYieldsASingleOutcome() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(events)
+
+        logic.markPending(AppPermission.ACCESSIBILITY)
+        logic.markPending(AppPermission.ACCESSIBILITY)
+        logic.emitRequested(AppPermission.ACCESSIBILITY)
+        logic.settle { true }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_REQUESTED, mapOf("permission" to "accessibility")),
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility")),
             ),
             events,
         )

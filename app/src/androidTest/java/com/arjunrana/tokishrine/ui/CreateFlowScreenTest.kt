@@ -103,7 +103,7 @@ class CreateFlowScreenTest {
         }
     }
 
-    private class GatedEventRepository(db: TokiDatabase) : EventRepository(db.eventDao(), db.appMetaDao()) {
+    private class GatedEventRepository(db: TokiDatabase) : EventRepository(db) {
         val gatedNames = mutableSetOf<String>()
         val gate = SuspensionGate()
 

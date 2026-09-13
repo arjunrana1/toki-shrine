@@ -3,6 +3,7 @@ package com.arjunrana.tokishrine.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -24,14 +25,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.arjunrana.tokishrine.data.permissions.AppPermission
 import com.arjunrana.tokishrine.data.permissions.PermissionEventLogic
 import com.arjunrana.tokishrine.data.repo.EventRepository
@@ -39,20 +43,16 @@ import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
+import com.arjunrana.tokishrine.ui.navigation.ChecklistMode
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.TerminalAction
 import kotlinx.coroutines.launch
-
-// How the checklist was reached, which drives chrome and onboarding events:
-// ONBOARDING — first run, reached from the welcome screen (fires
-//   onboarding_started upstream, onboarding_completed on Continue);
-// GATE — an ON toggle was tapped without accessibility (PRD §12: the gate
-//   falls on activation, never before);
-// SETTINGS — the Settings permission-health row reuses this component.
-enum class ChecklistMode { ONBOARDING, GATE, SETTINGS }
 
 // Screen 2: exactly four rows, two states each — pending and granted —
 // plus a progress bar and "n of 4" count (PRD §6). The displayed state is
-// the hoisted system snapshot, refreshed on every app resume.
+// the hoisted system snapshot, refreshed on every app resume. ChecklistMode
+// lives in ui.navigation with the routes: it is restored navigation state
+// (review blocker 1).
 @Composable
 fun PermissionChecklistScreen(
     mode: ChecklistMode,
@@ -60,6 +60,7 @@ fun PermissionChecklistScreen(
     permissionEvents: PermissionEventLogic,
     eventRepo: EventRepository,
     onStatesChanged: () -> Unit,
+    onRequestPermission: (permission: AppPermission, launchSystemUi: () -> Unit) -> Unit,
     onOpenAccessibilityExplainer: () -> Unit,
     onOpenBatteryInstructions: () -> Unit,
     onBack: () -> Unit,
@@ -68,6 +69,16 @@ fun PermissionChecklistScreen(
     val colors = NocturneTheme.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Onboarding completion is terminal: single-flight, atomic in the
+    // repository, and Back is absorbed while the commit is in flight so it
+    // cannot race the single navigation result (review blocker 2).
+    val terminal = remember(lifecycleOwner) { TerminalAction(lifecycleOwner.lifecycleScope) }
+    BackHandler(enabled = terminal.busy) {
+        // Completion commit in flight; its own onContinue performs the
+        // single navigation.
+    }
 
     // The runtime notification dialog reports its outcome through this
     // callback rather than an app resume, so it settles the request itself.
@@ -145,8 +156,7 @@ fun PermissionChecklistScreen(
                             when (permission) {
                                 AppPermission.ACCESSIBILITY -> onOpenAccessibilityExplainer()
                                 AppPermission.BATTERY -> onOpenBatteryInstructions()
-                                AppPermission.OVERLAY -> {
-                                    scope.launch { permissionEvents.requested(AppPermission.OVERLAY) }
+                                AppPermission.OVERLAY -> onRequestPermission(AppPermission.OVERLAY) {
                                     context.startActivity(
                                         Intent(
                                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -154,8 +164,7 @@ fun PermissionChecklistScreen(
                                         ),
                                     )
                                 }
-                                AppPermission.NOTIFICATIONS -> {
-                                    scope.launch { permissionEvents.requested(AppPermission.NOTIFICATIONS) }
+                                AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
                                     notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                                 }
                             }
@@ -168,19 +177,24 @@ fun PermissionChecklistScreen(
                 "Continue",
                 block = true,
                 height = 46.dp,
+                enabled = !terminal.busy,
                 onClick = {
-                    if (mode == ChecklistMode.ONBOARDING) {
-                        scope.launch {
-                            eventRepo.log(
-                                EventRepository.EVENT_ONBOARDING_COMPLETED,
-                                params = mapOf("granted_count" to grantedCount),
-                            )
-                            eventRepo.markOnboardingCompleted()
-                            onContinue()
-                        }
-                    } else {
-                        onContinue()
-                    }
+                    // Onboarding mode completes terminally: the §10 event
+                    // and the one-way app_meta marker commit atomically and
+                    // at most once (EventRepository.completeOnboarding), and
+                    // navigation happens only after the commit succeeds.
+                    // Gate/settings modes perform a plain pop.
+                    terminal.run(
+                        commit = {
+                            if (mode == ChecklistMode.ONBOARDING) {
+                                eventRepo.completeOnboarding(grantedCount)
+                            } else {
+                                true
+                            }
+                        },
+                        onChanged = {},
+                        onCommitted = onContinue,
+                    )
                 },
             )
         }

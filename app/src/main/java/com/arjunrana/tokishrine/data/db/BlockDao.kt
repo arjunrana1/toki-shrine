@@ -30,8 +30,10 @@ interface BlockDao {
     @Update
     suspend fun updateBlock(block: Block)
 
-    @Query("UPDATE blocks SET enabled = :enabled WHERE id = :id")
-    suspend fun setEnabled(id: Long, enabled: Boolean)
+    // Row count, so the caller records the transition event only for a real
+    // change: 1 when the stored value differed, 0 when it already matched.
+    @Query("UPDATE blocks SET enabled = :enabled WHERE id = :id AND enabled <> :enabled")
+    suspend fun setEnabled(id: Long, enabled: Boolean): Int
 
     @Query("DELETE FROM blocks WHERE id = :id")
     suspend fun deleteBlock(id: Long)

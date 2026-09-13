@@ -4,9 +4,11 @@ import androidx.room.withTransaction
 import com.arjunrana.tokishrine.data.db.BlockDao
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.db.TokiDatabase
+import com.arjunrana.tokishrine.data.entity.AppMeta
 import com.arjunrana.tokishrine.data.entity.BlockedApp
 import com.arjunrana.tokishrine.data.entity.BlockedSite
 import com.arjunrana.tokishrine.data.entity.Block
+import com.arjunrana.tokishrine.data.entity.Event
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import kotlinx.coroutines.flow.Flow
 
@@ -39,9 +41,13 @@ data class BlockDraft(
 
 // open only so instrumented UI tests can gate the async reads the create
 // flow performs; production code always uses this class directly.
-open class BlockRepository(private val db: TokiDatabase) {
+open class BlockRepository(
+    private val db: TokiDatabase,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
 
     private val dao: BlockDao = db.blockDao()
+    private val metaDao = db.appMetaDao()
 
     // PRD §4: a new block is saved OFF and does nothing until turned on —
     // enabled is forced false regardless of any draft state.
@@ -146,7 +152,40 @@ open class BlockRepository(private val db: TokiDatabase) {
 
     fun observeBlocksWithContents(): Flow<List<BlockWithContents>> = dao.observeBlocksWithContents()
 
-    suspend fun setEnabled(id: Long, enabled: Boolean) = dao.setEnabled(id, enabled)
+    // The terminal enabled-state transition (turn-on/turn-off): the blocks
+    // row and its block_turned_on/off event commit in one transaction, so a
+    // cancelled or failed caller can never leave a block without its event
+    // (review blocker 2). Returns whether the stored value actually changed
+    // — an already-stored value emits no event (and no haptic upstream).
+    suspend fun setEnabledRecordingTransition(id: Long, enabled: Boolean): Boolean = db.withTransaction {
+        val changed = dao.setEnabled(id, enabled) > 0
+        if (changed) {
+            // Transition events carry no target, so they are written
+            // directly beside the state change rather than through
+            // EventRepository.log, which would run outside this
+            // transaction. First-launch parity with log().
+            metaDao.putIfAbsent(AppMeta(AppMeta.KEY_FIRST_LAUNCH_AT, clock().toString()))
+            db.eventDao().insert(
+                Event(
+                    name = if (enabled) {
+                        EventRepository.EVENT_BLOCK_TURNED_ON
+                    } else {
+                        EventRepository.EVENT_BLOCK_TURNED_OFF
+                    },
+                    timestampUtc = clock(),
+                    blockId = id,
+                ),
+            )
+        }
+        changed
+    }
+
+    // Direct state write with no transition event — fixture seeding and
+    // future internal re-arm only. Every user-visible transition goes
+    // through setEnabledRecordingTransition; internal keeps it out of
+    // production call sites while staying visible to the test source sets.
+    internal suspend fun setEnabled(id: Long, enabled: Boolean): Boolean =
+        dao.setEnabled(id, enabled) > 0
 
     suspend fun deleteBlock(id: Long) = dao.deleteBlock(id)
 
