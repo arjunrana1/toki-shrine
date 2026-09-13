@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,7 @@ import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.BlockHaptics
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.formatEstimate
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
@@ -50,6 +52,7 @@ fun TurnOnScreen(
     onClose: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var block by remember { mutableStateOf<BlockWithContents?>(null) }
 
     LaunchedEffect(blockId) {
@@ -166,6 +169,9 @@ fun TurnOnScreen(
                 height = 48.dp,
                 fontSize = 15,
                 onClick = {
+                    // The one path that enables a block — both toggle entry
+                    // points route here — confirms with the stronger haptic.
+                    BlockHaptics.turnedOn(context)
                     scope.launch {
                         blockRepo.setEnabled(blockId, true)
                         eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_ON, blockId = blockId)

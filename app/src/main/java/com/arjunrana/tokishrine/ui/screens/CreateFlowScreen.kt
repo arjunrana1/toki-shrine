@@ -58,7 +58,6 @@ import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.formatCountdown
-import com.arjunrana.tokishrine.ui.util.formatEstimate
 import com.arjunrana.tokishrine.ui.util.isValidFullDomain
 import com.arjunrana.tokishrine.ui.util.toImageBitmap
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
@@ -875,7 +874,10 @@ private fun EstimateBox(state: CreateFlowState) {
         PhosphorIcon(Ph.Timer, tint = colors.accentRamp.step300, size = 22)
         Spacer(Modifier.width(11.dp))
         Text(
-            "${formatEstimate(typingEstimateSeconds(state.pauseChars))} to type each time you want in",
+            // Owner copy, 13 September. The passage range (50–200 chars at
+            // 0.4 s/char) keeps this in plain 20–80 seconds, so no minute
+            // formatting is needed.
+            "You'll take ${typingEstimateSeconds(state.pauseChars)} seconds to type random words each time you want to pause this block.",
             fontSize = 13.sp,
             lineHeight = 18.sp,
             color = colors.text,

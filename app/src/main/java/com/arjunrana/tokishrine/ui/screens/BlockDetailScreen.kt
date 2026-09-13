@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +48,7 @@ import com.arjunrana.tokishrine.ui.components.TargetRow
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.BlockHaptics
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
@@ -68,6 +70,7 @@ fun BlockDetailScreen(
     onEditFriction: (Long) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var block by remember { mutableStateOf<BlockWithContents?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -80,6 +83,9 @@ fun BlockDetailScreen(
     val isOff = !loaded.block.enabled
 
     fun turnOff() {
+        // Owner addendum, 13 September: turning off confirms with the
+        // lighter haptic.
+        BlockHaptics.turnedOff(context)
         scope.launch {
             blockRepo.setEnabled(blockId, false)
             eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_OFF, blockId = blockId)

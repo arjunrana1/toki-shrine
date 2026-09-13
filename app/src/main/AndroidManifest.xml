@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Normal, install-time permission for the turn-on/turn-off haptic
+         confirmation (owner addendum, 13 September). No other permissions. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- The app picker lists launchable apps; this keeps package visibility
          scoped to launchable activities instead of QUERY_ALL_PACKAGES. -->
     <queries>

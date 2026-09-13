@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +39,7 @@ import com.arjunrana.tokishrine.ui.components.NocturneSwitch
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.BlockHaptics
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import kotlinx.coroutines.launch
 
@@ -52,6 +54,7 @@ fun BlockListScreen(
     onTurnOn: (Long) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val blocks by blockRepo.observeBlocksWithContents().collectAsState(initial = null as List<BlockWithContents>?)
 
     Box(
@@ -109,6 +112,9 @@ fun BlockListScreen(
                                 if (on) {
                                     onTurnOn(block.block.id)
                                 } else {
+                                    // Turning off confirms with the lighter
+                                    // haptic (owner addendum, 13 September).
+                                    BlockHaptics.turnedOff(context)
                                     scope.launch {
                                         blockRepo.setEnabled(block.block.id, false)
                                         eventRepo.log(EventRepository.EVENT_BLOCK_TURNED_OFF, blockId = block.block.id)
