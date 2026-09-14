@@ -1,6 +1,7 @@
 package com.arjunrana.tokishrine.data.permissions
 
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -249,6 +250,156 @@ class PermissionEventLogicTest {
             listOf(
                 Emitted(EventRepository.EVENT_PERMISSION_REQUESTED, mapOf("permission" to "accessibility")),
                 Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility")),
+            ),
+            events,
+        )
+    }
+
+    // — outcome durability (review round 2): a failed or cancelled event
+    // write keeps the pending identity so the outcome can be retried, and
+    // a written outcome is never repeated —
+
+    @Test
+    fun failedResolveRetainsPendingAndARetryEmitsExactlyOnce() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        var failNextOutcome = true
+        val logic = PermissionEventLogic(mutableListOf(AppPermission.OVERLAY)) { name, params ->
+            if (failNextOutcome) {
+                failNextOutcome = false
+                throw IllegalStateException("event write failed")
+            }
+            events.add(Emitted(name, params))
+        }
+
+        try {
+            logic.resolve(AppPermission.OVERLAY, granted = true)
+            throw AssertionError("resolve must propagate the event-write failure")
+        } catch (_: IllegalStateException) {
+        }
+        assertEquals(emptyList<Emitted>(), events)
+
+        // The identity survived the failed write: the retry emits exactly
+        // once, clears it, and a later resume cannot repeat the outcome.
+        logic.resolve(AppPermission.OVERLAY, granted = true)
+        logic.settle { true }
+
+        assertEquals(
+            listOf(Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "overlay"))),
+            events,
+        )
+    }
+
+    @Test
+    fun cancelledResolveRetainsPendingForRetry() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        var cancelNextOutcome = true
+        val logic = PermissionEventLogic(mutableListOf(AppPermission.NOTIFICATIONS)) { name, params ->
+            if (cancelNextOutcome) {
+                cancelNextOutcome = false
+                throw CancellationException("cancelled mid-write")
+            }
+            events.add(Emitted(name, params))
+        }
+
+        try {
+            logic.resolve(AppPermission.NOTIFICATIONS, granted = false)
+        } catch (_: CancellationException) {
+        }
+        assertEquals(emptyList<Emitted>(), events)
+
+        logic.resolve(AppPermission.NOTIFICATIONS, granted = false)
+        logic.settle { true }
+
+        assertEquals(
+            listOf(Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "notifications"))),
+            events,
+        )
+    }
+
+    @Test
+    fun settleWriteFailureRetainsThatRequestForRetry() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        var failNextOutcome = true
+        val logic = PermissionEventLogic(mutableListOf(AppPermission.BATTERY)) { name, params ->
+            if (failNextOutcome) {
+                failNextOutcome = false
+                throw IllegalStateException("event write failed")
+            }
+            events.add(Emitted(name, params))
+        }
+
+        try {
+            logic.settle { true }
+            throw AssertionError("settle must propagate the event-write failure")
+        } catch (_: IllegalStateException) {
+        }
+        assertEquals(emptyList<Emitted>(), events)
+
+        logic.settle { false }
+        logic.settle { true }
+
+        assertEquals(
+            listOf(Emitted(EventRepository.EVENT_PERMISSION_DENIED, mapOf("permission" to "battery"))),
+            events,
+        )
+    }
+
+    @Test
+    fun settleStateCheckFailureRetainsEverythingForRetry() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        val logic = logic(events, pending = mutableListOf(AppPermission.ACCESSIBILITY))
+
+        try {
+            logic.settle { throw IllegalStateException("settings read failed") }
+            throw AssertionError("settle must propagate the state-check failure")
+        } catch (_: IllegalStateException) {
+        }
+        assertEquals(emptyList<Emitted>(), events)
+
+        logic.settle { true }
+
+        assertEquals(
+            listOf(Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility"))),
+            events,
+        )
+    }
+
+    @Test
+    fun settleRemovesWrittenItemsAndKeepsFailedAndUnprocessedPending() = runBlocking {
+        val events = mutableListOf<Emitted>()
+        var outcomeWrites = 0
+        val logic = PermissionEventLogic(
+            mutableListOf(AppPermission.ACCESSIBILITY, AppPermission.BATTERY, AppPermission.OVERLAY),
+        ) { name, params ->
+            if (name != EventRepository.EVENT_PERMISSION_REQUESTED) {
+                outcomeWrites += 1
+                // First outcome writes and is removed; the second (battery)
+                // fails and must stay pending along with the unprocessed
+                // third (overlay).
+                if (outcomeWrites == 2) throw IllegalStateException("event write failed")
+            }
+            events.add(Emitted(name, params))
+        }
+
+        try {
+            logic.settle { it == AppPermission.ACCESSIBILITY }
+        } catch (_: IllegalStateException) {
+        }
+        assertEquals(
+            listOf(Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility"))),
+            events,
+        )
+
+        // Retry settles battery and overlay exactly once; the already
+        // written accessibility outcome cannot repeat.
+        logic.settle { true }
+        logic.settle { true }
+
+        assertEquals(
+            listOf(
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "accessibility")),
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "battery")),
+                Emitted(EventRepository.EVENT_PERMISSION_GRANTED, mapOf("permission" to "overlay")),
             ),
             events,
         )

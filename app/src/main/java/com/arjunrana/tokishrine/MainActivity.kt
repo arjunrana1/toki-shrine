@@ -151,14 +151,26 @@ class MainActivity : ComponentActivity() {
 
                 // First run shows the welcome screen until onboarding is
                 // completed (app_meta flag); never a gate (PRD §12).
-                // launchResolved is itself saved, so a recreated session
-                // restores the stack as-is instead of re-deciding and
-                // pushing Welcome over an in-flight onboarding checklist.
+                // launchResolved is itself saved, but flips to true only
+                // after the decision below has fully finished — a cancelled
+                // lookup leaves it unresolved, so the recreated activity
+                // retries instead of skipping Welcome; a restored non-root
+                // stack resolves without re-running the root decision.
                 var launchResolved by rememberSaveable { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
-                    if (!launchResolved && stack.size == 1 && stack[0] == Route.BlockList) {
+                    if (!launchResolved) {
+                        if (stack.size == 1 && stack[0] == Route.BlockList) {
+                            // Genuine root launch: complete the suspended
+                            // onboarding lookup and the route it decides
+                            // before marking the launch resolved.
+                            if (!app.eventRepository.isOnboardingCompleted()) {
+                                stack.add(Route.Welcome)
+                            }
+                        }
+                        // Any other stack shape is a restored session that
+                        // already left the root — resolve without pushing
+                        // Welcome or repeating the lookup.
                         launchResolved = true
-                        if (!app.eventRepository.isOnboardingCompleted()) stack.add(Route.Welcome)
                     }
                 }
 
