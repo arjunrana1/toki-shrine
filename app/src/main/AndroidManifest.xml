@@ -9,6 +9,14 @@
          (PRD §12); only exists from API 33, which is the minSdk. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Special permission for the pause screen and timer bubble drawn over
+         other apps (PRD §12). Without this declaration the app is absent
+         from Settings › Special app access › Display over other apps, so
+         the overlay row could never be granted (P3-F01, owner validation
+         19 September). Granting stays user-mediated in that system screen;
+         state is read only through Settings.canDrawOverlays. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- Normal permission required to fire the universal
          ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS dialog (PRD §6 screen 4,
          the baseline battery path for non-Samsung manufacturers). -->

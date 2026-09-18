@@ -317,7 +317,6 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             },
-                            onDone = { stack.removeAt(stack.lastIndex) },
                         )
 
                         Route.Settings -> SettingsScreen(

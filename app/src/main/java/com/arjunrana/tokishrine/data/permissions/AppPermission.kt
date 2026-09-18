@@ -10,33 +10,41 @@ import androidx.core.content.ContextCompat
 import com.arjunrana.tokishrine.TokiAccessibilityService
 
 /*
- * The four onboarding permissions (PRD §12). Row copy follows the §12
- * "stated purpose" column — the authority over the mock's wording, which
- * still claims the overlay shows the pause screen (§13: overlay is needed
- * only for the floating bubble).
+ * The four onboarding permissions (PRD §12). Declaration order is the
+ * checklist display order, and row copy plus the Essential/Better
+ * experience grouping follow the owner-supplied `Accessibility screen
+ * design v2.png` (P3-F02, 19 September) — that reference supersedes the
+ * older §12 stated-purpose wording, which the overlay row no longer
+ * matches: it now names the pause screen as well as the timer bubble.
+ * eventValue strings are §10 event identity and must never change.
  */
 enum class AppPermission(
     val eventValue: String,
+    val essential: Boolean,
     val rowTitle: String,
     val rowDescription: String,
 ) {
     ACCESSIBILITY(
         eventValue = "accessibility",
+        essential = true,
         rowTitle = "Accessibility",
         rowDescription = "Tells us which app or site is open",
     ),
-    OVERLAY(
-        eventValue = "overlay",
-        rowTitle = "Display over other apps",
-        rowDescription = "Shows the timer bubble",
-    ),
     BATTERY(
         eventValue = "battery",
+        essential = true,
         rowTitle = "Battery exemption",
         rowDescription = "Stops the phone shutting us down in the background",
     ),
+    OVERLAY(
+        eventValue = "overlay",
+        essential = false,
+        rowTitle = "Display over other apps",
+        rowDescription = "Shows the pause screen and the timer bubble",
+    ),
     NOTIFICATIONS(
         eventValue = "notifications",
+        essential = false,
         rowTitle = "Notifications",
         rowDescription = "Shows the pause countdown",
     ),

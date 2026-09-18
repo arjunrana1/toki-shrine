@@ -49,10 +49,13 @@ import com.arjunrana.tokishrine.ui.util.TerminalAction
 import kotlinx.coroutines.launch
 
 // Screen 2: exactly four rows, two states each — pending and granted —
-// plus a progress bar and "n of 4" count (PRD §6). The displayed state is
-// the hoisted system snapshot, refreshed on every app resume. ChecklistMode
-// lives in ui.navigation with the routes: it is restored navigation state
-// (review blocker 1).
+// plus a progress bar and "n of 4" count (PRD §6). Row order, grouping
+// and copy follow the owner-supplied `Accessibility screen design v2.png`
+// (P3-F02, 19 September): Essential permissions (Accessibility, Battery),
+// then For a better experience (Overlay, Notifications). The displayed
+// state is the hoisted system snapshot, refreshed on every app resume.
+// ChecklistMode lives in ui.navigation with the routes: it is restored
+// navigation state (review blocker 1).
 @Composable
 fun PermissionChecklistScreen(
     mode: ChecklistMode,
@@ -113,10 +116,14 @@ fun PermissionChecklistScreen(
                 fontSize = 23.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.text,
-                modifier = Modifier.padding(top = 6.dp),
+                // Onboarding carries no appbar, so the heading itself owns
+                // the safe gap below the status bar (P3-F02/P3-F15).
+                modifier = Modifier.padding(
+                    top = if (mode == ChecklistMode.ONBOARDING) 56.dp else 6.dp,
+                ),
             )
             Text(
-                "Toki Shrine can't work without these. Here's exactly what each one is for.",
+                "Two are essential. The rest just make Toki Shrine nicer to live with.",
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
                 color = colors.neutral.step500,
@@ -147,31 +154,36 @@ fun PermissionChecklistScreen(
                     color = colors.neutral.step500,
                 )
             }
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AppPermission.values().forEach { permission ->
-                    PermissionRow(
-                        permission = permission,
-                        granted = states[permission] == true,
-                        onRequest = {
-                            when (permission) {
-                                AppPermission.ACCESSIBILITY -> onOpenAccessibilityExplainer()
-                                AppPermission.BATTERY -> onOpenBatteryInstructions()
-                                AppPermission.OVERLAY -> onRequestPermission(AppPermission.OVERLAY) {
-                                    context.startActivity(
-                                        Intent(
-                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                            Uri.parse("package:${context.packageName}"),
-                                        ),
-                                    )
-                                }
-                                AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
-                                    notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            }
-                        },
-                    )
+            val request: (AppPermission) -> Unit = { permission ->
+                when (permission) {
+                    AppPermission.ACCESSIBILITY -> onOpenAccessibilityExplainer()
+                    AppPermission.BATTERY -> onOpenBatteryInstructions()
+                    AppPermission.OVERLAY -> onRequestPermission(AppPermission.OVERLAY) {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:${context.packageName}"),
+                            ),
+                        )
+                    }
+                    AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
+                        notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 }
             }
+            PermissionGroup(
+                label = "Essential permissions",
+                permissions = AppPermission.values().filter { it.essential },
+                states = states,
+                onRequest = request,
+            )
+            PermissionGroup(
+                label = "For a better experience",
+                permissions = AppPermission.values().filter { !it.essential },
+                states = states,
+                onRequest = request,
+                modifier = Modifier.padding(top = 24.dp),
+            )
             Spacer(Modifier.weight(1f))
             NocturneButton(
                 "Continue",
@@ -197,6 +209,37 @@ fun PermissionChecklistScreen(
                     )
                 },
             )
+        }
+    }
+}
+
+// One labeled band of the checklist (owner-supplied grouping, P3-F02):
+// the section header, then its rows in declaration order.
+@Composable
+private fun PermissionGroup(
+    label: String,
+    permissions: List<AppPermission>,
+    states: Map<AppPermission, Boolean>,
+    onRequest: (AppPermission) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = NocturneTheme.colors
+    Column(modifier) {
+        Text(
+            label.uppercase(),
+            fontSize = 11.sp,
+            letterSpacing = 0.88.sp,
+            color = colors.neutral.step500,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            permissions.forEach { permission ->
+                PermissionRow(
+                    permission = permission,
+                    granted = states[permission] == true,
+                    onRequest = { onRequest(permission) },
+                )
+            }
         }
     }
 }

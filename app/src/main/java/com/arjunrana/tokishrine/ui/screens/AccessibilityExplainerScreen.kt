@@ -24,7 +24,9 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 
 // Screen 3: shown before Android's own accessibility screen (PRD §5/§6 —
 // this content is load-bearing; if it fails, users abandon here). States
-// plainly what the service does and never does.
+// plainly what the service does and never does. Title, body and list
+// content follow the owner-supplied `Accessibility Explainer.png`
+// replacement reference (P3-F03, 19 September).
 @Composable
 fun AccessibilityExplainerScreen(
     onBack: () -> Unit,
@@ -45,13 +47,13 @@ fun AccessibilityExplainerScreen(
         ) {
             NocturneAppbar(title = "Accessibility", onBack = onBack)
             Text(
-                "The next screen looks alarming.",
+                "About the accessibility screen",
                 fontSize = 23.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.text,
             )
             Text(
-                "Android warns that we can \"view everything you do.\" That's the standard wording for this permission. Here's what we actually do with it.",
+                "Android calls this \"full control of your device\" and warns we can \"view everything you do.\" That's its standard wording for accessibility access — here's what we actually do with it.",
                 fontSize = 13.5.sp,
                 lineHeight = 22.sp,
                 color = colors.neutral.step500,
@@ -65,9 +67,9 @@ fun AccessibilityExplainerScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             Column {
-                DoRow(true, "Check which app is in front of you")
+                DoRow(true, "See which app or site is open")
                 Spacer(Modifier.height(9.dp))
-                DoRow(true, "Read the address bar in supported browsers")
+                DoRow(true, "Show the pause screen over it")
             }
             Text(
                 "WHAT WE NEVER DO",
@@ -79,9 +81,9 @@ fun AccessibilityExplainerScreen(
             Column {
                 DoRow(false, "Read the contents of any page")
                 Spacer(Modifier.height(9.dp))
-                DoRow(false, "Log or store your browsing")
+                DoRow(false, "Tap, type, or act for you")
                 Spacer(Modifier.height(9.dp))
-                DoRow(false, "Send anything off your phone")
+                DoRow(false, "Log, store, or send your activity anywhere")
             }
             Spacer(Modifier.weight(1f))
             NocturneButton(

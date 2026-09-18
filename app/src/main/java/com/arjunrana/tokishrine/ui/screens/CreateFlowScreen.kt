@@ -966,6 +966,19 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
             enabled = state.apps.isNotEmpty() || state.sites.isNotEmpty(),
             onClick = onSave,
         )
+        // P3-F06 (owner request, 19 September): the OFF-after-save path is
+        // stated explicitly; the block still saves switched off and is
+        // turned on only from the Blocks homescreen.
+        Text(
+            "Turn it on from the \"Blocks\" homescreen.",
+            fontSize = 11.5.sp,
+            lineHeight = 17.sp,
+            color = NocturneTheme.colors.neutral.step500,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+        )
     }
 }
 

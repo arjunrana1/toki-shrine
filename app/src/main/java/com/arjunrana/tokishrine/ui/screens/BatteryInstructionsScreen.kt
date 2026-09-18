@@ -35,7 +35,6 @@ import androidx.compose.ui.window.Dialog
 import com.arjunrana.tokishrine.data.permissions.BatteryOem
 import com.arjunrana.tokishrine.data.permissions.BatteryStepPart
 import com.arjunrana.tokishrine.data.permissions.OemBattery
-import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
@@ -44,13 +43,14 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 // on Samsung hardware; "Not a Samsung? Pick your phone" opens the override
 // picker. There is no text field on this screen, so the One UI
 // keyboard+dialog freeze guidance (DECISIONS.md, Phase 2) does not apply —
-// still flagged for device validation like every dialog.
+// still flagged for device validation like every dialog. The completion
+// CTA was removed by owner request (P3-F05, 19 September); Back and
+// returning from battery settings both settle state on the checklist.
 @Composable
 fun BatteryInstructionsScreen(
     detectedManufacturer: String?,
     onBack: () -> Unit,
     onOpenBatterySettings: (BatteryOem) -> Unit,
-    onDone: () -> Unit,
 ) {
     val colors = NocturneTheme.colors
     val detected = remember(detectedManufacturer) { OemBattery.detect(detectedManufacturer) }
@@ -113,13 +113,6 @@ fun BatteryInstructionsScreen(
                 block = true,
                 height = 46.dp,
                 onClick = { onOpenBatterySettings(selected) },
-            )
-            NocturneButton(
-                "I've done this",
-                variant = ButtonVariant.GHOST,
-                block = true,
-                onClick = onDone,
-                modifier = Modifier.padding(top = 8.dp),
             )
             Text(
                 buildAnnotatedString {
