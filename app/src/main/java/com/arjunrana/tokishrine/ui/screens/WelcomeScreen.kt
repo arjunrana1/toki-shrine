@@ -26,6 +26,8 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 // Screen 1 (first launch only). Single CTA Get started — the mock's
 // "How it works" secondary CTA is removed per PRD §6. Browsing and block
 // creation are never gated behind this screen or onboarding (PRD §12).
+// Headline and body copy are the owner's replacement wording (direct
+// correction, 19 September), superseding the PRD §6 screen-1 text.
 @Composable
 fun WelcomeScreen(
     onGetStarted: () -> Unit,
@@ -50,26 +52,35 @@ fun WelcomeScreen(
         }
         Spacer(Modifier.height(26.dp))
         Text(
-            "Toki Shrine",
-            fontSize = 30.sp,
+            "Your time, your rules",
+            fontSize = 28.sp,
+            lineHeight = 34.sp,
             fontWeight = FontWeight.Medium,
             color = colors.text,
         )
         Spacer(Modifier.height(14.dp))
         Text(
-            "A small, self-chosen pause in front of the apps and sites you fall into.",
+            "Doomscrolling? Time-blindness? Yeah, we got you.",
             fontSize = 15.sp,
             lineHeight = 24.sp,
             color = colors.neutral.step300,
             textAlign = TextAlign.Center,
         )
         Text(
-            "It never blocks you out. You pick what to slow down, and how to get in!",
+            "We don't block you! We just do a vibe check before you fall in.",
             fontSize = 14.sp,
             lineHeight = 22.sp,
             color = colors.neutral.step500,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 16.dp),
+        )
+        Text(
+            "You choose what gets paused, for how long, and how you get back.",
+            fontSize = 14.sp,
+            lineHeight = 22.sp,
+            color = colors.neutral.step500,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 12.dp),
         )
         Spacer(Modifier.weight(1f))
         NocturneButton(

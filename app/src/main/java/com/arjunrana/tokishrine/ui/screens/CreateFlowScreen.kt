@@ -977,7 +977,10 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                // Owner correction, 19 September: keep clear space below
+                // the helper so it doesn't sit on the screen's bottom
+                // edge above the flow container's own padding.
+                .padding(top = 10.dp, bottom = 10.dp),
         )
     }
 }

@@ -4,8 +4,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// Screen 4's manufacturer logic: Samsung detection is the authored default,
-// and the in-app picker overrides whatever the hardware reports.
+// Screen 4's manufacturer logic: Samsung detection is the authored
+// default and everything else falls to the universal dialog path. The
+// in-app picker override was removed by owner correction (19 September),
+// so detection alone decides — its case-insensitive Samsung matching and
+// the authored step content stay pinned here.
 class OemBatteryTest {
 
     @Test
@@ -42,9 +45,8 @@ class OemBatteryTest {
     }
 
     @Test
-    fun everyOemHasAPickerLabelAndInstructions() {
+    fun everyOemHasInstructions() {
         BatteryOem.values().forEach { oem ->
-            assertTrue(oem.pickerLabel.isNotEmpty())
             assertTrue(OemBattery.instructionsFor(oem).intro.isNotEmpty())
         }
     }

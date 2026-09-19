@@ -241,7 +241,9 @@ fun NocturneAppbar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 16.dp),
+            // Owner feel correction, 19 September: the back control sat too
+            // close to the status bar; every screen shares this top gap.
+            .padding(top = 14.dp, bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {

@@ -1,28 +1,21 @@
 package com.arjunrana.tokishrine.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
@@ -31,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.arjunrana.tokishrine.data.permissions.BatteryOem
 import com.arjunrana.tokishrine.data.permissions.BatteryStepPart
 import com.arjunrana.tokishrine.data.permissions.OemBattery
@@ -39,13 +31,15 @@ import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 
-// Screen 4: manufacturer battery guidance. Detection defaults to Samsung
-// on Samsung hardware; "Not a Samsung? Pick your phone" opens the override
-// picker. There is no text field on this screen, so the One UI
-// keyboard+dialog freeze guidance (DECISIONS.md, Phase 2) does not apply —
-// still flagged for device validation like every dialog. The completion
-// CTA was removed by owner request (P3-F05, 19 September); Back and
-// returning from battery settings both settle state on the checklist.
+// Screen 4: battery guidance. Manufacturer handling is automatic and
+// invisible to the user (owner correction, 19 September): Samsung hardware
+// gets the authored One UI steps, every other device gets the universal
+// Android battery-optimisation dialog, and the former "Not a Samsung?
+// Pick your phone" override picker is removed — the intro speaks about
+// Android, not Samsung. There is no text field on this screen, so the One
+// UI keyboard+dialog freeze guidance (DECISIONS.md, Phase 2) does not
+// apply — still flagged for device validation like every dialog. The
+// earlier completion CTA was also removed by owner request (P3-F05).
 @Composable
 fun BatteryInstructionsScreen(
     detectedManufacturer: String?,
@@ -53,13 +47,10 @@ fun BatteryInstructionsScreen(
     onOpenBatterySettings: (BatteryOem) -> Unit,
 ) {
     val colors = NocturneTheme.colors
-    val detected = remember(detectedManufacturer) { OemBattery.detect(detectedManufacturer) }
-    // The override survives activity recreation while this screen is
-    // active (review blocker 1); enum values are Serializable, so the
-    // default saver handles them.
-    var selected by rememberSaveable { mutableStateOf(detected) }
-    var pickerOpen by remember { mutableStateOf(false) }
-    val instructions = OemBattery.instructionsFor(selected)
+    // Detection is derived, never user-set, so nothing survives—or needs
+    // to survive—activity recreation beyond the manufacturer input itself.
+    val oem = remember(detectedManufacturer) { OemBattery.detect(detectedManufacturer) }
+    val instructions = OemBattery.instructionsFor(oem)
 
     Box(
         Modifier
@@ -112,54 +103,8 @@ fun BatteryInstructionsScreen(
                 "Open battery settings",
                 block = true,
                 height = 46.dp,
-                onClick = { onOpenBatterySettings(selected) },
+                onClick = { onOpenBatterySettings(oem) },
             )
-            Text(
-                buildAnnotatedString {
-                    append("Not a Samsung? ")
-                    withStyle(SpanStyle(color = colors.accentRamp.step300)) { append("Pick your phone") }
-                },
-                fontSize = 11.5.sp,
-                color = colors.neutral.step500,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { pickerOpen = true }
-                    .padding(top = 10.dp),
-            )
-        }
-
-        if (pickerOpen) {
-            Dialog(onDismissRequest = { pickerOpen = false }) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(colors.surface, RoundedCornerShape(14.dp))
-                        .padding(20.dp),
-                ) {
-                    Text(
-                        "Pick your phone",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.text,
-                    )
-                    Spacer(Modifier.height(18.dp))
-                    BatteryOem.values().forEach { oem ->
-                        Text(
-                            oem.pickerLabel,
-                            fontSize = 14.sp,
-                            color = if (oem == selected) colors.accent else colors.text,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selected = oem
-                                    pickerOpen = false
-                                }
-                                .padding(vertical = 10.dp),
-                        )
-                    }
-                }
-            }
         }
     }
 }
