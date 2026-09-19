@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -66,7 +67,8 @@ fun BlockListScreen(
         Modifier
             .fillMaxSize()
             .background(NocturneTheme.colors.bg)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding(),
     ) {
         Column(
             Modifier
@@ -77,7 +79,10 @@ fun BlockListScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 16.dp),
+                    // Owner feel correction, 19 September: the home title,
+                    // like the app bars, needs a real gap below the status
+                    // bar — this row is this screen's only header.
+                    .padding(top = 18.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(

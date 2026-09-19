@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -274,7 +275,8 @@ fun CreateFlowScreen(
         Modifier
             .fillMaxSize()
             .background(NocturneTheme.colors.bg)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding(),
     ) {
         Column(
             Modifier
@@ -541,9 +543,11 @@ private fun AppSearchPane(
     var query by remember { mutableStateOf("") }
     val allApps = remember { mutableStateListOf<AppEntry>() }
     var ownerships by remember { mutableStateOf<Map<String, Long>?>(null) }
+    var appsLoaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         allApps.addAll(appsRepo.loadApps())
+        appsLoaded = true
         ownerships = blockRepo.appOwnerships()
     }
 
@@ -575,7 +579,16 @@ private fun AppSearchPane(
             },
         )
         Spacer(Modifier.height(8.dp))
-        if (query.isNotBlank()) {
+        if (!appsLoaded) {
+            // Owner request, 19 September: the first launcher-apps query
+            // takes a moment; say so below the search bar instead of
+            // showing an apparently empty list (or a wrong "0 apps match").
+            Text(
+                "loading...",
+                fontSize = 11.5.sp,
+                color = NocturneTheme.colors.neutral.step500,
+            )
+        } else if (query.isNotBlank()) {
             Text(
                 "${filtered.size} apps match “$query”",
                 fontSize = 11.5.sp,
