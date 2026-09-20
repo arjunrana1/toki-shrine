@@ -10,13 +10,15 @@ Do not read every linked document. TASK gives starting references; use this map 
 | Visual values, shared controls, icons/branding: `ui/theme`, `ui/components`, `ui/icons`, resources/design | [Theme/UI](components/theme-ui.md) | PRD §§6/15/17; relevant Nocturne tokens/markup/render only |
 | Build, dependencies, non-device checks, explicitly authorized phone setup | [Build/validation](components/build-validation.md) | Existing build.sh, tools/env.sh, build files; no unsolicited environment rebuild |
 | Detection service/URL/window logic, browser/OEM JSON | [Phase 4](phases/phase-04.md) + affected contracts above | PRD §§10/13/14; service currently declaration/prerequisite only |
-| Challenge/hold/countdown, pause lifecycle | [Phase 5](phases/phase-05.md), [Phase 6](phases/phase-06.md) as applicable | PRD §§7/8/10/17; planned, no implementation clearance |
+| Challenge/hold/countdown, pause lifecycle | [Phase 5](phases/phase-05.md), [Phase 6](phases/phase-06.md) as applicable | PRD §§7/8/10/17; Phase 5 routed through P5A/P5B, Phase 6 still planned |
 | Stats UI, feedback, distribution polish | [Phase 7](phases/phase-07.md) + persistence/theme contracts | PRD §§9/10/13; planned |
 | Why a decision was made or superseded | [History index](history/INDEX.md) | Named entry only; old role policies are not operative |
 
 ## Open obligations by owner document
 
 - Five-screen editor redesign: implemented and closed in [its task](../coordination/tasks/TS-block-wizard-redesign/TASK.md), with reviewer, owner and executed nonvisual PASS. PRD §7 and the latest §17 wizard amendment remain authoritative. Waiting is visible-and-unlocked, with no hold detection; challenge runtime remains Phase 5.
+
+- Phase 5 delivery: [P5A](../coordination/tasks/TS-P5A-interruption-ui/TASK.md) owns only stateless interruption UI/resources; [P5B](../coordination/tasks/TS-P5B-challenge-runtime/TASK.md) owns Activity integration and all lifecycle/event correctness. Phase 6 retains pause/re-arm, bubble and notification.
 
 - Phase 3 owner results and executed nonvisual evidence are closed in the [Phase 3 checklist](../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md).
 - Create-flow draft restoration/shared accessibility semantics: blocks/targets and theme/UI contracts; do not mislabel the repaired Phase 3 route stack as still broken.

@@ -1,6 +1,10 @@
 # Phase 5 — The interruption
 
-Planned only. Requires prior phase clearance and a scoped task before implementation.
+Phase 4 is closed. Delivery is split into the active bounded GLM visual task
+[TS-P5A-interruption-ui](../../coordination/tasks/TS-P5A-interruption-ui/TASK.md),
+followed after independent review by the senior-owned
+[TS-P5B-challenge-runtime](../../coordination/tasks/TS-P5B-challenge-runtime/TASK.md).
+Phase 6 pause lifecycle remains separate.
 
 Read only for this phase or an affected acceptance question. Scope/acceptance below was relocated from the original root instructions. PRD and applicable §17 amendments resolve stale copy/values; current WORKFLOW governs who performs checks. Historical shell/device commands describe evidence, not standing authorization; build through `./build.sh` and leave device operations to the authorized owner.
 

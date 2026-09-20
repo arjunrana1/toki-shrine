@@ -1,10 +1,10 @@
 # Current work
 
-- **Active task:** [TS-P4-detection-engine](tasks/TS-P4-detection-engine/TASK.md) — Accessibility detection and supported-browser URL matching.
-- **State:** `closed` — Phase 4 is cleared. Independent Codex review PASSed `9b3da43`; owner reports P4-01–P4-05/P4-07/P4-08 passing; P4-06 is explicitly waived; and the authorized Android asset-loader suite passed **5/5**. P4-09 is an owner-accepted deferred Samsung-survival risk, not a pass; see [OWNER-CHECKS](tasks/TS-P4-detection-engine/OWNER-CHECKS.md). Phase 5 implementation may begin only under a new scoped task.
-- **Next actor:** Arjun opens the Phase 5 task when ready. Preserve the Phase 4 deferred-risk record; do not represent overnight survival as validated.
-- **Base for any Phase 4 repair:** `9b3da43`. Preserve documentation records and unrelated work.
-- **Phase 4 implementation record:** settle callbacks require live active root/window/package; pending work invalidates on block-map and `(windowId, package)` replacement. `block_screen_shown` is emitted from `BlockActivity.onPostResume` with monotonic end-to-end latency and a saved one-shot guard. Browser/OEM JSON and the matcher/config seam remain unchanged.
+- **Active task:** [TS-P5A-interruption-ui](tasks/TS-P5A-interruption-ui/TASK.md) — bounded stateless interruption screens and assets.
+- **State:** `ready` — Phase 4 is closed and Phase 5 is opened as two ordered tasks. P5A is cleared for one GLM 5.3 Pro writer; P5B remains planned and senior-owned until P5A receives independent code PASS.
+- **Next actor:** Arjun dispatches GLM 5.3 Pro to implement only P5A from the committed clean task-opening base. GLM writes `HANDBACK.md`, moves this record to `ready_for_review`, and stops. No device operations.
+- **Implementation boundary:** P5A owns stateless Compose surfaces, supplied humour resources/font, paste/autocorrect suppression and pure presentation helpers. [P5B](tasks/TS-P5B-challenge-runtime/TASK.md) owns `BlockActivity` integration, random selection, lifecycle/lock handling, monotonic countdown, terminal races, events, walk-away count and block-disable persistence. Phase 6 retains the actual pause/access/re-arm lifecycle, bubble and notification.
+- **Phase 4 retained risk:** P4-09 Samsung overnight survival remains owner-accepted deferred risk, not a pass. Do not represent it as validated; see the closed [Phase 4 checklist](tasks/TS-P4-detection-engine/OWNER-CHECKS.md).
 - **Device state:** at Phase 3 closure, 51 Android tests passed on SM-S918B (`R5CW30ZBM2R`, Android 16) and packages were removed. Arjun later installed a build at records-only `aa6e91c` (code equivalent to `9b3da43`). On 20 September 2026, Codex ran the authorized targeted `AssetDetectionConfigLoaderTest` suite on that same device: **5/5 passed**. Gradle then removed both app and test packages (`pm path` empty); `enabled_accessibility_services` is `null`. Reinstall, re-grant and re-seed are required for future device work. See [build/validation](../docs/components/build-validation.md).
 
 ## Closed Phase 3 and wizard evidence
