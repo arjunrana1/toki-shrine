@@ -1,5 +1,26 @@
 # Codex review — TS-P4-detection-engine
 
+## Repair review — current verdict
+
+- **Reviewed submission:** `9b3da43`, repair range `0ca1424..9b3da43` (with documentation-only commits `d63a65c`, `7467965`, and `4a66311` outside the code range).
+- **Reviewer:** independent Codex reviewer, 20 September 2026.
+- **Verdict:** **PASS.** No code blockers remain in P4-F01–P4-F04.
+- **Review boundary:** repair diff and affected service/engine/activity/event paths, P4-F01–P4-F04, focused JVM regressions and the Phase 4/Persistence contracts. The reviewer confirmed the worktree was clean and did not run device, emulator, adb, installation, database extraction or instrumented execution.
+
+### Finding disposition
+
+- **P4-F01:** Pass — settle refreshes the actual active root and requires its live window/package identity before emitting; a missing or changed root consumes stale work.
+- **P4-F02:** Pass — block-map updates cancel a pending domain whose exact `BlockRef` changed, and the settle path rechecks the live map.
+- **P4-F03:** Pass — `(windowId, packageName)` replacement resets cached state and cancels its pending settle.
+- **P4-F04:** Pass — `BlockActivity.onPostResume` owns shown telemetry, uses the original monotonic detection time, validates inputs and retains a saved one-shot guard across recreation.
+
+### Evidence and remaining gates
+
+- Implementation-attributed non-device checks passed: `assembleDebug`, `testDebugUnitTest` **109/109**, and `assembleDebugAndroidTest` compile-only. The independent reviewer inspected these results but did not relabel them as runtime proof.
+- Code PASS clears the repair review gate only. Owner/device validation and execution of the instrumented asset-loader suite remain open in [OWNER-CHECKS](OWNER-CHECKS.md). No Phase 5 work is authorized.
+
+## Original review of `0ca1424`
+
 - **Reviewed submission:** `0ca1424` on base `0ddd569`.
 - **Reviewer:** Codex, 20 September 2026.
 - **Verdict:** **FAIL — changes requested.** The pure matching/config work is sound in the inspected paths, but four stale-state/outcome gaps can produce an incorrect placeholder or incorrect `block_screen_shown` evidence.
