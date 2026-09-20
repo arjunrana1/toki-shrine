@@ -128,8 +128,14 @@ open class EventRepository(
         const val EVENT_WALK_AWAY = "walk_away"
         const val EVENT_CHALLENGE_COMPLETED = "challenge_completed"
         const val EVENT_CHALLENGE_ABANDONED = "challenge_abandoned"
+        const val EVENT_CHALLENGE_STARTED = "challenge_started"
+        const val EVENT_TYPING_MISMATCH = "typing_mismatch"
+        const val EVENT_COUNTDOWN_STARTED = "countdown_started"
+        const val EVENT_COUNTDOWN_COMPLETED = "countdown_completed"
         const val EVENT_BLOCK_SCREEN_SHOWN = "block_screen_shown"
+        const val EVENT_TURNOFF_STARTED = "turnoff_started"
         const val EVENT_TURNOFF_COMPLETED = "turnoff_completed"
+        const val EVENT_TURNOFF_ABANDONED = "turnoff_abandoned"
         const val EVENT_STATS_VIEWED = "stats_viewed"
 
         // target_type values, aligned with §10's trigger_type (app | site).

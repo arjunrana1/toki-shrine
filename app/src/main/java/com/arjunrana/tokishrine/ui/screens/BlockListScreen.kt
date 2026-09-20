@@ -22,15 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
@@ -41,8 +37,6 @@ import com.arjunrana.tokishrine.ui.components.NocturneSwitch
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
-import com.arjunrana.tokishrine.ui.util.BlockHaptics
-import com.arjunrana.tokishrine.ui.util.TerminalAction
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 
 // Home screen — block list, empty and populated (screens 5 and 6).
@@ -53,15 +47,10 @@ fun BlockListScreen(
     onCreate: () -> Unit,
     onOpenDetail: (Long) -> Unit,
     onTurnOn: (Long) -> Unit,
+    onTurnOff: (Long) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val blocks by blockRepo.observeBlocksWithContents().collectAsState(initial = null as List<BlockWithContents>?)
-    // Terminal transitions run in the activity lifecycle scope and are
-    // single-flight: repeated OFF taps while the commit is in flight are
-    // ignored (review blocker 2).
-    val terminal = remember(lifecycleOwner) { TerminalAction(lifecycleOwner.lifecycleScope) }
 
     Box(
         Modifier
@@ -126,19 +115,7 @@ fun BlockListScreen(
                                 if (on) {
                                     onTurnOn(block.block.id)
                                 } else {
-                                    // State change and block_turned_off
-                                    // commit in one transaction; the lighter
-                                    // haptic (owner addendum, 13 September)
-                                    // fires only after a real change; a
-                                    // repeated tap during the commit is
-                                    // ignored.
-                                    terminal.run(
-                                        commit = {
-                                            blockRepo.setEnabledRecordingTransition(block.block.id, false)
-                                        },
-                                        onChanged = { BlockHaptics.turnedOff(context) },
-                                        onCommitted = {},
-                                    )
+                                    onTurnOff(block.block.id)
                                 }
                             },
                         )

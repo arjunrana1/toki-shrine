@@ -217,6 +217,7 @@ class MainActivity : ComponentActivity() {
                             onCreate = { stack.add(Route.Create()) },
                             onOpenDetail = { stack.add(Route.Detail(it)) },
                             onTurnOn = openTurnOnOrGate,
+                            onTurnOff = { startActivity(BlockActivity.turnOffIntent(context, it)) },
                             onOpenSettings = { stack.add(Route.Settings) },
                         )
 
@@ -253,6 +254,7 @@ class MainActivity : ComponentActivity() {
                             appsRepo = app.installedAppsRepository,
                             onBack = { stack.removeAt(stack.lastIndex) },
                             onTurnOn = openTurnOnOrGate,
+                            onTurnOff = { startActivity(BlockActivity.turnOffIntent(context, it)) },
                             onEditContents = { stack.add(Route.Create(editBlockId = it)) },
                             onEditFriction = { stack.add(Route.Create(editBlockId = it, startStep = 3)) },
                         )

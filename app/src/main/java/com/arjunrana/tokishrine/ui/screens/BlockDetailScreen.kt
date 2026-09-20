@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -29,13 +30,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.entity.FrictionType
@@ -51,8 +52,6 @@ import com.arjunrana.tokishrine.ui.components.TargetRow
 import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
-import com.arjunrana.tokishrine.ui.util.BlockHaptics
-import com.arjunrana.tokishrine.ui.util.TerminalAction
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
@@ -70,37 +69,32 @@ fun BlockDetailScreen(
     appsRepo: InstalledAppsRepository,
     onBack: () -> Unit,
     onTurnOn: (Long) -> Unit,
+    onTurnOff: (Long) -> Unit,
     onEditContents: (Long) -> Unit,
     onEditFriction: (Long) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var block by remember { mutableStateOf<BlockWithContents?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    // Terminal transitions run in the activity lifecycle scope and are
-    // single-flight (review blocker 2).
-    val terminal = remember(lifecycleOwner) { TerminalAction(lifecycleOwner.lifecycleScope) }
-
     LaunchedEffect(blockId, refresh) {
         block = blockRepo.getBlockWithContents(blockId)
     }
 
+    // Returning from the external disable challenge refreshes the stored ON
+    // state. BlockActivity owns the atomic mutation and terminal haptic.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refresh++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     val loaded = block ?: return
     val isOff = !loaded.block.enabled
-
-    fun turnOff() {
-        // State change and block_turned_off commit in one transaction; the
-        // lighter haptic (owner addendum, 13 September) fires only after a
-        // real change; the screen refreshes once the commit succeeds.
-        terminal.run(
-            commit = { blockRepo.setEnabledRecordingTransition(blockId, false) },
-            onChanged = { BlockHaptics.turnedOff(context) },
-            onCommitted = { refresh++ },
-        )
-    }
 
     fun delete() {
         scope.launch {
@@ -151,7 +145,7 @@ fun BlockDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     NocturneSwitch(checked = loaded.block.enabled, onCheckedChange = { on ->
-                        if (on) onTurnOn(blockId) else turnOff()
+                        if (on) onTurnOn(blockId) else onTurnOff(blockId)
                     })
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {

@@ -5,11 +5,17 @@ import androidx.room.Room
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.repo.BlockRepository
+import com.arjunrana.tokishrine.data.repo.ChallengeRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.detection.AssetDetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionConfigLoader
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class TokiApplication : Application() {
+
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: TokiDatabase by lazy {
         Room.databaseBuilder(this, TokiDatabase::class.java, TokiDatabase.NAME)
@@ -22,6 +28,7 @@ class TokiApplication : Application() {
     }
 
     val blockRepository: BlockRepository by lazy { BlockRepository(database) }
+    val challengeRepository: ChallengeRepository by lazy { ChallengeRepository(database) }
     val eventRepository: EventRepository by lazy {
         EventRepository(database)
     }

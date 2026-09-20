@@ -49,13 +49,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Phase 4 block-screen placeholder, launched by the detection
-             service when a blocked app or site is in front. Not exported:
+        <!-- Phase 5 interruption and disable challenge host. Detection
+             launches the block gate when a blocked target is in front;
+             MainActivity launches the same unexported Activity for the
+             stored-method turn-off challenge. Not exported:
              only Toki Shrine's own service starts it, and the
              accessibility background-launch exemption covers that start
              (PRD §13/§14), so no overlay permission is involved.
-             Excluded from recents and never retained in the back stack —
-             dismissing it returns to what was in front. -->
+             Excluded from recents and never retained after leaving —
+             abandonment resets the live challenge. -->
         <activity
             android:name=".BlockActivity"
             android:exported="false"

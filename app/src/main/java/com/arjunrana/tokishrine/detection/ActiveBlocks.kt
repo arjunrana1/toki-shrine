@@ -3,7 +3,7 @@ package com.arjunrana.tokishrine.detection
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 
 // The block a detection trigger points at. The block name travels with
-// the id so the Phase 4 placeholder can name the trigger without a
+// the id so the interruption launch can carry useful display data without a
 // database read on the event path.
 data class BlockRef(val blockId: Long, val blockName: String)
 
@@ -21,7 +21,7 @@ data class ActiveBlockIndex(
             val enabled = blocks.filter { it.block.enabled }
             return ActiveBlockIndex(
                 // Toki Shrine's own package is never a matchable app: the
-                // placeholder activity itself would otherwise re-trigger
+                // interruption Activity itself would otherwise re-trigger
                 // detection the moment it appears.
                 apps = enabled.flatMap { block ->
                     block.apps.map { it.packageName to BlockRef(block.block.id, block.block.name) }

@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * plus supported browsers, so the service is idle for everything else.
  * Unsupported browsers and in-app webviews are never in the filter and
  * never send events. Toki Shrine's own events are dropped on arrival —
- * the placeholder itself must not re-trigger detection.
+ * the interruption Activity itself must not re-trigger detection.
  */
 class TokiAccessibilityService : AccessibilityService() {
 
@@ -169,7 +169,7 @@ class TokiAccessibilityService : AccessibilityService() {
         when (action) {
             is DetectionAction.ScheduleSettle -> scheduleSettle(action.generation, action.delayMs)
             is DetectionAction.CancelSettle -> cancelSettle()
-            is DetectionAction.Trigger -> launchPlaceholder(action.trigger)
+            is DetectionAction.Trigger -> launchBlockScreen(action.trigger)
             is DetectionAction.UrlReadFailed ->
                 logServiceEvent {
                     log(EventRepository.EVENT_URL_READ_FAILED, params = mapOf("browser_package" to action.browserPackage))
@@ -214,7 +214,7 @@ class TokiAccessibilityService : AccessibilityService() {
         settleCallback = null
     }
 
-    private fun launchPlaceholder(trigger: DetectionTrigger) {
+    private fun launchBlockScreen(trigger: DetectionTrigger) {
         val intent = Intent(this, BlockActivity::class.java)
             .addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or

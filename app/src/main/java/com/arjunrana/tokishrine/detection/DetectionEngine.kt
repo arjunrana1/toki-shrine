@@ -15,7 +15,7 @@ data class DetectionTrigger(
 )
 
 // The engine's decisions for one input. The service executes them: settle
-// scheduling runs on its handler, triggers launch the placeholder (which
+// scheduling runs on its handler, triggers launch the interruption Activity (which
 // logs block_screen_shown once resumed), and url-read failures log the §10
 // canary. Keeping the actions declarative makes the machine JVM-testable.
 sealed interface DetectionAction {
@@ -302,9 +302,9 @@ class DetectionEngine(
         // from firing mid-typing. Tunable, not a platform limit.
         const val SETTLE_DELAY_MS = 2000L
 
-        // Phase 4 placeholder debounce: without Phase 5's pause/re-arm,
-        // this window is the only thing stopping an immediate re-trigger
-        // loop after the placeholder is dismissed. Tunable.
+        // Until Phase 6 consumes PauseRequested and grants temporary access,
+        // this window prevents an immediate re-trigger loop after the Phase 5
+        // interruption is dismissed. Tunable.
         const val REPEAT_TRIGGER_DEBOUNCE_MS = 10_000L
 
         private const val MAX_CACHED_WINDOWS = 16
