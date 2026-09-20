@@ -1,6 +1,6 @@
 # TS-P5A-interruption-ui — Interruption visual surfaces
 
-- **State:** `ready` — Phase 4 is closed and this bounded Phase 5 visual slice is cleared for GLM implementation. One writer only.
+- **State:** `ready_for_review` — initial GLM 5.3 Pro submission `3ba8037` on base `8523006` awaits independent code review; see [HANDBACK](HANDBACK.md).
 - **Goal:** build the reusable, stateless Compose surfaces for the real block gate, walk-away moment, typing challenge/mismatch state and delay countdown, ready for the senior-owned runtime task to integrate.
 - **Implementation owner:** GLM 5.3 Pro. This task is bounded visual/mechanical Compose work against explicit models and callbacks. Do not use Flash for the primary submission and do not absorb the senior-owned lifecycle/event state machine.
 - **Base:** the committed task-opening HEAD. Before editing, verify a clean worktree and record `git rev-parse HEAD` in `HANDBACK.md`; stop and reconcile with Arjun if the task routing or worktree differs.
