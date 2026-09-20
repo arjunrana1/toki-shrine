@@ -1,0 +1,31 @@
+select id,name,enabled from blocks
+(1, 'Review%', 1)
+(2, 'MovedTarget', 0)
+
+select * from blocked_apps
+(1, 2, 'com.instagram.android')
+(2, 2, 'com.sumerusolutions.abhyasaAndroid')
+(3, 2, 'com.threefiveeight.adda')
+(4, 2, 'com.instagram.layout')
+
+select id,name,block_id,params_json from event order by id
+(1, 'block_create_started', None, None)
+(2, 'block_create_started', None, None)
+(3, 'block_create_step_completed', None, '{"step":1}')
+(4, 'block_create_step_completed', None, '{"step":2}')
+(5, 'block_create_step_completed', None, '{"step":3}')
+(6, 'block_create_step_completed', None, '{"step":4}')
+(7, 'block_created', 1, '{"app_count":1,"site_count":1,"friction_type":"typing","pause_minutes":15,"pause_chars":100,"turnoff_chars":300,"countdown_seconds":30}')
+(8, 'block_turned_on', 1, None)
+(9, 'block_create_started', None, None)
+(10, 'block_conflict_shown', None, '{"target":"com.instagram.android","existing_block_id":1}')
+(11, 'block_conflict_resolved', None, '{"resolution":"kept"}')
+(12, 'block_conflict_shown', None, '{"target":"com.instagram.android","existing_block_id":1}')
+(13, 'block_conflict_resolved', None, '{"resolution":"moved"}')
+(14, 'block_create_step_completed', None, '{"step":1}')
+(15, 'block_create_step_completed', None, '{"step":2}')
+(16, 'block_create_step_completed', None, '{"step":3}')
+(17, 'block_create_step_completed', None, '{"step":4}')
+(18, 'block_created', 2, '{"app_count":4,"site_count":0,"friction_type":"typing","pause_minutes":15,"pause_chars":100,"turnoff_chars":300,"countdown_seconds":30}')
+(19, 'block_create_started', None, None)
+(20, 'block_create_step_completed', None, '{"step":1}')
