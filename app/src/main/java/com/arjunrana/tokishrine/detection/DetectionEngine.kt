@@ -3,22 +3,21 @@ package com.arjunrana.tokishrine.detection
 import com.arjunrana.tokishrine.data.repo.EventRepository
 
 // What actually fires when detection succeeds. triggerType uses the §10
-// values (app | site); latencyMs measures the decision path — from the
-// window-state event for app triggers (synchronous, so ~0) and from the
-// address reading that scheduled the settle for site triggers (≈ the
-// settle delay), matching the PRD §14 latency attribution.
+// values (app | site); startedAtElapsedMs is the original app event or site
+// reading time. BlockActivity combines it with its resumed time so §10
+// latency includes both settling and the actual activity launch.
 data class DetectionTrigger(
     val triggerType: String,
     val target: String,
     val blockId: Long,
     val blockName: String,
-    val latencyMs: Long,
+    val startedAtElapsedMs: Long,
 )
 
 // The engine's decisions for one input. The service executes them: settle
-// scheduling runs on its handler, triggers launch the placeholder and log
-// block_screen_shown, url-read failures log the §10 canary. Keeping the
-// actions declarative is what makes the whole machine JVM-testable.
+// scheduling runs on its handler, triggers launch the placeholder (which
+// logs block_screen_shown once resumed), and url-read failures log the §10
+// canary. Keeping the actions declarative makes the machine JVM-testable.
 sealed interface DetectionAction {
     data class ScheduleSettle(val generation: Long, val delayMs: Long) : DetectionAction
     data class CancelSettle(val generation: Long) : DetectionAction
@@ -88,20 +87,40 @@ class DetectionEngine(
     private val lastFired = HashMap<String, Long>()
 
     @Synchronized
-    fun onBlocksChanged(apps: Map<String, BlockRef>, sites: Map<String, BlockRef>) {
+    fun onBlocksChanged(
+        apps: Map<String, BlockRef>,
+        sites: Map<String, BlockRef>,
+    ): List<DetectionAction> {
         appBlocks = apps
         siteBlocks = sites
+        val activePending = pending
+        return if (
+            activePending != null &&
+            sites[activePending.blockedDomain] != activePending.ref
+        ) {
+            listOf(cancelPending())
+        } else {
+            emptyList()
+        }
     }
 
     @Synchronized
     fun onWindowStateChanged(windowId: Int, packageName: String): List<DetectionAction> {
         val now = clock()
         currentWindowId = windowId
-        touchWindow(windowId, packageName)
+        val packageChanged = touchWindow(windowId, packageName).packageChanged
         val actions = ArrayList<DetectionAction>()
-        pending?.let { if (it.windowId != windowId) actions += cancelPending() }
+        pending?.let {
+            if (it.windowId != windowId || packageChanged) actions += cancelPending()
+        }
         appBlocks[packageName]?.let { ref ->
-            maybeTrigger(EventRepository.TARGET_TYPE_APP, packageName, ref, latencyMs = 0, now)?.let { actions += it }
+            maybeTrigger(
+                EventRepository.TARGET_TYPE_APP,
+                packageName,
+                ref,
+                startedAtElapsedMs = now,
+                now = now,
+            )?.let { actions += it }
         }
         return actions
     }
@@ -116,23 +135,29 @@ class DetectionEngine(
         text: String?,
         focused: Boolean,
     ): List<DetectionAction> {
-        touchWindow(windowId, packageName)
-        val window = windows.getValue(windowId)
+        val touch = touchWindow(windowId, packageName)
+        val window = touch.reading
+        val actions = ArrayList<DetectionAction>()
+        if (touch.packageChanged && pending?.windowId == windowId) {
+            actions += cancelPending()
+        }
         if (focused) {
             // Typing: don't cache the partial text, just stop anything
             // that was settling on the previous value.
             window.focused = true
-            return cancelIfPendingHere(windowId)
+            actions += cancelIfPendingHere(windowId)
+            return actions
         }
         window.focused = false
         if (text == null) {
             // Hidden address bar: the cached URL stands, and a settle in
             // flight for this window must survive the scroll.
-            return emptyList()
+            return actions
         }
         if (text.contains(' ') || text.isBlank()) {
             // A search query, not a URL (PRD §13 space rule).
-            return cancelIfPendingHere(windowId)
+            actions += cancelIfPendingHere(windowId)
+            return actions
         }
         window.url = text
         val host = DomainMatcher.extractHost(text)
@@ -140,13 +165,13 @@ class DetectionEngine(
         if (blockedDomain == null) {
             // Nothing blockable here; a settle from an earlier value is
             // stale the moment the bar shows a different URL.
-            return cancelIfPendingHere(windowId)
+            actions += cancelIfPendingHere(windowId)
+            return actions
         }
         if (pending?.windowId == windowId && pending?.url == text) {
             // Identical reading to the one already settling.
-            return emptyList()
+            return actions
         }
-        val actions = ArrayList<DetectionAction>()
         pending?.let { actions += cancelPending() }
         val now = clock()
         generation += 1
@@ -169,8 +194,13 @@ class DetectionEngine(
     // text == null path above instead, so legitimate hides don't flood it.
     @Synchronized
     fun onAddressBarMissing(windowId: Int, packageName: String): List<DetectionAction> {
-        touchWindow(windowId, packageName)
-        return listOf(DetectionAction.UrlReadFailed(packageName))
+        val touch = touchWindow(windowId, packageName)
+        val actions = ArrayList<DetectionAction>()
+        if (touch.packageChanged && pending?.windowId == windowId) {
+            actions += cancelPending()
+        }
+        actions += DetectionAction.UrlReadFailed(packageName)
+        return actions
     }
 
     // The service's settle handler reports back with the generation it
@@ -178,16 +208,23 @@ class DetectionEngine(
     // or any state drift since scheduling — turns the callback into a
     // no-op instead of a block.
     @Synchronized
-    fun onSettleElapsed(generation: Long): List<DetectionAction> {
+    fun onSettleElapsed(
+        generation: Long,
+        activeWindowId: Int?,
+        activePackageName: String?,
+    ): List<DetectionAction> {
         val pending = this.pending ?: return emptyList()
         if (pending.generation != generation) return emptyList()
         this.pending = null
         val window = windows[pending.windowId]
         val stillValid = currentWindowId == pending.windowId &&
+            activeWindowId == pending.windowId &&
+            activePackageName == pending.packageName &&
             window != null &&
             !window.focused &&
             window.url == pending.url &&
-            window.packageName == pending.packageName
+            window.packageName == pending.packageName &&
+            siteBlocks[pending.blockedDomain] == pending.ref
         if (!stillValid) return emptyList()
         val now = clock()
         return listOfNotNull(
@@ -195,7 +232,7 @@ class DetectionEngine(
                 EventRepository.TARGET_TYPE_SITE,
                 pending.blockedDomain,
                 pending.ref,
-                latencyMs = now - pending.scheduledAtMs,
+                startedAtElapsedMs = pending.scheduledAtMs,
                 now = now,
             ),
         )
@@ -214,7 +251,7 @@ class DetectionEngine(
         triggerType: String,
         target: String,
         ref: BlockRef,
-        latencyMs: Long,
+        startedAtElapsedMs: Long,
         now: Long,
     ): DetectionAction.Trigger? {
         val key = "$triggerType:$target:${ref.blockId}"
@@ -228,7 +265,7 @@ class DetectionEngine(
                 target = target,
                 blockId = ref.blockId,
                 blockName = ref.blockName,
-                latencyMs = latencyMs,
+                startedAtElapsedMs = startedAtElapsedMs,
             ),
         )
     }
@@ -238,17 +275,27 @@ class DetectionEngine(
         lastFired.entries.removeAll { now - it.value >= debounceMs }
     }
 
-    private fun touchWindow(windowId: Int, packageName: String): WindowReading {
+    private fun touchWindow(windowId: Int, packageName: String): WindowTouch {
         val existing = windows.remove(windowId)
-        val reading = existing ?: WindowReading(packageName, url = null)
+        val packageChanged = existing != null && existing.packageName != packageName
+        val reading = if (existing == null || packageChanged) {
+            WindowReading(packageName, url = null)
+        } else {
+            existing
+        }
         windows[windowId] = reading
         if (windows.size > MAX_CACHED_WINDOWS) {
             val eldest = windows.keys.first()
             windows.remove(eldest)
             if (pending?.windowId == eldest) pending = null
         }
-        return reading
+        return WindowTouch(reading, packageChanged)
     }
+
+    private data class WindowTouch(
+        val reading: WindowReading,
+        val packageChanged: Boolean,
+    )
 
     companion object {
         // Prototype reference value (PRD §13): the settle keeps a block

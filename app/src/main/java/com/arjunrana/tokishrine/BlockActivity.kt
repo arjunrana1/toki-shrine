@@ -3,6 +3,7 @@ package com.arjunrana.tokishrine
 import androidx.activity.ComponentActivity
 import android.graphics.Color
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,7 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.detection.BlockShownEvent
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /*
  * Phase 4 block-screen placeholder (phase-04 scope): plain text naming
@@ -31,11 +37,18 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
  */
 class BlockActivity : ComponentActivity() {
 
+    private var shownEventScheduled = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        shownEventScheduled = savedInstanceState?.getBoolean(STATE_SHOWN_EVENT_SCHEDULED) == true
         val triggerType = intent?.getStringExtra(EXTRA_TRIGGER_TYPE)
         val target = intent?.getStringExtra(EXTRA_TARGET)
-        if (!triggerType.isNullOrBlank() && !target.isNullOrBlank()) {
+        val blockId = intent?.getLongExtra(EXTRA_BLOCK_ID, -1L) ?: -1L
+        val startedAtElapsedMs = intent?.getLongExtra(EXTRA_STARTED_AT_ELAPSED_MS, -1L) ?: -1L
+        val validTriggerType = triggerType == EventRepository.TARGET_TYPE_APP ||
+            triggerType == EventRepository.TARGET_TYPE_SITE
+        if (validTriggerType && !target.isNullOrBlank() && blockId > 0 && startedAtElapsedMs >= 0) {
             enableEdgeToEdge(
                 statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
                 navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
@@ -88,9 +101,47 @@ class BlockActivity : ComponentActivity() {
         }
     }
 
+    override fun onPostResume() {
+        super.onPostResume()
+        if (shownEventScheduled) return
+        val shownEvent = BlockShownEvent.create(
+            blockId = intent?.getLongExtra(EXTRA_BLOCK_ID, -1L) ?: -1L,
+            triggerType = intent?.getStringExtra(EXTRA_TRIGGER_TYPE),
+            target = intent?.getStringExtra(EXTRA_TARGET),
+            startedAtElapsedMs = intent?.getLongExtra(EXTRA_STARTED_AT_ELAPSED_MS, -1L) ?: -1L,
+            shownAtElapsedMs = SystemClock.elapsedRealtime(),
+        ) ?: return
+        val app = application as? TokiApplication ?: return
+        // Set synchronously before launching the write so repeated resume or
+        // recreation cannot schedule a duplicate presentation event.
+        shownEventScheduled = true
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                app.eventRepository.log(
+                    EventRepository.EVENT_BLOCK_SCREEN_SHOWN,
+                    blockId = shownEvent.blockId,
+                    target = shownEvent.target,
+                    targetType = shownEvent.triggerType,
+                    params = mapOf(
+                        "trigger_type" to shownEvent.triggerType,
+                        "latency_ms" to shownEvent.latencyMs,
+                    ),
+                )
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_SHOWN_EVENT_SCHEDULED, shownEventScheduled)
+        super.onSaveInstanceState(outState)
+    }
+
     companion object {
         const val EXTRA_TRIGGER_TYPE = "trigger_type"
         const val EXTRA_TARGET = "target"
         const val EXTRA_BLOCK_NAME = "block_name"
+        const val EXTRA_BLOCK_ID = "block_id"
+        const val EXTRA_STARTED_AT_ELAPSED_MS = "started_at_elapsed_ms"
+        private const val STATE_SHOWN_EVENT_SCHEDULED = "shown_event_scheduled"
     }
 }

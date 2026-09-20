@@ -4,8 +4,10 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.detection.ActiveBlockIndex
 import com.arjunrana.tokishrine.detection.BlockRef
@@ -53,7 +55,7 @@ class TokiAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         val app = application as? TokiApplication ?: return
-        engine = DetectionEngine()
+        engine = DetectionEngine(clock = SystemClock::elapsedRealtime)
         logServiceEvent { log(EventRepository.EVENT_ACCESSIBILITY_CONNECTED) }
 
         // Bundled JSON (PRD §13): supported browsers plus the OEM battery
@@ -74,7 +76,7 @@ class TokiAccessibilityService : AccessibilityService() {
             app.blockRepository.observeBlocksWithContents().distinctUntilChanged().collect { blocks ->
                 val index = ActiveBlockIndex.from(blocks, excludePackage = packageName)
                 appBlocks = index.apps
-                engine?.onBlocksChanged(index.apps, index.sites)
+                engine?.onBlocksChanged(index.apps, index.sites)?.forEach(::execute)
                 applyServiceInfoOnMain()
             }
         }
@@ -133,7 +135,18 @@ class TokiAccessibilityService : AccessibilityService() {
         // The active root is the address bar's window in the normal
         // single-foreground-browser case; a package mismatch (event from a
         // background window) means there is nothing reliable to read.
-        val root = rootInActiveWindow?.takeIf { it.packageName == packageName }
+        val root = rootInActiveWindow?.takeIf { it.packageName?.toString() == packageName }
+        readAddressBarFromRoot(engine, windowId, packageName, viewId, root, canaryOnMissing)
+    }
+
+    private fun readAddressBarFromRoot(
+        engine: DetectionEngine,
+        windowId: Int,
+        packageName: String,
+        viewId: String,
+        root: AccessibilityNodeInfo?,
+        canaryOnMissing: Boolean,
+    ) {
         val node = root?.findAccessibilityNodeInfosByViewId(viewId)?.firstOrNull()
         if (node == null) {
             if (canaryOnMissing) {
@@ -168,7 +181,29 @@ class TokiAccessibilityService : AccessibilityService() {
         cancelSettle()
         val runnable = Runnable {
             settleCallback = null
-            engine?.onSettleElapsed(generation)?.forEach(::execute)
+            val activeEngine = engine ?: return@Runnable
+            val activeRoot = rootInActiveWindow
+            val activePackage = activeRoot?.packageName?.toString()
+            val activeWindowId = activeRoot?.windowId
+            val viewId = activePackage?.let(browserViewIds::get)
+            if (activeRoot != null && activePackage != null && activeWindowId != null && viewId != null) {
+                // Refresh focus/text from the actual foreground root at the
+                // settle boundary. A hidden node preserves the cached URL;
+                // a changed/focused value cancels or replaces the old work.
+                readAddressBarFromRoot(
+                    activeEngine,
+                    activeWindowId,
+                    activePackage,
+                    viewId,
+                    activeRoot,
+                    canaryOnMissing = false,
+                )
+            }
+            activeEngine.onSettleElapsed(
+                generation,
+                activeWindowId = activeWindowId,
+                activePackageName = activePackage,
+            ).forEach(::execute)
         }
         settleCallback = runnable
         settleHandler.postDelayed(runnable, delayMs)
@@ -189,24 +224,13 @@ class TokiAccessibilityService : AccessibilityService() {
             .putExtra(BlockActivity.EXTRA_TRIGGER_TYPE, trigger.triggerType)
             .putExtra(BlockActivity.EXTRA_TARGET, trigger.target)
             .putExtra(BlockActivity.EXTRA_BLOCK_NAME, trigger.blockName)
+            .putExtra(BlockActivity.EXTRA_BLOCK_ID, trigger.blockId)
+            .putExtra(BlockActivity.EXTRA_STARTED_AT_ELAPSED_MS, trigger.startedAtElapsedMs)
         // Accessibility services are exempt from background-activity-launch
         // restrictions (PRD §14), so no overlay is involved. The §10
-        // block_screen_shown event is written only when the launch was
-        // accepted — a failed start shows nothing and logs nothing.
-        if (runCatching { startActivity(intent) }.isSuccess) {
-            logServiceEvent {
-                log(
-                    EventRepository.EVENT_BLOCK_SCREEN_SHOWN,
-                    blockId = trigger.blockId,
-                    target = trigger.target,
-                    targetType = trigger.triggerType,
-                    params = mapOf(
-                        "trigger_type" to trigger.triggerType,
-                        "latency_ms" to trigger.latencyMs,
-                    ),
-                )
-            }
-        }
+        // BlockActivity records block_screen_shown only after it reaches a
+        // resumed lifecycle. An accepted request is not itself a shown UI.
+        runCatching { startActivity(intent) }
     }
 
     private fun logServiceEvent(write: suspend EventRepository.() -> Unit) {

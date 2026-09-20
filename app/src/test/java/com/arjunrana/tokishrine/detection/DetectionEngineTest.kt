@@ -30,15 +30,21 @@ class DetectionEngineTest {
         )
     }
 
-    private fun appTrigger(target: String = "com.instagram.android", latency: Long = 0) =
+    private fun appTrigger(target: String = "com.instagram.android", startedAt: Long = 0) =
         DetectionAction.Trigger(
-            DetectionTrigger(EventRepository.TARGET_TYPE_APP, target, 1, "Dooms", latency),
+            DetectionTrigger(EventRepository.TARGET_TYPE_APP, target, 1, "Dooms", startedAt),
         )
 
-    private fun siteTrigger(latency: Long) =
+    private fun siteTrigger(startedAt: Long = 0) =
         DetectionAction.Trigger(
-            DetectionTrigger(EventRepository.TARGET_TYPE_SITE, "reddit.com", 2, "Reddit", latency),
+            DetectionTrigger(EventRepository.TARGET_TYPE_SITE, "reddit.com", 2, "Reddit", startedAt),
         )
+
+    private fun settle(
+        generation: Long,
+        activeWindowId: Int? = 20,
+        activePackageName: String? = "com.android.chrome",
+    ) = engine.onSettleElapsed(generation, activeWindowId, activePackageName)
 
     // A window always reaches the service through TYPE_WINDOW_STATE_CHANGED
     // before any content event, so site-path tests open the window first.
@@ -68,7 +74,10 @@ class DetectionEngineTest {
         now = 1_000
         assertEquals(emptyList<DetectionAction>(), engine.onWindowStateChanged(10, "com.instagram.android"))
         now = 10_000
-        assertEquals(listOf(appTrigger()), engine.onWindowStateChanged(10, "com.instagram.android"))
+        assertEquals(
+            listOf(appTrigger(startedAt = 10_000)),
+            engine.onWindowStateChanged(10, "com.instagram.android"),
+        )
     }
 
     // — site settle path —
@@ -80,11 +89,11 @@ class DetectionEngineTest {
     }
 
     @Test
-    fun settleElapsesIntoSiteTriggerWithSettleLatency() {
+    fun settleElapsesIntoSiteTriggerWithOriginalDetectionTime() {
         openChromeWindow()
         readReddit()
         now = 2_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(1))
+        assertEquals(listOf(siteTrigger()), settle(1))
     }
 
     @Test
@@ -115,7 +124,7 @@ class DetectionEngineTest {
         )
         now = 2_000
         // The cancelled settle's callback is a no-op even if it still fires.
-        assertEquals(emptyList<DetectionAction>(), engine.onSettleElapsed(1))
+        assertEquals(emptyList<DetectionAction>(), settle(1))
     }
 
     @Test
@@ -160,7 +169,7 @@ class DetectionEngineTest {
             engine.onBrowserAddressReading(20, "com.android.chrome", null, false),
         )
         now = 2_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(1))
+        assertEquals(listOf(siteTrigger()), settle(1))
     }
 
     @Test
@@ -184,8 +193,8 @@ class DetectionEngineTest {
             actions,
         )
         now = 3_000
-        assertEquals(emptyList<DetectionAction>(), engine.onSettleElapsed(1))
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(2))
+        assertEquals(emptyList<DetectionAction>(), settle(1))
+        assertEquals(listOf(siteTrigger(startedAt = 1_000)), settle(2))
     }
 
     @Test
@@ -197,7 +206,81 @@ class DetectionEngineTest {
             engine.onWindowStateChanged(30, "com.android.chrome"),
         )
         now = 2_000
-        assertEquals(emptyList<DetectionAction>(), engine.onSettleElapsed(1))
+        assertEquals(emptyList<DetectionAction>(), settle(1))
+    }
+
+    @Test
+    fun liveForegroundPackageMustStillBeTheScheduledBrowser() {
+        openChromeWindow()
+        readReddit()
+        now = 2_000
+
+        assertEquals(
+            emptyList<DetectionAction>(),
+            settle(1, activeWindowId = 99, activePackageName = "com.android.launcher"),
+        )
+        // The invalid callback consumes the pending settle; it cannot fire
+        // later if stale handler work is delivered twice.
+        assertEquals(emptyList<DetectionAction>(), settle(1))
+    }
+
+    @Test
+    fun unavailableForegroundRootCannotProduceASiteTrigger() {
+        openChromeWindow()
+        readReddit()
+        now = 2_000
+
+        assertEquals(
+            emptyList<DetectionAction>(),
+            settle(1, activeWindowId = null, activePackageName = null),
+        )
+    }
+
+    @Test
+    fun turningBlockOffCancelsItsPendingSiteSettle() {
+        openChromeWindow()
+        readReddit()
+
+        assertEquals(
+            listOf(DetectionAction.CancelSettle(1)),
+            engine.onBlocksChanged(
+                apps = mapOf("com.instagram.android" to instagram),
+                sites = emptyMap(),
+            ),
+        )
+        now = 2_000
+        assertEquals(emptyList<DetectionAction>(), settle(1))
+    }
+
+    @Test
+    fun changingDomainOwnerCancelsItsPendingSiteSettle() {
+        openChromeWindow()
+        readReddit()
+        val replacement = BlockRef(blockId = 3, blockName = "Replacement")
+
+        assertEquals(
+            listOf(DetectionAction.CancelSettle(1)),
+            engine.onBlocksChanged(
+                apps = mapOf("com.instagram.android" to instagram),
+                sites = mapOf("reddit.com" to replacement),
+            ),
+        )
+    }
+
+    @Test
+    fun sameWindowIdWithDifferentPackageResetsCacheAndCancelsSettle() {
+        openChromeWindow()
+        readReddit()
+
+        assertEquals(
+            listOf(DetectionAction.CancelSettle(1)),
+            engine.onWindowStateChanged(20, "com.other.app"),
+        )
+        now = 2_000
+        assertEquals(
+            emptyList<DetectionAction>(),
+            settle(1, activeWindowId = 20, activePackageName = "com.other.app"),
+        )
     }
 
     @Test
@@ -206,7 +289,7 @@ class DetectionEngineTest {
         readReddit()
         assertEquals(emptyList<DetectionAction>(), engine.onWindowStateChanged(20, "com.android.chrome"))
         now = 2_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(1))
+        assertEquals(listOf(siteTrigger()), settle(1))
     }
 
     @Test
@@ -214,7 +297,7 @@ class DetectionEngineTest {
         openChromeWindow()
         readReddit()
         now = 2_000
-        assertEquals(emptyList<DetectionAction>(), engine.onSettleElapsed(99))
+        assertEquals(emptyList<DetectionAction>(), settle(99))
     }
 
     // — site debounce —
@@ -224,19 +307,19 @@ class DetectionEngineTest {
         openChromeWindow()
         readReddit()
         now = 2_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(1))
+        assertEquals(listOf(siteTrigger()), settle(1))
 
         // Second full settle cycle for the same URL inside the window.
         now = 3_000
         assertEquals(listOf(DetectionAction.ScheduleSettle(2, 2000)), readReddit())
         now = 5_000
-        assertEquals(emptyList<DetectionAction>(), engine.onSettleElapsed(2))
+        assertEquals(emptyList<DetectionAction>(), settle(2))
 
         // After the debounce window, the same URL can trigger again.
         now = 13_000
         assertEquals(listOf(DetectionAction.ScheduleSettle(3, 2000)), readReddit())
         now = 15_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(3))
+        assertEquals(listOf(siteTrigger(startedAt = 13_000)), settle(3))
     }
 
     // — recreation —
@@ -252,7 +335,7 @@ class DetectionEngineTest {
             sites = mapOf("reddit.com" to reddit),
         )
         now = 500
-        assertEquals(listOf(appTrigger(latency = 0)), recreated.onWindowStateChanged(10, "com.instagram.android"))
+        assertEquals(listOf(appTrigger(startedAt = 500)), recreated.onWindowStateChanged(10, "com.instagram.android"))
     }
 
     @Test
@@ -261,7 +344,10 @@ class DetectionEngineTest {
         readReddit()
         val recreated = DetectionEngine(clock = { now }, settleDelayMs = 2000, debounceMs = 10_000)
         now = 2_000
-        assertEquals(listOf(siteTrigger(latency = 2_000)), engine.onSettleElapsed(1))
-        assertEquals(emptyList<DetectionAction>(), recreated.onSettleElapsed(1))
+        assertEquals(listOf(siteTrigger()), settle(1))
+        assertEquals(
+            emptyList<DetectionAction>(),
+            recreated.onSettleElapsed(1, activeWindowId = 20, activePackageName = "com.android.chrome"),
+        )
     }
 }
