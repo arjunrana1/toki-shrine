@@ -106,9 +106,29 @@ class ChallengeRepositoryTest {
 
         assertFalse(blocks.getBlockWithContents(blockId)!!.block.enabled)
         val names = db.eventDao().getAll().map { it.name }
-        assertEquals(1, names.count { it == EventRepository.EVENT_CHALLENGE_COMPLETED })
+        assertEquals(0, names.count { it == EventRepository.EVENT_CHALLENGE_COMPLETED })
         assertEquals(1, names.count { it == EventRepository.EVENT_TURNOFF_COMPLETED })
         assertEquals(1, names.count { it == EventRepository.EVENT_BLOCK_TURNED_OFF })
+    }
+
+    @Test
+    fun completedTurnOffDoesNotChangeWalkAwayRate() = runBlocking {
+        val blockId = createEnabledBlock()
+        challenges.recordWalkAwayAndCount(
+            sessionId = "walk-before-turnoff",
+            blockId = blockId,
+            target = "com.example.target",
+            targetType = EventRepository.TARGET_TYPE_APP,
+            source = "block_screen",
+        )
+        val events = EventRepository(db, clock = { now })
+        assertEquals(1.0, events.getStats(now).walkAwayRate, 0.0)
+
+        assertTrue(challenges.completeTurnOff(typingCompletion(blockId, "stats-boundary")))
+
+        assertEquals(1.0, events.getStats(now).walkAwayRate, 0.0)
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_COMPLETED))
+        assertEquals(1, db.eventDao().countByName(EventRepository.EVENT_TURNOFF_COMPLETED))
     }
 
     @Test

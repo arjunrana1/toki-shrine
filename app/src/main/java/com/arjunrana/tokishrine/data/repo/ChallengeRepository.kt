@@ -144,7 +144,7 @@ class ChallengeRepository(
         if (!block.enabled || block.frictionType != request.method) return@withTransaction false
         if (!configMatches(block.pauseChars, block.countdownSeconds, request)) return@withTransaction false
         ensureFirstLaunch()
-        insertCompletionEvents(request)
+        insertPauseCompletionEvents(request)
         markCompleted(request.sessionId)
         true
     }
@@ -163,7 +163,7 @@ class ChallengeRepository(
         if (blocks.setEnabled(block.id, false) == 0) return@withTransaction false
 
         ensureFirstLaunch()
-        insertCompletionEvents(request)
+        insertCountdownCompletionEvent(request)
         insert(
             EventRepository.EVENT_TURNOFF_COMPLETED,
             block.id,
@@ -174,7 +174,7 @@ class ChallengeRepository(
         true
     }
 
-    private suspend fun insertCompletionEvents(request: CompletionRequest) {
+    private suspend fun insertPauseCompletionEvents(request: CompletionRequest) {
         insert(
             EventRepository.EVENT_CHALLENGE_COMPLETED,
             request.blockId,
@@ -184,6 +184,10 @@ class ChallengeRepository(
                 "attempts" to request.attempts,
             ),
         )
+        insertCountdownCompletionEvent(request)
+    }
+
+    private suspend fun insertCountdownCompletionEvent(request: CompletionRequest) {
         if (request.method == FrictionType.DELAY) {
             insert(
                 EventRepository.EVENT_COUNTDOWN_COMPLETED,
