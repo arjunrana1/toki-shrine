@@ -1,5 +1,7 @@
 # TimeShrine — Phase 0 PRD
 
+> **Historical input only.** Current behavior is governed by [PRD.md](PRD.md), with live scope and authorization in [coordination/CURRENT.md](coordination/CURRENT.md). Do not implement from superseded values or flows in this document.
+
 Early working document. Expected to be revised after design mockups. Text only, no design decisions.
 
 ---

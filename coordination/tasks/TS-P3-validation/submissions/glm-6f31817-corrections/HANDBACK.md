@@ -1,6 +1,6 @@
 # GLM handback — TS-P3-validation
 
-Current submission: direct owner corrections, 19 September (round 2). The prior P3-F01–P3-F06 repair handback is preserved verbatim at [submissions/glm-7d779a6-repair/HANDBACK.md](submissions/glm-7d779a6-repair/HANDBACK.md); the pre-migration builder record remains at [submissions/imported-cb1ad45/HANDBACK.md](submissions/imported-cb1ad45/HANDBACK.md).
+Current submission: direct owner corrections, 19 September (round 2). The prior P3-F01–P3-F06 repair handback is preserved verbatim at [glm-7d779a6-repair/HANDBACK.md](../glm-7d779a6-repair/HANDBACK.md); the pre-migration builder record remains at [imported-cb1ad45/HANDBACK.md](../imported-cb1ad45/HANDBACK.md).
 
 - **Submission:** `6f31817` on `7d779a6` (Phase 3 base `6c3b962`). Six files changed; all unrelated migration/PRD/branding/design edits preserved untouched.
 - **Implementer:** GLM 5.3 under the direct owner→GLM correction path (WORKFLOW); owner message of 19 September 11:40 with one screenshot (Samsung One UI Accessibility list).
@@ -35,4 +35,4 @@ Current submission: direct owner corrections, 19 September (round 2). The prior 
 
 ## Next-role prompt (paste-ready)
 
-> Read AGENTS.md and resume [TS-P3-validation](../TASK.md) as reviewer (Codex). Re-review the direct owner-correction delta `7d779a6..6f31817` (welcome copy, appbar spacing, battery picker removal, review-step padding; details in HANDBACK.md), then Arjun continues owner retests on installed build `6f31817`.
+> Read AGENTS.md and resume [TS-P3-validation](../../TASK.md) as reviewer (Codex). Re-review the direct owner-correction delta `7d779a6..6f31817` (welcome copy, appbar spacing, battery picker removal, review-step padding; details in HANDBACK.md), then Arjun continues owner retests on installed build `6f31817`.

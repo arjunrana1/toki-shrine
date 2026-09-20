@@ -1,9 +1,9 @@
 # GLM repair handback — TS-P3-validation, P3-F01–P3-F06
 
-Builder submission 19 September 2026. The prior imported builder handback for `cb1ad45` is preserved verbatim at [submissions/imported-cb1ad45/HANDBACK.md](submissions/imported-cb1ad45/HANDBACK.md).
+Builder submission 19 September 2026. The prior imported builder handback for `cb1ad45` is preserved verbatim at [imported-cb1ad45/HANDBACK.md](../imported-cb1ad45/HANDBACK.md).
 
 - **Submission:** `7d779a6` on `cb1ad45` (Phase 3 base `6c3b962`). Exactly nine files changed; every unrelated migration/PRD/branding/design edit in the working tree is preserved untouched.
-- **Implementer:** GLM 5.3 under the direct owner-correction path in [TASK](TASK.md); findings and owners from [REVIEW](REVIEW.md) (19 September section).
+- **Implementer:** GLM 5.3 under the direct owner-correction path in [TASK](../../TASK.md); findings and owners from [REVIEW](../../REVIEW.md) (19 September section).
 - **Scope:** exactly P3-F01–P3-F06. No other behavior, dependency, test-assertion or tooling change.
 
 ## Changes per finding
@@ -25,9 +25,9 @@ Builder submission 19 September 2026. The prior imported builder handback for `c
 ## Limits and readiness
 
 - Self-verification by the implementer only. Stopping for Codex re-review of the `cb1ad45..7d779a6` repair delta and affected dependencies.
-- No device operations performed or requested. Owner retest needed on an installed, identified build: P3-02, P3-03, P3-06 (feel), P3-08 (grant/revoke after manifest fix), P3-09, P3-14 (including the still-unreported behavioral matrix) and P3-15; a precise P3-01 result is still missing. P3-NV-02–P3-NV-04 remain open exactly as recorded in [OWNER-CHECKS](OWNER-CHECKS.md). Phase 4 not cleared.
+- No device operations performed or requested. Owner retest needed on an installed, identified build: P3-02, P3-03, P3-06 (feel), P3-08 (grant/revoke after manifest fix), P3-09, P3-14 (including the still-unreported behavioral matrix) and P3-15; a precise P3-01 result is still missing. P3-NV-02–P3-NV-04 remain open exactly as recorded in [OWNER-CHECKS](../../OWNER-CHECKS.md). Phase 4 not cleared.
 - Coordination records remain uncommitted alongside the owner's pending documentation migration; only the code repair was committed (`7d779a6`).
 
 ## Next-role prompt (paste-ready)
 
-> Read AGENTS.md and resume [TS-P3-validation](../TASK.md) as reviewer (Codex). Re-review the repair submission `7d779a6` (range `cb1ad45..7d779a6`) against findings P3-F01–P3-F06 in REVIEW.md and affected dependencies only; HANDBACK.md records the exact changes and checks. Then owner retests P3-02/03/06/08/09/14/15 and reports P3-01.
+> Read AGENTS.md and resume [TS-P3-validation](../../TASK.md) as reviewer (Codex). Re-review the repair submission `7d779a6` (range `cb1ad45..7d779a6`) against findings P3-F01–P3-F06 in REVIEW.md and affected dependencies only; HANDBACK.md records the exact changes and checks. Then owner retests P3-02/03/06/08/09/14/15 and reports P3-01.

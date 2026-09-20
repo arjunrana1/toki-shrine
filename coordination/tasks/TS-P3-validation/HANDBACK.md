@@ -29,4 +29,4 @@ Current submission: direct owner corrections, 19 September (round 3 — screen i
 
 ## Next-role prompt (paste-ready)
 
-> Read AGENTS.md and resume [TS-P3-validation](../TASK.md) as reviewer (Codex). Re-review the accumulated direct owner-correction delta `7d779a6..f92661d` (round 2: welcome copy, appbar spacing, battery picker removal, review-step padding; round 3: nav-bar insets on all screens, home title gap, app-search loading state — details in HANDBACK.md), then Arjun retests on the installed build.
+> Read AGENTS.md and resume [TS-P3-validation](TASK.md) as reviewer (Codex). Re-review the accumulated direct owner-correction delta `7d779a6..f92661d` (round 2: welcome copy, appbar spacing, battery picker removal, review-step padding; round 3: nav-bar insets on all screens, home title gap, app-search loading state — details in HANDBACK.md), then Arjun retests on the installed build.

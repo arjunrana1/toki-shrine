@@ -1,5 +1,7 @@
 # TimeShrine — Design Brief, Phase 1
 
+> **Historical input only.** Current behavior is governed by [PRD.md](PRD.md), with live scope and authorization in [coordination/CURRENT.md](coordination/CURRENT.md). Do not implement from superseded values or flows in this document.
+
 Companion to the Phase 0 PRD, which holds the full behavioural rules. This document covers what needs designing and the constraints around it.
 
 Android only. Phone, portrait, one-handed.

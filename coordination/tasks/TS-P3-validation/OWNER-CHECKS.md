@@ -112,7 +112,9 @@ Arjun reports that the four remaining owner scenarios pass on the latest install
 
 Codex should identify the smallest exact missing evidence when results arrive. Device-only evidence requires owner-led validation or explicit execution authorization; do not silently waive it or build a large substitute framework.
 
-## Known owner decisions to resolve through testing
+## Historical testing risks — resolved at closure
+
+The items below are retained as provenance. P3-10, P3-06 and P3-14 are resolved by the final owner report and nonvisual execution above; none remains an open Phase 3 gate.
 
 - Notification retry after repeated denial; record a dead Grant action as an issue, not a platform-based automatic pass.
 - Haptic feel: stronger ON/lighter OFF remains required; the repaired two-segment ON effect still needs owner feel confirmation.

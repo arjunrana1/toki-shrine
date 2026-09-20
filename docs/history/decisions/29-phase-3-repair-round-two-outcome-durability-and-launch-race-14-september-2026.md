@@ -1,0 +1,14 @@
+# Historical decision record
+
+Historical evidence, not current workflow instructions. Later records may supersede this entry. Use current component contracts and PRD requirements for implementation.
+
+Source: pre-migration DECISIONS.md, section 29.
+
+## Phase 3 repair, round two — outcome durability and launch race — 14 September 2026
+
+Narrow repair of the two review findings on `4b0ca0f` (GLM 5.3). Code committed; records stay uncommitted with the owner's in-flight documentation edits (R7 precedent).
+
+- **Outcome durability (PermissionEventLogic).** `resolve()` now confirms the request is pending, emits the outcome, and removes the identity only after the event write returns; `settle()` walks its snapshot in order and removes each identity only after its own outcome write succeeds. A throw or cancellation from either the state check or the event write leaves the failed request — and in `settle()` every unprocessed request — pending, so the next resume retries; a written outcome can never repeat. Both settlement paths run under a `Mutex` (kotlinx.coroutines, existing dependency) so a notification-callback `resolve()` arriving while a resume `settle()` is mid-write cannot observe a not-yet-removed identity and double-emit — remove-after-success alone would have reopened that interleaving window that the old clear-up-front code accidentally closed.
+- **First-launch race (MainActivity).** `launchResolved` flips to true only after the root decision fully finishes: the suspended `isOnboardingCompleted()` lookup completes and the Welcome route it decides is pushed first, then the flag is saved resolved. Cancellation during the lookup leaves the saved state unresolved, so the recreated activity retries the decision instead of skipping Welcome; a restored non-root stack resolves immediately without pushing Welcome or repeating the lookup (this also fixes the latent blank frame when a restored non-root stack met the old condition). The blank frame remains only while a genuine root decision is pending.
+- **Coverage.** PermissionEventLogicTest grew 13 → 18: failed and cancelled `resolve` retain the pending identity and a retry emits exactly once; `settle` write failure and state-check failure retain their request(s) for retry; a mixed settle removes written items while the failed and unprocessed ones remain and later settle exactly once. One test-side correction during the pass: a failure flag was initialised false instead of true (the assertion caught it; production code was correct).
+- **Checks:** assembleDebug, testDebugUnitTest — **44 JVM tests, 0 failures** (18 PermissionEventLogic + 5 TerminalAction + 4 RouteCodec + 5 OemBattery + 7 StatsCalculator + 5 Domain), assembleDebugAndroidTest compile-only, hex grep clean. No device operations. Device/Room items still pending: instrumented execution, real recreation/grant flows, and the transactional pairings from the previous round.

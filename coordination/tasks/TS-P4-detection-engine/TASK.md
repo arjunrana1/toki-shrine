@@ -3,7 +3,7 @@
 - **State:** `ready` — Phase 3 is closed; Phase 4 implementation is authorized.
 - **Goal:** detect blocked foreground apps and supported-browser whole-domain visits, then open the Phase 4 plain trigger placeholder within the required timing without firing from address-bar editing or stale window state.
 - **Implementation owner:** GLM 5.3 Pro / senior model. Service/window/URL timing, cancellation, stale events and per-window caching are stateful correctness work; Flash is not the primary owner. Arjun dispatches manually; one writer.
-- **Base:** the committed Phase 3/wizard closure at repository HEAD when handed to the implementer. Verify and record `git rev-parse HEAD` before editing; preserve unrelated unstaged documentation, branding, design and reports. Do not rewrite the accepted prior submission. Record the exact implementation base in HANDBACK.
+- **Base:** the committed Phase 3/wizard closure plus repository-hygiene documentation/assets at repository HEAD when handed to the implementer. Verify and record `git rev-parse HEAD` before editing. The worktree is expected to be clean; if it is not, reconcile unexpected changes with Arjun before writing. Do not rewrite the accepted prior submission, and record the exact implementation base in HANDBACK.
 - **Authority:** [Phase 4](../../../docs/phases/phase-04.md), PRD §§10, 13 and 14, [navigation/permissions](../../../docs/components/navigation-permissions.md), [persistence/events](../../../docs/components/persistence-events.md), and [build/validation](../../../docs/components/build-validation.md). Prototype observations are product evidence, not this app's runtime proof.
 
 ## Scope and invariants

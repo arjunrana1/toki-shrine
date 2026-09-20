@@ -1,0 +1,26 @@
+# Historical decision record
+
+Historical evidence, not current workflow instructions. Later records may supersede this entry. Use current component contracts and PRD requirements for implementation.
+
+Source: pre-migration DECISIONS.md, section 15.
+
+## Phase 2 owner refinements implemented — 13 September 2026
+
+- **R1–R14 refinement pass (this change, on top of 9d02a28).** All fourteen PRD §17 requirements implemented in one bounded pass, no rewrite of the completed ownership/terminal-guard repairs:
+  - R1: `PAUSE_MIN` 15 → 5 (default 15, max 120, step 5 unchanged; the control is shared by both mechanisms). The pause-duration footNote now reads "Minimum is 5 minutes".
+  - R2: step 3 reordered per §17 — Type to pause / Wait for this duration first, then Pause duration, then Disable this block, with the exact §17 helper copy (straight apostrophes as recorded). The step-3 middle section became scrollable so the pinned estimate (typing) and Next stay reachable with the longer helper text.
+  - R3: `SECONDS_PER_CHAR` 0.3 → 0.4 (100 → 40 s, 300 → 120 s). All surfaces flow through `typingEstimateSeconds`, so configuration box, review, detail and turn-on summaries changed together.
+  - R4: the EstimateBox is now typing-only; the delay box ("A … wait each time you want in · no typing…") is removed. The countdown stepper is the delay estimate.
+  - Estimate-box copy: dropped the "~20 wpm on mobile" suffix — it was the 0.3 s/char basis and is false at 0.4 s/char (≈30 wpm); §17 prescribes no replacement copy, so the box reads "<estimate> to type each time you want in".
+  - R5: the saved-OFF sentence row is removed from the create review; saving still forces `enabled = false` (Phase 1 invariant untouched).
+  - R6: review chips replaced by a vertical bounded list — icon + label rows, hairline dividers, apps then sites, surface card. Capped at four 46 dp rows (187 dp) with internal scrolling beyond; review content scrolls and Save is pinned, so nothing overflows horizontally or pushes the summary/Save off screen. List labels wrap; no ellipsis.
+  - R7: name input single-line with a hard 20-character cap (`NAME_MAX_CHARS`; input beyond 20 is dropped). `NocturneTextField` gained a `singleLine` parameter passed to `BasicTextField`. Display names keep default wrapping (no maxLines/ellipsis anywhere — already true).
+  - R8: step-1 Next, step-3 Next and review Save all require ≥ 1 target, in create and edit. `createBlock`/`updateBlock` additionally `require` a nonempty target list at the transaction boundary (IllegalArgumentException, before any DAO write) so direct friction edits and stale drafts cannot bypass. No legacy migration; the owner-authorized one-time removal of empty test blocks is deferred to the phone-handoff cleanup, not implemented here.
+  - R9: `Route.Create` carries `startStep`; detail's THE FRICTION → Edit enters the flow at 3/4 (contents edit unchanged at 1/4). Back (system and appbar) unwinds only to the entry step, then exits — create mode still logs `block_create_abandoned` exactly once; edits (both entries) close silently. Save/cancel/event semantics unchanged (`block_edited` with pre-write `fields_changed`).
+  - R10: the separate "Turn on" CTA is removed from the detail status card; the switch is the sole activation control.
+  - R11: home bottom row is now Share feedback (weight 1f, secondary, left) + "+ New Block" (weight 1.5f, primary, Plus glyph + "New Block", right); the overlapping FAB is removed. Both remain inert/reachable per phase (feedback is Phase 7).
+  - R12: turn-on subtitle replaced with the exact §17 copy plus a "Block Summary:" label above the cost rows; the "This is the last easy moment…" sentence is removed.
+  - R13: switch thumb 21 dp/2 dp padding → 17 dp with 3 dp horizontal inset and vertical centering (4 dp inset top/bottom), ON offset 19 dp — the thumb no longer runs flush with the track edge in either state. Track 42×25 unchanged (mock .tgl values).
+  - R14: deleting an OFF block now asks first — an in-place Dialog with "Are you sure?" and Confirm / Go back; only Confirm deletes (delete + `block_deleted` + onBack), Go back and outside-dismiss leave data unchanged. The detail screen has no text field, so the One UI keyboard+dialog freeze guidance does not apply; still flagged for device validation. Buttons use the standard PRIMARY/SECONDARY variants — the approved error palette was not pulled in because §17 specifies no destructive styling.
+- **Tests updated/added (compile-verified only; device runs pending owner authorization):** repository — empty-draft rejection for create and update plus a nonempty target in `setEnabledTogglesWithoutTouchingOtherFields`; UI — two existing saves now draft a real target through the picker (holder-block pill doubles as the ownership-loaded signal), plus new tests for step-1 empty gating, the 20-character cap, direct 3/4 entry with silent Back, and a DAO-seeded legacy empty block that cannot advance from 3/4.
+- **Checks run:** `./build.sh assembleDebug`, `testDebugUnitTest` (7 Stats JVM tests green), `assembleDebugAndroidTest` (instrumented sources compile), hex-colour grep clean. Instrumented execution, install and all visual/device assertions remain pending Arjun.

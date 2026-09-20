@@ -1,0 +1,46 @@
+# Independent reviewer — code review only
+
+**Current checkpoint — 14 September 2026: Phase 3 code PASS at `cb1ad45` (original submission `9a88b41`, approved base `6c3b962`).** Codex re-reviewed only `4b0ca0f..cb1ad45` against the two remaining findings. Permission outcome settlement is now serialized and removes each saved request only after its event write succeeds; failure/cancellation and partial-settlement retries are meaningfully covered. First-launch resolution now becomes durable only after the suspended completion lookup and route decision finish, while restored non-root stacks resolve directly. No blocking code findings remain. Builder result XML records 44 JVM tests with zero failures/errors; GLM also reports assembleDebug, androidTest compilation and a clean hex grep. Codex ran no builds/tests/device operations. Arjun may begin the numbered Phase 3 device/experience checklist; this is code clearance, not full Phase 3 sign-off.
+
+Owner workflow update: 10 September 2026. Latest owner update: both agents skip device operations; code approval precedes Arjun’s device testing. AGENTS.md §§3a–3b governs responsibilities and efficiency.
+
+Owner communication preference, 14 September 2026: whenever work must return to GLM, Codex supplies Arjun with a paste-ready prompt. Keep it token-efficient and precise: exact model, base/submission boundary, named findings and files, intended implementation shape where known, checks, exclusions, deliverables and stop condition. Do not leave GLM to rediscover repository context or infer the repair boundary.
+
+## Responsibilities
+
+- GLM is the builder: implements, compiles and runs targeted non-device checks, commits, and repairs findings.
+- Codex is the code reviewer: evaluates high-level architecture and whether the code supports the required behavior. No feature patches.
+- Arjun tests the device experience using the reviewer's checklist.
+
+Do not use adb, control a phone/emulator, install APKs, capture screenshots, extract device databases, or run builds/test suites unless Arjun explicitly changes this scope. Inspect existing tests/results as evidence, attributing them to the builder. Never call source inspection a runtime pass.
+
+## Efficient review
+
+1. Read AGENTS.md, relevant PRD.md requirements and DECISIONS.md. Read the latest phase report and builder update for context, not as proof of correctness.
+2. Inspect git status/log and identify the exact submission and comparison base. Preserve unrelated changes. For re-review, compare the new repair diff against the last reviewed submission, prior blockers and affected data paths. Do not restart the whole previous audit or reopen accepted phases. Explain any expansion into unchanged code with a concrete risk.
+3. Trace relevant code from UI actions through state, repositories and persistence, and back to display/events. Check ownership, validation/normalization, atomicity, error handling, lifecycle and formatting. Read enough surrounding implementation/test code to substantiate findings; expand only for a concrete risk.
+4. Review architecture proportionately. Flag real requirement failures or maintainability risks with consequences, not naming preferences, cosmetic polish or hypothetical refactors. Do not start later phases. No exhaustive pixel comparison or device automation.
+5. Check that tests meaningfully assert the critical invariants; do not write or run replacement probes. Identify missing builder evidence explicitly.
+
+## Deliverable
+
+- **Code review:** PASS / PASS WITH NOTES / FAIL, exact commit reviewed, material limitations, and actionable findings with file/line, consequence and requested correction. Separate blockers from notes.
+- **Owner device checklist:** numbered test IDs with setup, steps and visible expected results. Cover the current phase's acceptance scenarios, repaired bugs and material edge cases (Back/keyboard, create vs edit, ON vs OFF, cancellation, persistence and invalid/duplicate input as relevant). Make results easy to return as pass/fail by ID. Avoid duplicate test paths.
+- **Builder-only checks:** separate anything Arjun cannot validate from the screen, such as transaction rollback, event-table payloads or race conditions. Inspect reported evidence or request a targeted non-device builder check. Device-only assertions remain explicitly pending for owner-led validation or authorization; neither agent executes them by default.
+- **Phase status:** pending until code blockers are resolved and the assigned acceptance evidence is complete. Owner-reported device passes are valid evidence under this workflow; label their source. A code PASS is not a device PASS.
+
+Follow AGENTS.md §3b for progress updates, delay explanations and completion reporting. While code blockers remain, prioritize the repair findings; the owner checklist is for use after code clearance.
+
+Keep the answer and documentation concise. Use the existing phase report if a record is needed, with detailed evidence only for defects GLM must fix. Do not create new handoff .md files. For a new session provide a short prompt pointing to these existing instructions and the current phase/commit.
+
+## Current review boundary
+
+Next step: Arjun reports numbered Phase 3 device/experience results against approved code commit `cb1ad45`. Reconcile each PASS/FAIL with the existing checklist, request only evidence needed for failures or nonvisual gaps, and do not reopen the code audit without a concrete device regression. Full Phase 3 sign-off remains pending owner validation.
+
+Carry-forward: saved navigation/drafts across recreation, shared accessibility semantics, development-only destructive migrations and vector/themed launcher icon polish. Investigate only when concretely affected by Phase 3. Preserve unrelated branding work. Revised instrumented tests remain compile-only evidence, not executed passes.
+
+## Model and run-boundary reminder
+
+Follow AGENTS.md §3c. At each phase/repair start, recommend the builder model with a reason and state scope, checks and stop condition. Codex remains the independent reviewer; switching builders does not trigger a whole-codebase review. Preserve the current repair and review its diff before requesting further implementation. After two failed attempts at the same check, report a bounded diagnosis instead of continuing speculative retries. Once planned checks pass, hand off. Phone preparation follows code approval and an owner setup request; it is not authorization to run device tests.
+
+At phase/repair start, use the model/scope/checks/stop format in AGENTS.md §3c. Flash is the owner-reported image-reading choice for supplied visual references and bounded UI work; GLM 5.3 is preferred for complex state/lifecycle/persistence. Do not add a second whole-project review or require a model handoff for trivial work. On interruption, report from local records without launching another check or querying the phone.

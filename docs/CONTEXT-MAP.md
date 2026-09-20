@@ -16,7 +16,7 @@ Do not read every linked document. TASK gives starting references; use this map 
 
 ## Open obligations by owner document
 
-- Approved five-screen editor redesign: [task](../coordination/tasks/TS-block-wizard-redesign/TASK.md), PRD §7 and latest §17 wizard amendment; implementation pending. Waiting is visible-and-unlocked, with no hold detection; runtime remains Phase 5.
+- Five-screen editor redesign: implemented and closed in [its task](../coordination/tasks/TS-block-wizard-redesign/TASK.md), with reviewer, owner and executed nonvisual PASS. PRD §7 and the latest §17 wizard amendment remain authoritative. Waiting is visible-and-unlocked, with no hold detection; challenge runtime remains Phase 5.
 
 - Phase 3 owner results and executed nonvisual evidence are closed in the [Phase 3 checklist](../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md).
 - Create-flow draft restoration/shared accessibility semantics: blocks/targets and theme/UI contracts; do not mislabel the repaired Phase 3 route stack as still broken.
