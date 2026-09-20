@@ -1,6 +1,6 @@
 # TS-P4-detection-engine — Accessibility detection and browser URL matching
 
-- **State:** `changes_requested` — Codex review of `0ca1424` found P4-F01–P4-F04; see [REVIEW](REVIEW.md). Repair is required before owner/device acceptance.
+- **State:** `ready_for_review` — senior Codex repair `9b3da43` addresses P4-F01–P4-F04 on code base `0ca1424`; see [HANDBACK](HANDBACK.md). Fresh independent review is required before owner/device acceptance.
 - **Goal:** detect blocked foreground apps and supported-browser whole-domain visits, then open the Phase 4 plain trigger placeholder within the required timing without firing from address-bar editing or stale window state.
 - **Implementation owner:** GLM 5.3 Pro / senior model. Service/window/URL timing, cancellation, stale events and per-window caching are stateful correctness work; Flash is not the primary owner. Arjun dispatches manually; one writer.
 - **Base:** the committed Phase 3/wizard closure plus repository-hygiene documentation/assets at repository HEAD when handed to the implementer. Verify and record `git rev-parse HEAD` before editing. The worktree is expected to be clean; if it is not, reconcile unexpected changes with Arjun before writing. Do not rewrite the accepted prior submission, and record the exact implementation base in HANDBACK.

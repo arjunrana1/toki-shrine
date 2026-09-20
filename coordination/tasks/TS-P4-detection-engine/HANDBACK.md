@@ -1,4 +1,40 @@
-# GLM handback — TS-P4-detection-engine
+# Implementation handback — TS-P4-detection-engine
+
+## Senior Codex repair — current submission
+
+- **Submission:** `9b3da43` repairing findings P4-F01–P4-F04 on code base `0ca1424`. Documentation-only commits `d63a65c` and `7467965` sit between the implementation commits and do not alter the reviewed code base.
+- **Implementer:** senior Codex, 20 September 2026. Self-verification only; a fresh independent review of `0ca1424..9b3da43` is required before owner/device acceptance.
+
+### Finding resolution
+
+- **P4-F01 — foreground settle truth:** the delayed callback now snapshots `rootInActiveWindow`, refreshes focus/text from that actual root when it is a supported browser, and supplies the live window/package identity to `DetectionEngine`. A missing root or foreground identity mismatch consumes the stale settle without triggering; a hidden address-bar node still preserves the cached URL.
+- **P4-F02 — live block ownership:** `onBlocksChanged` now cancels the pending settle when its domain no longer maps to the same active `BlockRef`; `onSettleElapsed` also revalidates the current map before emitting.
+- **P4-F03 — cache identity:** cached readings are keyed semantically by `(windowId, packageName)`. Reusing a numeric window ID for another package resets its URL/focus state and cancels pending work for the old identity.
+- **P4-F04 — truthful shown event:** the service carries block identity and the original monotonic detection timestamp into `BlockActivity` but no longer logs `block_screen_shown`. The activity logs only from `onPostResume`, computes latency through that presentation point, and saves a synchronous one-shot guard so resume/recreation cannot schedule duplicates. Invalid launch data produces neither UI nor telemetry.
+
+### Repair files
+
+- Modified: `TokiAccessibilityService.kt`, `BlockActivity.kt`, `detection/DetectionEngine.kt`, `detection/DetectionEngineTest.kt`.
+- Added: `detection/BlockShownEvent.kt`, `detection/BlockShownEventTest.kt`.
+
+### Checks (senior Codex, non-device, this machine, 20 September 2026)
+
+- `./build.sh testDebugUnitTest` — BUILD SUCCESSFUL; **109 tests, 0 failures, 0 errors**. `DetectionEngineTest` is 25/25 and `BlockShownEventTest` is 3/3. New cases cover unfiltered foreground departure, unavailable active roots, block removal/reassignment, same-ID package replacement, original detection timestamps, invalid event inputs and non-negative latency.
+- `./build.sh assembleDebug` — BUILD SUCCESSFUL.
+- `./build.sh assembleDebugAndroidTest` — BUILD SUCCESSFUL, compile-only.
+- `git diff --check` — passed before submission.
+
+### Remaining evidence and stop
+
+- No adb, device/emulator, installation, screenshot, database extraction or instrumented execution was performed. The previously listed Phase 4 device/browser checks and execution of `AssetDetectionConfigLoaderTest` remain owner-authorized only after independent code PASS.
+- In particular, the new live-root/window identity behavior and resumed `block_screen_shown` latency still require actual service/browser/device evidence; the compile and JVM results do not claim that acceptance.
+- Stop at `ready_for_review`. Do not begin owner/device acceptance or Phase 5.
+
+### Current next-role prompt
+
+> Read AGENTS.md and resume `TS-P4-detection-engine` as an independent Codex reviewer. Review only repair range `0ca1424..9b3da43` and affected dependencies against P4-F01–P4-F04 in `REVIEW.md`. The three authorized non-device checks pass; no device execution occurred. Record PASS/FAIL for `9b3da43`, keep owner/device acceptance separate, and stop after updating REVIEW/CURRENT.
+
+## Initial GLM submission — preserved evidence
 
 - **Submission:** `0ca1424` on base `0ddd569` (repository HEAD when the task was handed over; worktree was clean before editing). First Phase 4 submission; no prior Phase 4 handback to preserve.
 - **Implementer:** GLM 5.3 Pro, as assigned in TASK/CURRENT, 20 September 2026. Self-verification only; independent Codex review precedes owner/device acceptance.
@@ -37,6 +73,6 @@ org.json is not on the JVM classpath and no test dependency may be added, so: th
 - `block_screen_shown` is written when the launch call succeeds; actual on-screen timing is device evidence.
 - Phase 3 owner checklist retests are unaffected by this change set except the battery screen (text now JSON-loaded).
 
-## Next-role prompt (paste-ready)
+## Initial next-role prompt (superseded by the repair prompt above)
 
 > Read AGENTS.md and resume [TS-P4-detection-engine](TASK.md) as reviewer (Codex). Submission `0ca1424` on base `0ddd569` is ready for review; see HANDBACK.md for the state-machine invariants, the JVM/androidTest evidence split and the flagged adapter simplifications.
