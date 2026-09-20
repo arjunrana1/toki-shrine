@@ -23,4 +23,17 @@ Code review PASS applies only to repair submission `9b3da43` (on implementation 
 
 ## Results
 
-No Phase 4 owner/device results have been recorded yet.
+Source: `Toki Shrine _ Owner device checklist _ Phase 4.docx`, supplied by Arjun on 20 September 2026. The document records owner observations, but does not identify the installed code commit, device, test date, or permission/fixture state. Its statements are preserved as evidence, not used to waive product requirements by themselves.
+
+| ID | Owner result | Evidence and disposition |
+|---|---|---|
+| P4-01 | **Pass reported** | Service bound was marked Pass. Installed-build/device attribution remains unconfirmed. |
+| P4-02 | **Pass reported** | Instagram interception was marked Pass. The document does not independently establish the 1-second measurement method. |
+| P4-03 | **Pass reported** | Chrome `reddit.com` interception was marked Pass. The document does not independently establish the 3-second measurement method. |
+| P4-04 | **Pass reported** | Focused typing and spaced-search exclusion were marked Pass. |
+| P4-05 | **Pass reported** | `old.reddit.com` matching and both stated lookalike exclusions were marked Pass. |
+| P4-06 | **Not run** | The document says this case is “not needed.” Unsupported-browser silence remains an unexecuted Phase 4 acceptance scenario unless Arjun explicitly waives it. |
+| P4-07 | **Pass reported** | Both foreground departure and turning the block OFF during settle were marked Pass. |
+| P4-08 | **Pass reported** | Samsung battery JSON text and usable action were marked Pass. |
+| P4-NV-01 | **Pending** | The document says it was not run. Codex attempted the explicitly authorized connected-device preflight on 20 September 2026, but adb reported no devices/emulators; no instrumented test ran. |
+| P4-09 | **Deferred risk** | The document says overnight validation is not needed and proposes assuming pass. It is not evidence of Samsung survival; keep it as a known unverified risk unless Arjun explicitly accepts deferral. |
