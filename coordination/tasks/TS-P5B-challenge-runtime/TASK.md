@@ -1,9 +1,9 @@
 # TS-P5B-challenge-runtime — Challenge lifecycle, outcomes and events
 
-- **State:** `planned` — do not implement until TS-P5A has an independently reviewed code PASS and CURRENT routes work here.
+- **State:** `ready_for_review` — senior Codex submitted `eb2f956` on base `9e3a373`; see [HANDBACK](HANDBACK.md). Implementer non-device checks pass; independent review is required before owner acceptance.
 - **Goal:** integrate the Phase 5 interruption surfaces into `BlockActivity` and implement the correctness-critical typing/waiting challenge runtime, explicit walk-away accounting, disable completion and a clean Phase 6 pause-outcome seam.
 - **Implementation owner:** senior model (Codex session using Arjun's chosen capable model). Cancellation, foreground/unlocked visibility, monotonic time, terminal races, duplicate callbacks and atomic persistence/event ordering are explicitly senior-owned. Do not delegate the core to GLM after P5A.
-- **Base:** the independently approved P5A submission. Record the exact commit before editing and preserve unrelated work.
+- **Base:** `9e3a373`, containing independently approved P5A submission `3ba8037` plus records-only commits. Preserve unrelated work.
 - **Authority:** [Phase 5](../../../docs/phases/phase-05.md), PRD §§7, 8, 10, 11, 13 and applicable §17 amendments, [persistence/events](../../../docs/components/persistence-events.md), [theme/UI](../../../docs/components/theme-ui.md), and [build/validation](../../../docs/components/build-validation.md).
 
 ## Runtime architecture and invariants
