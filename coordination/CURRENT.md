@@ -1,9 +1,9 @@
 # Current work
 
 - **Active task:** [TS-P4-detection-engine](tasks/TS-P4-detection-engine/TASK.md) — Accessibility detection and supported-browser URL matching.
-- **State:** `ready_for_review` — Phase 4 implementation submitted by GLM as `0ca1424` on base `0ddd569`; see [HANDBACK](tasks/TS-P4-detection-engine/HANDBACK.md). Non-device checks passed (`assembleDebug`, `testDebugUnitTest` 101/101, `assembleDebugAndroidTest` compile-only). Independent Codex review precedes owner/device acceptance.
-- **Next actor:** Arjun opens a Codex session as reviewer for submission `0ca1424`; paste-ready prompt at the end of the HANDBACK.
-- **Base for any repair:** `0ca1424`. The worktree is expected to be clean; reconcile unexpected changes with Arjun before writing.
+- **State:** `changes_requested` — independent Codex review of `0ca1424` on base `0ddd569` found four blockers; see [REVIEW](tasks/TS-P4-detection-engine/REVIEW.md). P4-F01–P4-F03 permit stale site triggers after foreground, block-map or package-identity changes; P4-F04 records `block_screen_shown` before the placeholder is actually shown. Owner/device acceptance must wait for repair and fresh review.
+- **Next actor:** Arjun opens a senior Codex implementation session for the bounded P4-F01–P4-F04 repair; paste-ready prompt at the end of REVIEW.
+- **Base for repair:** `0ca1424`. Preserve the documentation-only handback/review commits and unrelated work; neither documentation commit changes the reviewed code base.
 - **Implementation notes for review:** all §13 rules live in the pure `DetectionEngine` (JVM-tested); the service is a thin adapter (package filter, `rootInActiveWindow` address reads, §10 events, placeholder launch). Browser map + OEM battery text ship in `assets/detection_config.json` behind `DetectionConfigLoader`. Full asset parsing is covered by a new androidTest suite awaiting the owner-authorized instrumented run; no device execution has been performed or claimed.
 - **Device state:** unchanged from Phase 3 closure — final `./build.sh connectedDebugAndroidTest` passed **51/51** on SM-S918B (`R5CW30ZBM2R`, Android 16); app and test packages were then removed (`pm path` empty, `enabled_accessibility_services` `null`). Reinstall, re-grant accessibility and re-seed fixtures before any Phase 4 device acceptance; the new androidTest suite (56 instrumented tests incl. `AssetDetectionConfigLoaderTest`) also awaits an authorized run. Plan data preservation first — see [build/validation](../docs/components/build-validation.md).
 
