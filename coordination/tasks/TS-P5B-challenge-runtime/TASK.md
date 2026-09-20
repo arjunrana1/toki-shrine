@@ -1,6 +1,6 @@
 # TS-P5B-challenge-runtime — Challenge lifecycle, outcomes and events
 
-- **State:** `ready_for_review` — senior Codex repaired blocker `P5B-01` in `7a8fb00` on reviewed implementation `eb2f956`; see [HANDBACK](HANDBACK.md). Fresh independent review is required. No owner acceptance is authorized.
+- **State:** `awaiting_owner` — independent Codex re-review passed repair `7a8fb00` over `eb2f956`; `P5B-01` is resolved. See [REVIEW](REVIEW.md). Phase 5 owner acceptance remains separate; Phase 6 is not authorized.
 - **Goal:** integrate the Phase 5 interruption surfaces into `BlockActivity` and implement the correctness-critical typing/waiting challenge runtime, explicit walk-away accounting, disable completion and a clean Phase 6 pause-outcome seam.
 - **Implementation owner:** senior model (Codex session using Arjun's chosen capable model). Cancellation, foreground/unlocked visibility, monotonic time, terminal races, duplicate callbacks and atomic persistence/event ordering are explicitly senior-owned. Do not delegate the core to GLM after P5A.
 - **Base:** `9e3a373`, containing independently approved P5A submission `3ba8037` plus records-only commits. Preserve unrelated work.
@@ -44,6 +44,13 @@
   fresh repair commit with a replacement `HANDBACK.md`, then set this task to
   `ready_for_review` for a new independent review. Do not begin owner testing or
   Phase 6.
+
+### Resolution
+
+Independent re-review passed `7a8fb00`: turn-off no longer writes the generic
+Stats-counted `challenge_completed` event, while its atomic OFF mutation and
+terminal events remain intact. `P5B-01` is resolved; owner acceptance is the
+next separate gate.
 
 ### Repair submission
 

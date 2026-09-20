@@ -56,3 +56,31 @@ accounting, while preserving atomic retry/rollback behavior.
 Senior Codex should repair **P5B-01 only**, add the focused regression coverage,
 write a replacement handback for the repair submission, and route the task for
 a fresh independent code review. Owner testing and Phase 6 remain out of scope.
+
+## Re-review — P5B-01 repair
+
+- **Repair submission:** `7a8fb00` (`Fix turn-off stats accounting`)
+- **Repair comparison:** `eb2f956`; original task base remains `9e3a373`
+- **Verdict:** **PASS.** No blocking or required code finding remains in the
+  P5B boundary.
+
+`7a8fb00` separates the writers so `completePause()` alone persists the generic
+`challenge_completed` event consumed by `EventRepository.getStats()`. The
+turn-off transaction now keeps the OFF mutation, `turnoff_completed`,
+`block_turned_off`, and applicable `countdown_completed` in its existing Room
+transaction without inserting that Stats-counted event. The focused Room
+regression establishes a walk-away rate of `1.0`, completes a turn-off, and
+proves both that the rate remains `1.0` and that no generic completion event was
+written. Existing at-most-once, retry/rollback, and waiting-countdown coverage
+remains applicable to the unchanged transaction boundary.
+
+The repair delta is structurally clean (`git diff --check eb2f956..7a8fb00`:
+PASS). This re-review is source and data-flow evidence only. The repair
+handback's assembly, JVM, and compile-only Android-test results remain
+implementer-attributed; no device, emulator, adb, installation, or instrumented
+test execution was performed by the reviewer.
+
+**P5B-01 resolution:** resolved and independently verified in `7a8fb00`.
+
+P5B code review is complete. Phase 5 owner acceptance remains separate; no
+Phase 6 behavior is authorized.
