@@ -1,6 +1,6 @@
 # TS-P5B-challenge-runtime — Challenge lifecycle, outcomes and events
 
-- **State:** `ready_for_review` — senior Codex submitted `eb2f956` on base `9e3a373`; see [HANDBACK](HANDBACK.md). Implementer non-device checks pass; independent review is required before owner acceptance.
+- **State:** `changes_requested` — independent review of `eb2f956` on base `9e3a373` found blocker `P5B-01`; see [REVIEW](REVIEW.md). No owner acceptance is authorized.
 - **Goal:** integrate the Phase 5 interruption surfaces into `BlockActivity` and implement the correctness-critical typing/waiting challenge runtime, explicit walk-away accounting, disable completion and a clean Phase 6 pause-outcome seam.
 - **Implementation owner:** senior model (Codex session using Arjun's chosen capable model). Cancellation, foreground/unlocked visibility, monotonic time, terminal races, duplicate callbacks and atomic persistence/event ordering are explicitly senior-owned. Do not delegate the core to GLM after P5A.
 - **Base:** `9e3a373`, containing independently approved P5A submission `3ba8037` plus records-only commits. Preserve unrelated work.
@@ -30,3 +30,17 @@
 
 - No Phase 6 pause lifecycle/access grant/re-arm, floating bubble or ongoing notification; no Stats/settings/feedback; no rename; no unrelated migration/toolchain/dependency change; no device operations.
 - Stop at the independently reviewable Phase 5 runtime submission. Explicitly list all Phase 6-dependent acceptance that remains unclaimable.
+
+## Review repair
+
+- **P5B-01 (blocker):** The turn-off transaction currently writes the generic
+  `challenge_completed` event through `insertCompletionEvents()`. Stats counts
+  that event as a walk-away completion, contrary to the Phase 5 requirement
+  that turn-off events remain separate from walk-away Stats. Senior Codex must
+  repair this accounting boundary only: retain atomic turn-off terminal events
+  and the OFF write, prevent turn-offs from affecting walk-away completion
+  accounting, and add focused regression coverage.
+- Preserve the accepted `eb2f956` runtime behavior outside this repair. Submit a
+  fresh repair commit with a replacement `HANDBACK.md`, then set this task to
+  `ready_for_review` for a new independent review. Do not begin owner testing or
+  Phase 6.
