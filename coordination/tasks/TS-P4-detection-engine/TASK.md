@@ -1,6 +1,6 @@
 # TS-P4-detection-engine — Accessibility detection and browser URL matching
 
-- **State:** `awaiting_owner` — independent Codex review PASSed repair `9b3da43` for P4-F01–P4-F04; see [REVIEW](REVIEW.md). Owner/device and executed instrumented evidence remain open in [OWNER-CHECKS](OWNER-CHECKS.md).
+- **State:** `closed` — independent Codex review PASSed repair `9b3da43`; owner reports pass for P4-01–P4-05/P4-07/P4-08, P4-06 is explicitly waived, and P4-NV-01 executed 5/5 on Android. P4-09 is an owner-accepted deferred Samsung-survival risk; see [OWNER-CHECKS](OWNER-CHECKS.md). Phase 5 is authorized when Arjun opens its scoped task.
 - **Goal:** detect blocked foreground apps and supported-browser whole-domain visits, then open the Phase 4 plain trigger placeholder within the required timing without firing from address-bar editing or stale window state.
 - **Implementation owner:** GLM 5.3 Pro / senior model. Service/window/URL timing, cancellation, stale events and per-window caching are stateful correctness work; Flash is not the primary owner. Arjun dispatches manually; one writer.
 - **Base:** the committed Phase 3/wizard closure plus repository-hygiene documentation/assets at repository HEAD when handed to the implementer. Verify and record `git rev-parse HEAD` before editing. The worktree is expected to be clean; if it is not, reconcile unexpected changes with Arjun before writing. Do not rewrite the accepted prior submission, and record the exact implementation base in HANDBACK.

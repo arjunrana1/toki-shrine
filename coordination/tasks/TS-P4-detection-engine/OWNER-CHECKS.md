@@ -32,8 +32,8 @@ Source: `Toki Shrine _ Owner device checklist _ Phase 4.docx`, supplied by Arjun
 | P4-03 | **Pass reported** | Chrome `reddit.com` interception was marked Pass. The document does not independently establish the 3-second measurement method. |
 | P4-04 | **Pass reported** | Focused typing and spaced-search exclusion were marked Pass. |
 | P4-05 | **Pass reported** | `old.reddit.com` matching and both stated lookalike exclusions were marked Pass. |
-| P4-06 | **Not run** | The document says this case is “not needed.” Unsupported-browser silence remains an unexecuted Phase 4 acceptance scenario unless Arjun explicitly waives it. |
+| P4-06 | **Waived by owner** | Arjun explicitly waived this non-essential unsupported-browser scenario in the active conversation on 20 September 2026. It is not runtime evidence and need not be retried for Phase 4 closure. |
 | P4-07 | **Pass reported** | Both foreground departure and turning the block OFF during settle were marked Pass. |
 | P4-08 | **Pass reported** | Samsung battery JSON text and usable action were marked Pass. |
-| P4-NV-01 | **Pending** | The document says it was not run. Codex attempted the explicitly authorized connected-device preflight on 20 September 2026, but adb reported no devices/emulators; no instrumented test ran. |
-| P4-09 | **Deferred risk** | The document says overnight validation is not needed and proposes assuming pass. It is not evidence of Samsung survival; keep it as a known unverified risk unless Arjun explicitly accepts deferral. |
+| P4-NV-01 | **Pass** | With Arjun’s explicit authorization, Codex ran only `AssetDetectionConfigLoaderTest` through `./build.sh connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.arjunrana.tokishrine.detection.AssetDetectionConfigLoaderTest` on SM-S918B (`R5CW30ZBM2R`, Android 16): **5 tests, 0 failures, 0 errors, 0 skipped**. This executes real asset parsing plus malformed/missing/duplicate parser paths. |
+| P4-09 | **Deferred risk accepted by owner** | Arjun explicitly deferred overnight survival in the active conversation on 20 September 2026. Samsung battery survival remains unverified and must not be represented as a pass, but it does not block Phase 4 closure. |
