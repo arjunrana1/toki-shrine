@@ -32,6 +32,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.arjunrana.tokishrine.data.permissions.AppPermission
+import com.arjunrana.tokishrine.data.permissions.BatteryInstructions
 import com.arjunrana.tokishrine.data.permissions.BatteryOem
 import com.arjunrana.tokishrine.data.permissions.PermissionEventLogic
 import com.arjunrana.tokishrine.data.permissions.Permissions
@@ -293,31 +294,46 @@ class MainActivity : ComponentActivity() {
                             },
                         )
 
-                        Route.BatteryInstructions -> BatteryInstructionsScreen(
-                            detectedManufacturer = Build.MANUFACTURER,
-                            onBack = { stack.removeAt(stack.lastIndex) },
-                            onOpenBatterySettings = { oem ->
-                                stack.removeAt(stack.lastIndex)
-                                requestPermission(AppPermission.BATTERY) {
-                                    startActivity(
-                                        when (oem) {
-                                            // Samsung's authored steps walk the
-                                            // app-info → Battery path (PRD §6
-                                            // screen 4); every other maker gets
-                                            // the universal Android dialog.
-                                            BatteryOem.SAMSUNG -> Intent(
-                                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                                Uri.parse("package:$packageName"),
-                                            )
-                                            BatteryOem.GENERIC -> Intent(
-                                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                                Uri.parse("package:$packageName"),
-                                            )
-                                        },
-                                    )
-                                }
-                            },
-                        )
+                        Route.BatteryInstructions -> {
+                            // Authored OEM text comes from the bundled
+                            // detection JSON (Phase 4); null means still
+                            // loading or a corrupt asset, and the screen
+                            // degrades to its frame without the text.
+                            var instructionsByOem by remember {
+                                mutableStateOf<Map<BatteryOem, BatteryInstructions>?>(null)
+                            }
+                            LaunchedEffect(Unit) {
+                                instructionsByOem = runCatching { app.detectionConfigLoader.load() }
+                                    .getOrNull()
+                                    ?.batteryInstructions
+                            }
+                            BatteryInstructionsScreen(
+                                detectedManufacturer = Build.MANUFACTURER,
+                                instructionsByOem = instructionsByOem,
+                                onBack = { stack.removeAt(stack.lastIndex) },
+                                onOpenBatterySettings = { oem ->
+                                    stack.removeAt(stack.lastIndex)
+                                    requestPermission(AppPermission.BATTERY) {
+                                        startActivity(
+                                            when (oem) {
+                                                // Samsung's authored steps walk the
+                                                // app-info → Battery path (PRD §6
+                                                // screen 4); every other maker gets
+                                                // the universal Android dialog.
+                                                BatteryOem.SAMSUNG -> Intent(
+                                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                                    Uri.parse("package:$packageName"),
+                                                )
+                                                BatteryOem.GENERIC -> Intent(
+                                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                                    Uri.parse("package:$packageName"),
+                                                )
+                                            },
+                                        )
+                                    }
+                                },
+                            )
+                        }
 
                         Route.Settings -> SettingsScreen(
                             states = permissionStates,

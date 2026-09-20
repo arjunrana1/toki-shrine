@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Phase 3 prerequisite: the declaration that makes the service grantable
-     from system accessibility settings. No event types are subscribed yet —
-     the Phase 4 detection engine adds them — but window content retrieval
-     is already requested because address-bar reading needs it. -->
+<!-- Phase 4 detection engine: window state/content events carry app
+     switches and address-bar updates; flagReportViewIds makes
+     findAccessibilityNodeInfosByViewId work for address-bar reading.
+     The package list itself is applied at runtime via setServiceInfo —
+     enabled blocked apps plus the supported browsers from the bundled
+     JSON map, so the service stays idle for everything else (PRD §13). -->
 <accessibility-service
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/accessibility_service_description"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault"
+    android:accessibilityFlags="flagDefault|flagReportViewIds"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="true" />

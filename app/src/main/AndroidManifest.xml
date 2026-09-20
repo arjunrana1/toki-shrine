@@ -49,11 +49,27 @@
             </intent-filter>
         </activity>
 
-        <!-- Phase 3 permission prerequisite: the declaration that makes the
-             app grantable from system accessibility settings. The detection
-             engine itself is Phase 4; this service observes nothing yet.
+        <!-- Phase 4 block-screen placeholder, launched by the detection
+             service when a blocked app or site is in front. Not exported:
+             only Toki Shrine's own service starts it, and the
+             accessibility background-launch exemption covers that start
+             (PRD §13/§14), so no overlay permission is involved.
+             Excluded from recents and never retained in the back stack —
+             dismissing it returns to what was in front. -->
+        <activity
+            android:name=".BlockActivity"
+            android:exported="false"
+            android:label="@string/block_activity_label"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <!-- Permission prerequisite turned detection engine (Phase 4): the
+             declaration that makes the app grantable from system
+             accessibility settings, now implementing foreground-app
+             detection and supported-browser address-bar reading.
              Exported so the system can bind it; the signature-level
-             BIND_ACCESSIBILITY_SERVICE permission keeps every other app out. -->
+             BIND_ACCESSIBILITY_SERVICE permission keeps every other app
+             out. -->
         <service
             android:name=".TokiAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

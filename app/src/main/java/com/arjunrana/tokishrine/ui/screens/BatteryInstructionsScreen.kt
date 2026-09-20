@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arjunrana.tokishrine.data.permissions.BatteryInstructions
 import com.arjunrana.tokishrine.data.permissions.BatteryOem
 import com.arjunrana.tokishrine.data.permissions.BatteryStepPart
 import com.arjunrana.tokishrine.data.permissions.OemBattery
@@ -37,13 +38,18 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 // gets the authored One UI steps, every other device gets the universal
 // Android battery-optimisation dialog, and the former "Not a Samsung?
 // Pick your phone" override picker is removed — the intro speaks about
-// Android, not Samsung. There is no text field on this screen, so the One
-// UI keyboard+dialog freeze guidance (DECISIONS.md, Phase 2) does not
-// apply — still flagged for device validation like every dialog. The
-// earlier completion CTA was also removed by owner request (P3-F05).
+// Android, not Samsung. Since Phase 4 the authored text arrives from the
+// bundled detection JSON through DetectionConfigLoader: the map is null
+// while it loads (or if the asset is corrupt, a build defect) and the
+// screen renders its frame with the settings button still functional.
+// There is no text field on this screen, so the One UI keyboard+dialog
+// freeze guidance (DECISIONS.md, Phase 2) does not apply — still flagged
+// for device validation like every dialog. The earlier completion CTA
+// was also removed by owner request (P3-F05).
 @Composable
 fun BatteryInstructionsScreen(
     detectedManufacturer: String?,
+    instructionsByOem: Map<BatteryOem, BatteryInstructions>?,
     onBack: () -> Unit,
     onOpenBatterySettings: (BatteryOem) -> Unit,
 ) {
@@ -51,7 +57,7 @@ fun BatteryInstructionsScreen(
     // Detection is derived, never user-set, so nothing survives—or needs
     // to survive—activity recreation beyond the manufacturer input itself.
     val oem = remember(detectedManufacturer) { OemBattery.detect(detectedManufacturer) }
-    val instructions = OemBattery.instructionsFor(oem)
+    val instructions = instructionsByOem?.get(oem) ?: BatteryInstructions(intro = "", steps = emptyList())
 
     Box(
         Modifier

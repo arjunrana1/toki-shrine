@@ -5,4 +5,7 @@
          the in-app explainer (PRD §6 screen 3): what the service does, and
          the three things it never does. -->
     <string name="accessibility_service_description">Toki Shrine uses this to tell which app or website is in front of you, and to read the address bar in supported browsers. It never reads the contents of any page, never logs or stores your browsing, and never sends anything off your phone.</string>
+    <!-- Phase 4 placeholder title for the block activity; the full block
+         screen (PRD §6 screen 15) replaces it in Phase 5. -->
+    <string name="block_activity_label">Blocked</string>
 </resources>

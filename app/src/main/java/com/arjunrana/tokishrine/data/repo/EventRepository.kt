@@ -154,5 +154,13 @@ open class EventRepository(
         const val EVENT_PERMISSION_DENIED = "permission_denied"
         const val EVENT_ONBOARDING_COMPLETED = "onboarding_completed"
         const val EVENT_SETTINGS_VIEWED = "settings_viewed"
+
+        // Service-health events (§10) fired by the Phase 4 detection
+        // service. url_read_failed is the silent-failure canary: a browser
+        // that changes its address-bar view ID stops detection with no
+        // visible error, so nulls are counted per browser package.
+        const val EVENT_ACCESSIBILITY_CONNECTED = "accessibility_connected"
+        const val EVENT_ACCESSIBILITY_DISCONNECTED = "accessibility_disconnected"
+        const val EVENT_URL_READ_FAILED = "url_read_failed"
     }
 }

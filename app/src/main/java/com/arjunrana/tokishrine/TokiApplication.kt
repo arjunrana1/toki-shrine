@@ -2,10 +2,12 @@ package com.arjunrana.tokishrine
 
 import android.app.Application
 import androidx.room.Room
+import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
-import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
+import com.arjunrana.tokishrine.detection.AssetDetectionConfigLoader
+import com.arjunrana.tokishrine.detection.DetectionConfigLoader
 
 class TokiApplication : Application() {
 
@@ -24,4 +26,8 @@ class TokiApplication : Application() {
         EventRepository(database)
     }
     val installedAppsRepository: InstalledAppsRepository by lazy { InstalledAppsRepository(this) }
+
+    // Bundled detection JSON (browser map + OEM battery text) behind the
+    // replaceable loader seam (PRD §13, Phase 4).
+    val detectionConfigLoader: DetectionConfigLoader by lazy { AssetDetectionConfigLoader(this) }
 }
