@@ -257,9 +257,16 @@ fun BlockDetailScreen(
                             "Wait ${formatCountdown(loaded.block.countdownSeconds)}"
                         },
                     )
+                    // Wizard redesign (19 September): disabling follows the
+                    // block's method — the summary must not describe typing
+                    // for a waiting block.
                     FrictionLine(
                         label = "To turn off",
-                        value = "Type ${loaded.block.turnoffChars} · ~${typingEstimateSeconds(loaded.block.turnoffChars)}s",
+                        value = if (loaded.block.frictionType == FrictionType.TYPING) {
+                            "Type ${loaded.block.turnoffChars} · ~${typingEstimateSeconds(loaded.block.turnoffChars)}s"
+                        } else {
+                            "Wait ${formatCountdown(loaded.block.turnoffSeconds)}"
+                        },
                     )
                     FrictionLine(
                         label = "Pause lasts",

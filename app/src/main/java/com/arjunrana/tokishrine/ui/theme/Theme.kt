@@ -194,8 +194,8 @@ val NocturneColorScheme: ColorScheme = darkColorScheme(
     onError = NocturneBg, // text on a filled error surface, as onPrimary
     errorContainer = NocturneErrorContainer, // mirrors accent-800's step
     onErrorContainer = NocturneOnErrorContainer, // mirrors accent-100's step
-    // - Scrim: the .dialog-backdrop value the CSS component layer authors —
-    //   neutral-900 at 50%, not M3's pure black.
+    // - Scrim: the owner-approved sheet reference darkens the Nocturne
+    //   background at 50%; neutral-900 would lighten it instead.
     scrim = NocturneScrim,
 )
 

@@ -1,6 +1,9 @@
 package com.arjunrana.tokishrine.ui.screens
 
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,8 +24,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,21 +36,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.arjunrana.tokishrine.data.apps.AppEntry
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
+import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_CHOICES
+import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_DEFAULT
+import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_CHOICES
+import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_DEFAULT
+import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_MIN
+import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_STEP
+import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_DEFAULT
+import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_MAX
+import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_MIN
+import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_STEP
+import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_DEFAULT
+import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_MIN
+import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.BoundedTargetList
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
@@ -62,62 +88,73 @@ import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.isValidFullDomain
 import com.arjunrana.tokishrine.ui.util.toImageBitmap
 import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// Editor ranges and steps (PRD §7, revised by §17 R1/R7).
-private const val PAUSE_MIN = 5
-private const val PAUSE_MAX = 120
-private const val PAUSE_STEP = 5
-private const val PAUSE_CHARS_MIN = 50
-private const val PAUSE_CHARS_MAX = 200
-private const val CHARS_STEP = 10
-private const val TURNOFF_CHARS_MIN = 100
-private const val TURNOFF_CHARS_MAX = 350
-private const val COUNTDOWN_MIN = 10
-private const val COUNTDOWN_MAX = 300
-private const val COUNTDOWN_STEP = 5
+// Draft defaults (PRD §7; §17's 19 September wizard amendment). Ranges,
+// steps and the fixed disable ladders live beside the persistence boundary
+// in BlockRepository so the UI and storage cannot drift.
 private const val NAME_MAX_CHARS = 30
 
-// Draft state for the four-step create/edit flow. The flow may be entered
-// directly at the friction step (PRD §17 R9, detail → THE FRICTION → Edit);
-// entryStep is the floor Back unwinds to before exiting the flow.
-class CreateFlowState(val editBlockId: Long?, entryStep: Int = 1) {
+// Five screens with progress segments (contents, name, method, disable,
+// review). The details sheet is an optional refinement inside step 3, never
+// a sixth step (PRD §17, 19 September).
+private const val STEP_CONTENTS = 1
+private const val STEP_NAME = 2
+private const val STEP_METHOD = 3
+private const val STEP_DISABLE = 4
+private const val STEP_REVIEW = 5
+
+// Draft state for the five-step create/edit flow. The flow may be entered
+// directly at the method step (detail → THE FRICTION → Edit); entryStep is
+// the floor Back unwinds to before exiting the flow.
+//
+// Step 3/4 settings are kept per method (the redesign retains each method's
+// draft adjustments and disable choice when switching), so the stored per-
+// method columns are the natural draft homes: typingPauseChars/typingTurn-
+// offChars hold the typing method's passage and disable passage, waitPause-
+// Seconds/waitTurnoffSeconds hold the waiting method's durations. The saved
+// row keeps all of them; frictionType decides which are active.
+class CreateFlowState(
+    val editBlockId: Long?,
+    entryStep: Int = 1,
+    val flowId: String = UUID.randomUUID().toString(),
+) {
     var step by mutableStateOf(entryStep)
-    val entryStep = entryStep.coerceIn(1, 4)
+    val entryStep = entryStep.coerceIn(STEP_CONTENTS, STEP_REVIEW)
     var showSearch by mutableStateOf(false)
+    var showDetails by mutableStateOf(false)
     var appsTab by mutableStateOf(true)
 
     val apps = mutableStateListOf<AppEntry>()
     val sites = mutableStateListOf<String>()
 
     var name by mutableStateOf("")
+
     var frictionType by mutableStateOf(FrictionType.TYPING)
-    var pauseMinutes by mutableStateOf(15)
-    var pauseChars by mutableStateOf(100)
-    var turnoffChars by mutableStateOf(300)
-    var countdownSeconds by mutableStateOf(30)
+    var pauseMinutes by mutableStateOf(PAUSE_MINUTES_DEFAULT)
+    var typingPauseChars by mutableStateOf(PAUSE_CHARS_DEFAULT)
+    var waitPauseSeconds by mutableStateOf(PAUSE_WAIT_SECONDS_DEFAULT)
+    var typingTurnoffChars by mutableStateOf(DISABLE_CHARS_DEFAULT)
+    var waitTurnoffSeconds by mutableStateOf(DISABLE_WAIT_SECONDS_DEFAULT)
+
+    // Edit mode: true once the stored block has been loaded into the draft.
+    // Saveable, so a recreated activity keeps the restored draft without the
+    // prefill overwriting the user's adjustments from the stored values again.
+    var prefilled by mutableStateOf(false)
 
     // Set when a save was rejected for conflicting ownership: the draft is
     // kept and the review step explains inline (owner decision — no owner
     // name, no dialog, no transfer).
     var saveRejected by mutableStateOf(false)
-
-    // One-shot guard for the flow's single terminal transition (save or
-    // abandon). It is taken synchronously, before any async work starts, so
-    // repeated Back/Save input while an event write is in flight can neither
-    // enqueue a second terminal event nor navigate twice. A rejected save
-    // releases it, because the flow stays open.
-    private var terminalTaken = false
-
-    fun takeTerminal(): Boolean {
-        if (terminalTaken) return false
-        terminalTaken = true
-        return true
-    }
-
-    fun releaseTerminal() {
-        terminalTaken = false
-    }
 
     fun draft() = BlockDraft(
         name = name.trim(),
@@ -125,14 +162,233 @@ class CreateFlowState(val editBlockId: Long?, entryStep: Int = 1) {
         siteDomains = sites.toList(),
         frictionType = frictionType,
         pauseMinutes = pauseMinutes,
-        pauseChars = pauseChars,
-        turnoffChars = turnoffChars,
-        countdownSeconds = countdownSeconds,
-        // Typos are always shown now (owner decision, 13 September); the
-        // column is retained only to avoid a destructive wipe mid-testing —
-        // every save rewrites it to true.
-        showTypos = true,
+        pauseChars = typingPauseChars,
+        turnoffChars = typingTurnoffChars,
+        countdownSeconds = waitPauseSeconds,
+        turnoffSeconds = waitTurnoffSeconds,
     )
+
+    // — step 3 adjustments; deltas arrive in the approved step sizes —
+    fun adjustPauseMinutes(delta: Int) {
+        pauseMinutes = (pauseMinutes + delta).coerceIn(PAUSE_MINUTES_MIN, PAUSE_MINUTES_MAX)
+    }
+
+    fun adjustTypingPause(delta: Int) {
+        typingPauseChars = (typingPauseChars + delta).coerceIn(PAUSE_CHARS_MIN, PAUSE_CHARS_MAX)
+    }
+
+    fun adjustWaitPause(delta: Int) {
+        waitPauseSeconds = (waitPauseSeconds + delta).coerceIn(PAUSE_WAIT_SECONDS_MIN, PAUSE_WAIT_SECONDS_MAX)
+    }
+
+    // The sheet's Reset restores only the displayed method's own field and
+    // the shared pause duration; per-method drafts and the step-4 disable
+    // choices are untouched (PRD §17, 19 September).
+    fun resetDetails() {
+        when (frictionType) {
+            FrictionType.TYPING -> typingPauseChars = PAUSE_CHARS_DEFAULT
+            FrictionType.DELAY -> waitPauseSeconds = PAUSE_WAIT_SECONDS_DEFAULT
+        }
+        pauseMinutes = PAUSE_MINUTES_DEFAULT
+    }
+
+    // — step 4: fixed ladder choices for the inherited method —
+    val disableChoices: List<Int>
+        get() = when (frictionType) {
+            FrictionType.TYPING -> DISABLE_CHARS_CHOICES
+            FrictionType.DELAY -> DISABLE_WAIT_SECONDS_CHOICES
+        }
+
+    var disableChoiceIndex: Int
+        get() = disableChoices.indexOf(
+            if (frictionType == FrictionType.TYPING) typingTurnoffChars else waitTurnoffSeconds,
+        )
+        set(value) {
+            when (frictionType) {
+                FrictionType.TYPING -> typingTurnoffChars = DISABLE_CHARS_CHOICES[value]
+                FrictionType.DELAY -> waitTurnoffSeconds = DISABLE_WAIT_SECONDS_CHOICES[value]
+            }
+        }
+}
+
+// Restores the draft across activity recreation (BW-06): every adjustment
+// lives in instance-saved primitives, so an in-progress create/edit resumes
+// on the same step with the draft intact. App icons are not saved — selected
+// rows fall back to glyphs, exactly as in edit prefill. A damaged or stale
+// shape falls back to a fresh state instead of crashing.
+val CreateFlowStateSaver: Saver<CreateFlowState, ArrayList<Any>> = Saver(
+    save = { s ->
+        arrayListOf(
+            s.editBlockId ?: -1L,
+            s.step,
+            s.entryStep,
+            s.showSearch,
+            s.showDetails,
+            s.appsTab,
+            s.name,
+            s.frictionType.name,
+            s.pauseMinutes,
+            s.typingPauseChars,
+            s.waitPauseSeconds,
+            s.typingTurnoffChars,
+            s.waitTurnoffSeconds,
+            s.prefilled,
+            s.saveRejected,
+            ArrayList(s.apps.map { "${it.packageName}\u0000${it.label}" }),
+            ArrayList(s.sites),
+            s.flowId,
+        )
+    },
+    restore = { saved ->
+        runCatching {
+            val state = CreateFlowState(
+                editBlockId = (saved[0] as Long).takeIf { it != -1L },
+                entryStep = saved[2] as Int,
+                flowId = saved[17] as String,
+            )
+            state.step = (saved[1] as Int).coerceIn(STEP_CONTENTS, STEP_REVIEW)
+            state.showSearch = saved[3] as Boolean
+            state.showDetails = saved[4] as Boolean
+            state.appsTab = saved[5] as Boolean
+            state.name = saved[6] as String
+            state.frictionType = FrictionType.valueOf(saved[7] as String)
+            state.pauseMinutes = saved[8] as Int
+            state.typingPauseChars = saved[9] as Int
+            state.waitPauseSeconds = saved[10] as Int
+            state.typingTurnoffChars = saved[11] as Int
+            state.waitTurnoffSeconds = saved[12] as Int
+            state.prefilled = saved[13] as Boolean
+            state.saveRejected = saved[14] as Boolean
+            (saved[15] as ArrayList<*>).forEach {
+                val (pkg, label) = (it as String).split("\u0000", limit = 2)
+                state.apps.add(AppEntry(pkg, label, null))
+            }
+            (saved[16] as ArrayList<*>).forEach { state.sites.add(it as String) }
+            state
+        }.getOrNull()
+    },
+)
+
+internal enum class CreateFlowOutcome { CLOSE, SAVE_REJECTED }
+
+/**
+ * One ordered operation stream for a logical editor flow. The owner scope is
+ * retained outside the composition, so activity recreation neither cancels a
+ * committed save between its events nor starts a second terminal operation.
+ */
+internal class CreateFlowSession(
+    scope: CoroutineScope,
+    private val isCreate: Boolean,
+    private val onStart: suspend () -> Unit,
+    private val onStep: suspend (Int) -> Unit,
+    private val onSave: suspend (BlockDraft) -> Unit,
+    private val onAbandon: suspend (Int) -> Unit,
+) {
+    private sealed interface Operation {
+        data object Start : Operation
+        data class Step(val number: Int) : Operation
+        data class Save(val draft: BlockDraft) : Operation
+        data class Abandon(val step: Int) : Operation
+    }
+
+    private val operations = Channel<Operation>(Channel.UNLIMITED)
+    private val terminalTaken = AtomicBoolean(false)
+    private val _outcome = MutableStateFlow<CreateFlowOutcome?>(null)
+    val outcome: StateFlow<CreateFlowOutcome?> = _outcome
+    val terminalInFlight: Boolean get() = terminalTaken.get()
+
+    private val worker = scope.launch {
+        for (operation in operations) {
+            when (operation) {
+                Operation.Start -> onStart()
+                is Operation.Step -> onStep(operation.number)
+                is Operation.Abandon -> {
+                    onAbandon(operation.step)
+                    _outcome.value = CreateFlowOutcome.CLOSE
+                }
+                is Operation.Save -> {
+                    try {
+                        onSave(operation.draft)
+                        _outcome.value = CreateFlowOutcome.CLOSE
+                    } catch (_: ConflictingOwnershipException) {
+                        terminalTaken.set(false)
+                        _outcome.value = CreateFlowOutcome.SAVE_REJECTED
+                    }
+                }
+            }
+        }
+    }
+
+    init {
+        if (isCreate) check(operations.trySend(Operation.Start).isSuccess)
+    }
+
+    fun recordStep(step: Int): Boolean {
+        if (terminalTaken.get()) return false
+        if (!isCreate) return true
+        return operations.trySend(Operation.Step(step)).isSuccess
+    }
+
+    fun requestSave(draft: BlockDraft): Boolean {
+        if (!terminalTaken.compareAndSet(false, true)) return false
+        if (operations.trySend(Operation.Save(draft)).isSuccess) return true
+        terminalTaken.set(false)
+        return false
+    }
+
+    fun requestAbandon(step: Int): Boolean {
+        if (!terminalTaken.compareAndSet(false, true)) return false
+        if (operations.trySend(Operation.Abandon(step)).isSuccess) return true
+        terminalTaken.set(false)
+        return false
+    }
+
+    fun consumeOutcome(expected: CreateFlowOutcome): Boolean =
+        _outcome.compareAndSet(expected, null)
+
+    fun close() {
+        operations.close()
+        worker.cancel()
+    }
+}
+
+/** Activity-retained registry. Completed flows are removed after delivery. */
+internal class CreateFlowOperationStore : ViewModel() {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val sessions = mutableMapOf<String, CreateFlowSession>()
+
+    fun session(
+        flowId: String,
+        isCreate: Boolean,
+        onStart: suspend () -> Unit,
+        onStep: suspend (Int) -> Unit,
+        onSave: suspend (BlockDraft) -> Unit,
+        onAbandon: suspend (Int) -> Unit,
+    ): CreateFlowSession = synchronized(sessions) {
+        sessions.getOrPut(flowId) {
+            CreateFlowSession(scope, isCreate, onStart, onStep, onSave, onAbandon)
+        }
+    }
+
+    fun release(flowId: String, expected: CreateFlowSession) {
+        synchronized(sessions) {
+            if (sessions[flowId] === expected) sessions.remove(flowId)?.close()
+        }
+    }
+
+    override fun onCleared() {
+        synchronized(sessions) {
+            sessions.values.forEach { it.close() }
+            sessions.clear()
+        }
+        scope.cancel()
+    }
+}
+
+private tailrec fun Context.findComponentActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findComponentActivity()
+    else -> null
 }
 
 @Composable
@@ -144,119 +400,139 @@ fun CreateFlowScreen(
     onClose: () -> Unit,
     initialStep: Int = 1,
 ) {
-    val scope = rememberCoroutineScope()
-    val state = remember { CreateFlowState(editBlockId, initialStep) }
+    val state = rememberSaveable(saver = CreateFlowStateSaver) {
+        CreateFlowState(editBlockId, initialStep)
+    }
+    val context = LocalContext.current
+    val activity = remember(context) {
+        checkNotNull(context.findComponentActivity()) { "CreateFlowScreen requires a ComponentActivity" }
+    }
+    val operationStore = remember(activity) {
+        ViewModelProvider(activity)[CreateFlowOperationStore::class.java]
+    }
+    val session = remember(state.flowId, operationStore, editBlockId, blockRepo, eventRepo) {
+        operationStore.session(
+            flowId = state.flowId,
+            isCreate = editBlockId == null,
+            onStart = {
+                eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STARTED)
+            },
+            onStep = { step ->
+                eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED, params = mapOf("step" to step))
+            },
+            onSave = { draft ->
+                if (editBlockId == null) {
+                    eventRepo.atomically {
+                        val id = blockRepo.createBlock(draft)
+                        eventRepo.log(
+                            EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                            params = mapOf("step" to STEP_REVIEW),
+                        )
+                        eventRepo.log(
+                            EventRepository.EVENT_BLOCK_CREATED,
+                            blockId = id,
+                            params = mapOf(
+                                "app_count" to draft.appPackageNames.size,
+                                "site_count" to draft.siteDomains.size,
+                                "friction_type" to draft.frictionType.name.lowercase(),
+                                "pause_minutes" to draft.pauseMinutes,
+                                "pause_chars" to draft.pauseChars,
+                                "turnoff_chars" to draft.turnoffChars,
+                                "countdown_seconds" to draft.countdownSeconds,
+                                "turnoff_seconds" to draft.turnoffSeconds,
+                            ),
+                        )
+                    }
+                } else {
+                    eventRepo.atomically {
+                        val changed = changedFields(blockRepo, editBlockId, draft)
+                        blockRepo.updateBlock(editBlockId, draft)
+                        eventRepo.log(
+                            EventRepository.EVENT_BLOCK_EDITED,
+                            blockId = editBlockId,
+                            params = mapOf("fields_changed" to changed),
+                        )
+                    }
+                }
+            },
+            onAbandon = { step ->
+                if (editBlockId == null) {
+                    eventRepo.log(
+                        EventRepository.EVENT_BLOCK_CREATE_ABANDONED,
+                        params = mapOf("step" to step),
+                    )
+                }
+            },
+        )
+    }
 
-    // Edit mode: prefill the draft from the stored block.
+    // The retained session completes independently of a particular activity
+    // instance. A recreated screen receives the pending outcome and invokes
+    // the current navigation callback exactly once.
+    LaunchedEffect(session) {
+        session.outcome.collect { outcome ->
+            if (outcome != null && session.consumeOutcome(outcome)) {
+                when (outcome) {
+                    CreateFlowOutcome.CLOSE -> {
+                        operationStore.release(state.flowId, session)
+                        onClose()
+                    }
+                    CreateFlowOutcome.SAVE_REJECTED -> state.saveRejected = true
+                }
+            }
+        }
+    }
+
+    // Edit mode: prefill the draft from the stored block exactly once per
+    // flow instance — after recreation the saveable draft is already current
+    // and must not be clobbered with the stored values.
     LaunchedEffect(editBlockId) {
-        if (editBlockId != null) {
+        if (editBlockId != null && !state.prefilled) {
             blockRepo.getBlockWithContents(editBlockId)?.let { stored ->
                 state.name = stored.block.name
                 state.frictionType = stored.block.frictionType
                 state.pauseMinutes = stored.block.pauseMinutes
-                state.pauseChars = stored.block.pauseChars
-                state.turnoffChars = stored.block.turnoffChars
-                state.countdownSeconds = stored.block.countdownSeconds
+                state.typingPauseChars = stored.block.pauseChars
+                state.typingTurnoffChars = stored.block.turnoffChars
+                state.waitPauseSeconds = stored.block.countdownSeconds
+                state.waitTurnoffSeconds = stored.block.turnoffSeconds
                 state.apps.addAll(
                     stored.apps.map { AppEntry(it.packageName, appsRepo.labelFor(it.packageName), null) },
                 )
                 state.sites.addAll(stored.sites.map { it.domain })
             }
+            state.prefilled = true
         }
     }
 
-    // PRD §10: creation telemetry, create mode only — edits log block_edited.
-    LaunchedEffect(Unit) {
-        if (editBlockId == null) eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STARTED)
-    }
-
-    fun stepCompleted(step: Int) {
-        if (editBlockId == null) {
-            scope.launch {
-                eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED, params = mapOf("step" to step))
-            }
-        }
-    }
+    fun stepCompleted(step: Int): Boolean = session.recordStep(step)
 
     fun abandonAndClose() {
         // Capture the exit step and take the guard synchronously, before the
         // async event write, so any Back/appbar input queued while that write
         // is suspended finds the guard taken and does nothing.
-        val exitStep = state.step
-        if (!state.takeTerminal()) return
-        if (editBlockId == null) {
-            scope.launch {
-                eventRepo.log(
-                    EventRepository.EVENT_BLOCK_CREATE_ABANDONED,
-                    params = mapOf("step" to exitStep),
-                )
-                onClose()
-            }
-        } else {
-            onClose()
-        }
-    }
-
-    suspend fun persist(draft: BlockDraft) {
-        run {
-            if (editBlockId == null) {
-                val id = blockRepo.createBlock(draft)
-                eventRepo.log(EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED, params = mapOf("step" to 4))
-                eventRepo.log(
-                    EventRepository.EVENT_BLOCK_CREATED,
-                    blockId = id,
-                    params = mapOf(
-                        "app_count" to draft.appPackageNames.size,
-                        "site_count" to draft.siteDomains.size,
-                        "friction_type" to draft.frictionType.name.lowercase(),
-                        "pause_minutes" to draft.pauseMinutes,
-                        "pause_chars" to draft.pauseChars,
-                        "turnoff_chars" to draft.turnoffChars,
-                        "countdown_seconds" to draft.countdownSeconds,
-                    ),
-                )
-            } else {
-                val changed = changedFields(blockRepo, editBlockId, draft)
-                blockRepo.updateBlock(editBlockId, draft)
-                eventRepo.log(
-                    EventRepository.EVENT_BLOCK_EDITED,
-                    blockId = editBlockId,
-                    params = mapOf("fields_changed" to changed),
-                )
-            }
-        }
+        session.requestAbandon(state.step)
     }
 
     fun save() {
         // Same terminal guard as abandon: while a save is in flight, Back and
         // further Save taps are no-ops, so exactly one of the two terminal
         // outcomes can ever run.
-        if (!state.takeTerminal()) return
         state.saveRejected = false
-        scope.launch {
-            val draft = state.draft()
-            try {
-                persist(draft)
-            } catch (e: ConflictingOwnershipException) {
-                // Ownership changed while the editor was open — a stale draft.
-                // The repository rolled the save back; keep the draft and
-                // explain inline instead of silently discarding the work.
-                state.releaseTerminal()
-                state.saveRejected = true
-                return@launch
-            }
-            onClose()
-        }
+        session.requestSave(state.draft())
     }
 
     // Android Back mirrors the appbar: app-search closes first, then the
-    // flow steps backwards down to the entry step, and a Back there exits —
-    // routed through the abandonment logger exactly once (create mode;
-    // edits close silently). Direct friction entry (§17 R9) unwinds only to
-    // step 3 before exiting. With the keyboard open the system consumes
+    // details sheet (a sheet Back dismisses the sheet before any wizard
+    // navigation), then the flow steps backwards down to the entry step, and
+    // a Back there exits — routed through the abandonment logger exactly once
+    // (create mode; edits close silently). Direct method entry unwinds only
+    // to step 3 before exiting. With the keyboard open the system consumes
     // Back to dismiss it, so this handler runs only once the keyboard is
-    // down.
+    // down. The open sheet's own back handling wins over this handler while
+    // it is visible; this branch is the fallback.
     fun stepBack(): Boolean {
+        if (session.terminalInFlight) return true
         if (state.step > state.entryStep) {
             state.step -= 1
             return true
@@ -267,6 +543,7 @@ fun CreateFlowScreen(
     BackHandler {
         when {
             state.showSearch -> state.showSearch = false
+            state.showDetails -> state.showDetails = false
             !stepBack() -> abandonAndClose()
         }
     }
@@ -291,23 +568,34 @@ fun CreateFlowScreen(
                     appsRepo = appsRepo,
                     onClose = { state.showSearch = false },
                 )
-                state.step == 1 -> StepContents(
+                state.step == STEP_CONTENTS -> StepContents(
                     state,
                     blockRepo,
                     onBack = ::abandonAndClose,
-                    onNext = { stepCompleted(1); state.step = 2 },
+                    onNext = { if (stepCompleted(1)) state.step = STEP_NAME },
                 )
-                state.step == 2 -> StepName(state, onBack = { state.step = 1 }, onNext = { stepCompleted(2); state.step = 3 })
-                state.step == 3 -> StepFriction(
+                state.step == STEP_NAME -> StepName(
+                    state,
+                    onBack = { if (!session.terminalInFlight) state.step = STEP_CONTENTS },
+                    onNext = { if (stepCompleted(2)) state.step = STEP_METHOD },
+                )
+                state.step == STEP_METHOD -> StepFriction(
                     state,
                     onBack = { if (!stepBack()) abandonAndClose() },
-                    onNext = { stepCompleted(3); state.step = 4 },
+                    onNext = { if (stepCompleted(3)) state.step = STEP_DISABLE },
+                )
+                state.step == STEP_DISABLE -> StepDisable(
+                    state,
+                    onBack = { if (!session.terminalInFlight) state.step = STEP_METHOD },
+                    onNext = { if (stepCompleted(4)) state.step = STEP_REVIEW },
                 )
                 else -> StepReview(
                     state,
                     onBack = {
-                        state.saveRejected = false
-                        state.step = 3
+                        if (!session.terminalInFlight) {
+                            state.saveRejected = false
+                            state.step = STEP_DISABLE
+                        }
                     },
                     onSave = ::save,
                 )
@@ -333,7 +621,7 @@ private suspend fun changedFields(
         if (current.block.pauseChars != draft.pauseChars) add("pause_chars")
         if (current.block.turnoffChars != draft.turnoffChars) add("turnoff_chars")
         if (current.block.countdownSeconds != draft.countdownSeconds) add("countdown_seconds")
-        if (current.block.showTypos != draft.showTypos) add("show_typos")
+        if (current.block.turnoffSeconds != draft.turnoffSeconds) add("turnoff_seconds")
     }
     return changed.joinToString(",").ifEmpty { "none" }
 }
@@ -371,10 +659,10 @@ private fun StepContents(
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
             title = if (state.editBlockId == null) "New block" else "Edit block",
-            stepLabel = "1 / 4",
+            stepLabel = "$STEP_CONTENTS / 5",
             onBack = onBack,
         )
-        ProgressDots(total = 4, current = 1)
+        ProgressDots(total = 5, current = STEP_CONTENTS)
         Spacer(Modifier.height(16.dp))
         Text(
             "What should this cover?",
@@ -690,10 +978,10 @@ private fun StepName(state: CreateFlowState, onBack: () -> Unit, onNext: () -> U
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
             title = if (state.editBlockId == null) "New block" else "Edit block",
-            stepLabel = "2 / 4",
+            stepLabel = "$STEP_NAME / 5",
             onBack = onBack,
         )
-        ProgressDots(total = 4, current = 2)
+        ProgressDots(total = 5, current = STEP_NAME)
         Spacer(Modifier.height(22.dp))
         Text(
             "Give it a name",
@@ -734,104 +1022,310 @@ private fun StepName(state: CreateFlowState, onBack: () -> Unit, onNext: () -> U
     }
 }
 
-// — Step 3: friction —
+// — Step 3: method —
 
+// Two tappable method cards with live plain-words summaries; selecting a
+// card changes nothing else on the screen (PRD §17, 19 September). The
+// details live in an optional sheet, not a sixth step.
 @Composable
 private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
             title = if (state.editBlockId == null) "New block" else "Edit block",
-            stepLabel = "3 / 4",
+            stepLabel = "$STEP_METHOD / 5",
             onBack = onBack,
         )
-        ProgressDots(total = 4, current = 3)
+        ProgressDots(total = 5, current = STEP_METHOD)
         Spacer(Modifier.height(16.dp))
         Text(
             "What should getting in cost?",
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             lineHeight = 23.sp,
+            letterSpacing = (-0.2).sp,
             color = NocturneTheme.colors.text,
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            "Tap either option to see how it's set up.",
+            "Pick whichever you'll actually respect.",
             fontSize = 11.sp,
             lineHeight = 17.sp,
             color = NocturneTheme.colors.neutral.step500,
         )
         Spacer(Modifier.height(12.dp))
-        NocturneSegmented(
-            options = listOf(Ph.Keyboard to "Type words", Ph.Hourglass to "Wait it out"),
-            selectedIndex = if (state.frictionType == FrictionType.TYPING) 0 else 1,
-            onSelect = { state.frictionType = if (it == 0) FrictionType.TYPING else FrictionType.DELAY },
-        )
-        Spacer(Modifier.height(18.dp))
 
-        // PRD §17 R2: control order and headings. Typing: Type to pause →
-        // Pause duration → Disable this block. Delay: Wait for this
-        // duration → Pause duration → Disable this block. The scroller keeps
-        // the estimate and Next reachable with the longer helper copy.
         Column(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (state.frictionType == FrictionType.TYPING) {
-                StepperField(
-                    label = "Type to pause",
-                    helper = "You'll need to type random words of this length to pause the block.",
-                    value = "${state.pauseChars} characters",
-                    onDecrement = { state.pauseChars = (state.pauseChars - CHARS_STEP).coerceAtLeast(PAUSE_CHARS_MIN) },
-                    onIncrement = { state.pauseChars = (state.pauseChars + CHARS_STEP).coerceAtMost(PAUSE_CHARS_MAX) },
-                    canDecrement = state.pauseChars > PAUSE_CHARS_MIN,
-                    canIncrement = state.pauseChars < PAUSE_CHARS_MAX,
+            MethodCard(
+                selected = state.frictionType == FrictionType.TYPING,
+                glyph = Ph.Keyboard,
+                title = "Type a passage",
+                summary = "${state.typingPauseChars} characters. Random words. " +
+                    "Then ${state.pauseMinutes} minutes before the block comes back.",
+                onClick = { state.frictionType = FrictionType.TYPING },
+            )
+            Spacer(Modifier.height(10.dp))
+            MethodCard(
+                selected = state.frictionType == FrictionType.DELAY,
+                glyph = Ph.Hourglass,
+                title = "Wait it out",
+                summary = "A ${formatCountdown(state.waitPauseSeconds)} wait to pause the block. " +
+                    "Then ${state.pauseMinutes} minutes before the block comes back.",
+                onClick = { state.frictionType = FrictionType.DELAY },
+            )
+            Spacer(Modifier.height(14.dp))
+            // Outlined secondary button in normal layout space under the
+            // cards — not a floating overlay (PRD §17, 19 September).
+            NocturneButton(
+                "Adjust the details",
+                variant = ButtonVariant.SECONDARY,
+                block = true,
+                height = 44.dp,
+                leading = {
+                    PhosphorIcon(Ph.SlidersHorizontal, tint = NocturneTheme.colors.text, size = 16)
+                },
+                onClick = { state.showDetails = true },
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        NocturneButton(
+            "Next",
+            block = true,
+            height = 46.dp,
+            enabled = state.apps.isNotEmpty() || state.sites.isNotEmpty(),
+            onClick = onNext,
+        )
+    }
+
+    if (state.showDetails) {
+        DetailsSheet(state)
+    }
+}
+
+@Composable
+private fun MethodCard(
+    selected: Boolean,
+    glyph: Int,
+    title: String,
+    summary: String,
+    onClick: () -> Unit,
+) {
+    val colors = NocturneTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(if (selected) colors.accentRamp.step900 else colors.surface, RoundedCornerShape(12.dp))
+            .border(1.dp, if (selected) colors.accent else colors.divider, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        PhosphorIcon(
+            glyph,
+            tint = if (selected) colors.accentRamp.step300 else colors.neutral.step400,
+            size = 18,
+            modifier = Modifier.padding(top = 1.dp),
+        )
+        Spacer(Modifier.width(11.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.text,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                summary,
+                fontSize = 12.5.sp,
+                lineHeight = 18.sp,
+                color = colors.neutral.step500,
+            )
+        }
+        // Owner correction, 19 September: both cards carry the tick circle —
+        // filled and checked on the selected card, empty ring on the other.
+        Spacer(Modifier.width(10.dp))
+        if (selected) {
+            Box(
+                Modifier
+                    .size(20.dp)
+                    .background(colors.accent, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                PhosphorIcon(Ph.Check, tint = colors.bg, size = 11)
+            }
+        } else {
+            Box(
+                Modifier
+                    .size(20.dp)
+                    .border(1.dp, colors.neutral.step500, CircleShape),
+            )
+        }
+    }
+}
+
+// The details sheet (PRD §17, 19 September): only the selected method's own
+// field plus the shared pause duration. Adjustments update the draft and the
+// card summaries immediately; no save happens here. Done, Back, swipe and
+// outside dismissal all just close the sheet — the draft keeps the changes.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun DetailsSheet(state: CreateFlowState) {
+    val colors = NocturneTheme.colors
+    ModalBottomSheet(
+        onDismissRequest = { state.showDetails = false },
+        // DC-06: the reference sheet is the darker Nocturne background, not
+        // the lighter card surface. Keeping elevation at zero prevents M3
+        // from compositing a lavender surface tint over that exact token.
+        containerColor = colors.bg,
+        scrimColor = MaterialTheme.colorScheme.scrim,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+        ) {
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "The details",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.text,
+                    modifier = Modifier.weight(1f),
                 )
-            } else {
-                StepperField(
-                    label = "Wait for this duration",
-                    helper = "You'll need to wait for this long each time you want to pause the block.",
-                    value = formatCountdown(state.countdownSeconds),
-                    onDecrement = { state.countdownSeconds = (state.countdownSeconds - COUNTDOWN_STEP).coerceAtLeast(COUNTDOWN_MIN) },
-                    onIncrement = { state.countdownSeconds = (state.countdownSeconds + COUNTDOWN_STEP).coerceAtMost(COUNTDOWN_MAX) },
-                    canDecrement = state.countdownSeconds > COUNTDOWN_MIN,
-                    canIncrement = state.countdownSeconds < COUNTDOWN_MAX,
+                Text(
+                    "Reset",
+                    fontSize = 13.sp,
+                    color = colors.accentRamp.step300,
+                    modifier = Modifier.clickable { state.resetDetails() },
                 )
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                when (state.frictionType) {
+                    FrictionType.TYPING -> "Typing a passage to get in."
+                    FrictionType.DELAY -> "Waiting it out to get in."
+                },
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = colors.neutral.step500,
+            )
+            Spacer(Modifier.height(16.dp))
 
-            StepperField(
-                label = "Pause duration",
-                helper = "Stay unblocked for this long. Then the block will be activated again.",
+            when (state.frictionType) {
+                FrictionType.TYPING -> {
+                    Text("Passage length", fontSize = 12.sp, color = colors.neutral.step400)
+                    Spacer(Modifier.height(8.dp))
+                    NocturneStepper(
+                        value = "${state.typingPauseChars} characters",
+                        onDecrement = { state.adjustTypingPause(-PAUSE_CHARS_STEP) },
+                        onIncrement = { state.adjustTypingPause(PAUSE_CHARS_STEP) },
+                        canDecrement = state.typingPauseChars > PAUSE_CHARS_MIN,
+                        canIncrement = state.typingPauseChars < PAUSE_CHARS_MAX,
+                    )
+                }
+                FrictionType.DELAY -> {
+                    Text("Wait before you're in", fontSize = 12.sp, color = colors.neutral.step400)
+                    Spacer(Modifier.height(8.dp))
+                    NocturneStepper(
+                        value = formatCountdown(state.waitPauseSeconds),
+                        onDecrement = { state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP) },
+                        onIncrement = { state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP) },
+                        canDecrement = state.waitPauseSeconds > PAUSE_WAIT_SECONDS_MIN,
+                        canIncrement = state.waitPauseSeconds < PAUSE_WAIT_SECONDS_MAX,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Text("Block stays off for", fontSize = 12.sp, color = colors.neutral.step400)
+            Spacer(Modifier.height(8.dp))
+            NocturneStepper(
                 value = "${state.pauseMinutes} min",
-                onDecrement = { state.pauseMinutes = (state.pauseMinutes - PAUSE_STEP).coerceAtLeast(PAUSE_MIN) },
-                onIncrement = { state.pauseMinutes = (state.pauseMinutes + PAUSE_STEP).coerceAtMost(PAUSE_MAX) },
-                canDecrement = state.pauseMinutes > PAUSE_MIN,
-                canIncrement = state.pauseMinutes < PAUSE_MAX,
-                footNote = "Minimum is 5 minutes",
+                onDecrement = { state.adjustPauseMinutes(-PAUSE_MINUTES_STEP) },
+                onIncrement = { state.adjustPauseMinutes(PAUSE_MINUTES_STEP) },
+                canDecrement = state.pauseMinutes > PAUSE_MINUTES_MIN,
+                canIncrement = state.pauseMinutes < PAUSE_MINUTES_MAX,
+            )
+            Spacer(Modifier.height(5.dp))
+            Text(
+                // Written spec prevails over the mock's stale 10-minute note.
+                "Then it comes back on its own. Minimum 5 minutes.",
+                fontSize = 10.5.sp,
+                color = colors.neutral.step600,
             )
 
-            // Turning a block off is always a typed passage, so it is
-            // configured on both variants. Typos are always shown — the
-            // former toggle was removed by owner decision (13 September).
-            StepperField(
-                label = "Disable this block",
-                helper = "You'll need to type random words of this length to disable this block. You can edit or delete this block once it's disabled.",
-                value = "${state.turnoffChars} characters",
-                onDecrement = { state.turnoffChars = (state.turnoffChars - CHARS_STEP).coerceAtLeast(TURNOFF_CHARS_MIN) },
-                onIncrement = { state.turnoffChars = (state.turnoffChars + CHARS_STEP).coerceAtMost(TURNOFF_CHARS_MAX) },
-                canDecrement = state.turnoffChars > TURNOFF_CHARS_MIN,
-                canIncrement = state.turnoffChars < TURNOFF_CHARS_MAX,
+            Spacer(Modifier.height(18.dp))
+            NocturneButton(
+                "Done",
+                block = true,
+                height = 46.dp,
+                onClick = { state.showDetails = false },
             )
         }
+    }
+}
 
-        // The live estimate stays pinned above Next while the passage length
-        // is adjusted. PRD §17 R4 removed the delay variant of this box; the
-        // countdown itself is the delay estimate.
-        if (state.frictionType == FrictionType.TYPING) {
-            Spacer(Modifier.height(14.dp))
-            EstimateBox(state)
+// — Step 4: disable difficulty —
+
+// The method is inherited from step 3 and never asked again; the three
+// ladder choices are fixed and independent of the pause settings, with the
+// middle one recommended and preselected so Next alone is valid (PRD §17,
+// 19 September). Each method's choice is remembered per method draft.
+@Composable
+private fun StepDisable(state: CreateFlowState, onBack: () -> Unit, onNext: () -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        NocturneAppbar(
+            title = if (state.editBlockId == null) "New block" else "Edit block",
+            stepLabel = "$STEP_DISABLE / 5",
+            onBack = onBack,
+        )
+        ProgressDots(total = 5, current = STEP_DISABLE)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Disabling the block",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
+            lineHeight = 23.sp,
+            letterSpacing = (-0.2).sp,
+            color = NocturneTheme.colors.text,
+        )
+        Spacer(Modifier.height(2.dp))
+        // Owner correction, 19 September: states what disabling is for,
+        // replacing the PRD §17 amendment's original explainer sentence.
+        Text(
+            "Disable the block to edit or delete the block. It needs to be a little inconvenient!",
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            color = NocturneTheme.colors.neutral.step500,
+        )
+        Spacer(Modifier.height(12.dp))
+
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            state.disableChoices.forEachIndexed { index, value ->
+                val (title, body) = disableCardCopy(state.frictionType, index, value)
+                DisableChoiceCard(
+                    selected = state.disableChoiceIndex == index,
+                    title = title,
+                    body = body,
+                    recommended = index == 1,
+                    onClick = { state.disableChoiceIndex = index },
+                )
+            }
         }
+
         Spacer(Modifier.height(12.dp))
         NocturneButton(
             "Next",
@@ -843,74 +1337,88 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
     }
 }
 
-@Composable
-private fun StepperField(
-    label: String,
-    helper: String?,
-    value: String,
-    onDecrement: () -> Unit,
-    onIncrement: () -> Unit,
-    canDecrement: Boolean,
-    canIncrement: Boolean,
-    footNote: String? = null,
-) {
-    Column {
-        Text(label, fontSize = 12.sp, color = NocturneTheme.colors.neutral.step400)
-        if (helper != null) {
-            Spacer(Modifier.height(2.dp))
-            Text(helper, fontSize = 11.5.sp, lineHeight = 17.sp, color = NocturneTheme.colors.neutral.step500)
+// Visible card copy from the disable reference, with the written ladder
+// values (3/6/12 minutes, not the mock's old note).
+private fun disableCardCopy(method: FrictionType, index: Int, value: Int): Pair<String, String> {
+    val title = when (method) {
+        FrictionType.TYPING -> when (index) {
+            0 -> "Type a bit"
+            1 -> "Type a bit more"
+            else -> "Make it hurt"
         }
-        Spacer(Modifier.height(8.dp))
-        NocturneStepper(
-            value = value,
-            onDecrement = onDecrement,
-            onIncrement = onIncrement,
-            canDecrement = canDecrement,
-            canIncrement = canIncrement,
-        )
-        if (footNote != null) {
-            Spacer(Modifier.height(5.dp))
-            Text(footNote, fontSize = 10.5.sp, color = NocturneTheme.colors.neutral.step600)
+        FrictionType.DELAY -> when (index) {
+            0 -> "Wait a bit"
+            1 -> "Wait a bit more"
+            else -> "Make it hurt"
         }
     }
+    val body = when (method) {
+        FrictionType.TYPING -> when (index) {
+            0 -> "Type $value characters. Random words."
+            1 -> "Type $value characters. Random words. Not easy but not impossible either."
+            else -> "Type $value characters. For blocks you don't trust yourself with."
+        }
+        FrictionType.DELAY -> when (index) {
+            0 -> "Wait for ${value / 60} minutes."
+            1 -> "Wait for ${value / 60} minutes."
+            else -> "Wait for ${value / 60} minutes. For blocks you don't trust yourself with."
+        }
+    }
+    return title to body
 }
 
 @Composable
-private fun EstimateBox(state: CreateFlowState) {
+private fun DisableChoiceCard(
+    selected: Boolean,
+    title: String,
+    body: String,
+    recommended: Boolean,
+    onClick: () -> Unit,
+) {
     val colors = NocturneTheme.colors
-    Row(
+    Column(
         Modifier
             .fillMaxWidth()
-            .background(colors.accentRamp.step900, RoundedCornerShape(12.dp))
-            .border(1.dp, colors.accentRamp.step800, RoundedCornerShape(12.dp))
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .background(if (selected) colors.accentRamp.step900 else colors.surface, RoundedCornerShape(12.dp))
+            .border(1.dp, if (selected) colors.accent else colors.divider, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        PhosphorIcon(Ph.Timer, tint = colors.accentRamp.step300, size = 22)
-        Spacer(Modifier.width(11.dp))
         Text(
-            // Owner copy, 13 September. The passage range (50–200 chars at
-            // 0.4 s/char) keeps this in plain 20–80 seconds, so no minute
-            // formatting is needed.
-            "You'll take ${typingEstimateSeconds(state.pauseChars)} seconds to type random words each time you want to pause this block.",
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
+            title,
+            fontSize = 14.5.sp,
+            fontWeight = FontWeight.Medium,
             color = colors.text,
         )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            body,
+            fontSize = 12.5.sp,
+            lineHeight = 18.sp,
+            color = colors.neutral.step500,
+        )
+        if (recommended) {
+            Spacer(Modifier.height(5.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PhosphorIcon(Ph.Check, tint = colors.accentRamp.step300, size = 11)
+                Spacer(Modifier.width(4.dp))
+                Text("Recommended", fontSize = 11.5.sp, color = colors.accentRamp.step300)
+            }
+        }
     }
 }
 
-// — Step 4: review & save —
+// — Step 5: review & save —
 
 @Composable
 private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
             title = if (state.editBlockId == null) "New block" else "Edit block",
-            stepLabel = "4 / 4",
+            stepLabel = "$STEP_REVIEW / 5",
             onBack = onBack,
         )
-        ProgressDots(total = 4, current = 4)
+        ProgressDots(total = 5, current = STEP_REVIEW)
         // PRD §17 R6: the summary and Save stay reachable whatever the list
         // length — the review content scrolls, the Save stays pinned.
         Column(
@@ -935,21 +1443,26 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
                     .fillMaxWidth()
                     .background(NocturneTheme.colors.surface, RoundedCornerShape(12.dp)),
             ) {
+                val typing = state.frictionType == FrictionType.TYPING
                 CostRow(
-                    glyph = if (state.frictionType == FrictionType.TYPING) Ph.Keyboard else Ph.Hourglass,
+                    glyph = if (typing) Ph.Keyboard else Ph.Hourglass,
                     tint = NocturneTheme.colors.accentRamp.step300,
                     title = "To pause it",
-                    subtitle = if (state.frictionType == FrictionType.TYPING) {
-                        "Type ${state.pauseChars} characters · ~${typingEstimateSeconds(state.pauseChars)} sec"
+                    subtitle = if (typing) {
+                        "Type ${state.typingPauseChars} characters · ~${typingEstimateSeconds(state.typingPauseChars)} sec"
                     } else {
-                        "Wait ${formatCountdown(state.countdownSeconds)}, phone in hand"
+                        "Wait ${formatCountdown(state.waitPauseSeconds)}"
                     },
                 )
                 CostRow(
                     glyph = Ph.LockKeyOpen,
                     tint = NocturneTheme.colors.neutral.step400,
                     title = "To turn this block off",
-                    subtitle = "Type ${state.turnoffChars} characters · ~${typingEstimateSeconds(state.turnoffChars)} sec",
+                    subtitle = if (typing) {
+                        "Type ${state.typingTurnoffChars} characters · ~${typingEstimateSeconds(state.typingTurnoffChars)} sec"
+                    } else {
+                        "Wait ${formatCountdown(state.waitTurnoffSeconds)}"
+                    },
                     background = NocturneTheme.colors.neutral.step900,
                 )
                 CostRow(
@@ -1040,4 +1553,3 @@ private fun CostRow(glyph: Int, tint: Color, title: String, subtitle: String, ba
         }
     }
 }
-

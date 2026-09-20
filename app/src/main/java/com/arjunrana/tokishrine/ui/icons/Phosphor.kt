@@ -46,6 +46,9 @@ object Ph {
     const val Plus = 0xe3d4
     const val PlusCircle = 0xe3d6
     const val ScribbleLoop = 0xe662
+    // @phosphor-icons/web 2.1.1 regular: .ph-sliders-horizontal (owner-corrected
+    // after the device render showed the wrong glyph for the guessed 0xe6c2).
+    const val SlidersHorizontal = 0xe434
     const val Square = 0xe45e
     const val SquareHalf = 0xe462
     const val SquaresFour = 0xe464

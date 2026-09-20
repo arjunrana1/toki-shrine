@@ -59,6 +59,13 @@ open class EventRepository(
         )
     }
 
+    // Lets a caller pair its own Room mutation with the events describing
+    // that mutation. Nested repository withTransaction calls reuse Room's
+    // coroutine transaction, so create/edit plus terminal telemetry either
+    // all commit or all roll back. Keep the block small and database-only.
+    suspend fun <T> atomically(block: suspend () -> T): T =
+        db.withTransaction { block() }
+
     // All six PRD §9 figures in one read. nowMs/zone are parameters so the
     // formulas are pinned down exactly in tests; production uses defaults.
     suspend fun getStats(nowMs: Long = clock(), zone: ZoneId = ZoneId.systemDefault()): StatsSnapshot {

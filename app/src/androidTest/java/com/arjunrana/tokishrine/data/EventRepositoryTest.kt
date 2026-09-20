@@ -6,6 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.entity.AppMeta
 import com.arjunrana.tokishrine.data.entity.Event
+import com.arjunrana.tokishrine.data.permissions.AppPermission
+import com.arjunrana.tokishrine.data.permissions.PermissionEventLogic
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -14,6 +16,8 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
@@ -219,5 +223,67 @@ class EventRepositoryTest {
         val first = db.appMetaDao().get(AppMeta.KEY_FIRST_LAUNCH_AT)
         repo.log(EventRepository.EVENT_STATS_VIEWED)
         assertEquals(first, db.appMetaDao().get(AppMeta.KEY_FIRST_LAUNCH_AT))
+    }
+
+    @Test
+    fun onboardingCompletionCommitsMarkerAndEventAtMostOnce() = runBlocking {
+        assertTrue(repo.completeOnboarding(grantedCount = 3))
+        assertEquals(false, repo.completeOnboarding(grantedCount = 4))
+
+        assertNotNull(db.appMetaDao().get(AppMeta.KEY_ONBOARDING_COMPLETED_AT))
+        val events = db.eventDao().getAll()
+            .filter { it.name == EventRepository.EVENT_ONBOARDING_COMPLETED }
+        assertEquals(1, events.size)
+        assertEquals(3, JSONObject(events.single().paramsJson!!).getInt("granted_count"))
+    }
+
+    @Test
+    fun onboardingCompletionRollsBackMarkerWhenEventInsertFails() = runBlocking {
+        db.openHelper.writableDatabase.execSQL(
+            """CREATE TRIGGER fail_onboarding_event
+                BEFORE INSERT ON event
+                WHEN NEW.name = '${EventRepository.EVENT_ONBOARDING_COMPLETED}'
+                BEGIN SELECT RAISE(ABORT, 'forced onboarding event failure'); END""",
+        )
+
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            runBlocking { repo.completeOnboarding(grantedCount = 2) }
+        }
+
+        assertNull(db.appMetaDao().get(AppMeta.KEY_ONBOARDING_COMPLETED_AT))
+        assertNull(db.appMetaDao().get(AppMeta.KEY_FIRST_LAUNCH_AT))
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_ONBOARDING_COMPLETED))
+    }
+
+    @Test
+    fun restoredPermissionOutcomeUsesRoomAndRetriesAfterFailedWriteExactlyOnce() = runBlocking {
+        val pending = mutableListOf(AppPermission.OVERLAY)
+        val emit: suspend (String, Map<String, Any?>) -> Unit = { name, params ->
+            repo.log(name, params = params)
+        }
+        db.openHelper.writableDatabase.execSQL(
+            """CREATE TRIGGER fail_permission_outcome
+                BEFORE INSERT ON event
+                WHEN NEW.name = '${EventRepository.EVENT_PERMISSION_GRANTED}'
+                BEGIN SELECT RAISE(ABORT, 'forced permission event failure'); END""",
+        )
+
+        val beforeRecreation = PermissionEventLogic(pending, emit)
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            runBlocking { beforeRecreation.settle { true } }
+        }
+        assertEquals(listOf(AppPermission.OVERLAY), pending)
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_PERMISSION_GRANTED))
+
+        db.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_permission_outcome")
+        val afterRecreation = PermissionEventLogic(pending, emit)
+        afterRecreation.settle { true }
+        afterRecreation.settle { true }
+
+        assertTrue(pending.isEmpty())
+        val outcomes = db.eventDao().getAll()
+            .filter { it.name == EventRepository.EVENT_PERMISSION_GRANTED }
+        assertEquals(1, outcomes.size)
+        assertEquals("overlay", JSONObject(outcomes.single().paramsJson!!).getString("permission"))
     }
 }

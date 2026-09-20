@@ -56,6 +56,6 @@ internal val NocturneError = Color(0xFFD4716B) // oklch(0.660 0.125 25)
 internal val NocturneErrorContainer = Color(0xFF612421) // oklch(0.350 0.090 25)
 internal val NocturneOnErrorContainer = Color(0xFFFFEBE8) // oklch(0.960 0.030 25)
 
-// Scrim — the .dialog-backdrop value from the CSS component layer:
-// color-mix(in srgb, neutral-900 50%, transparent).
-internal val NocturneScrim = Color(0x80292B31)
+// Scrim — the sheet reference darkens the Nocturne background by half. A
+// translucent neutral-900 would instead make that background lighter.
+internal val NocturneScrim = Color(0x80000000)

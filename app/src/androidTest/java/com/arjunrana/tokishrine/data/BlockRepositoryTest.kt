@@ -9,7 +9,9 @@ import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
-import com.arjunrana.tokishrine.data.repo.MAX_STORED_COUNTDOWN_SECONDS
+import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_CHOICES
+import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_CHOICES
+import com.arjunrana.tokishrine.data.repo.EventRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,17 +51,21 @@ class BlockRepositoryTest {
         apps: List<String> = emptyList(),
         sites: List<String> = emptyList(),
         frictionType: FrictionType = FrictionType.TYPING,
-        countdownSeconds: Int = 45,
+        countdownSeconds: Int = 90,
+        turnoffSeconds: Int = 360,
+        turnoffChars: Int = 350,
+        pauseChars: Int = 120,
+        pauseMinutes: Int = 25,
     ) = BlockDraft(
         name = name,
         appPackageNames = apps,
         siteDomains = sites,
         frictionType = frictionType,
-        pauseMinutes = 25,
-        pauseChars = 120,
-        turnoffChars = 320,
+        pauseMinutes = pauseMinutes,
+        pauseChars = pauseChars,
+        turnoffChars = turnoffChars,
         countdownSeconds = countdownSeconds,
-        showTypos = false,
+        turnoffSeconds = turnoffSeconds,
     )
 
     // Acceptance: insert a block, read it back, all fields match.
@@ -71,6 +77,7 @@ class BlockRepositoryTest {
                 apps = listOf("com.instagram.android", "com.reddit.frontpage"),
                 sites = listOf("reddit.com"),
                 frictionType = FrictionType.DELAY,
+                turnoffSeconds = 720,
             ),
         )
 
@@ -81,9 +88,9 @@ class BlockRepositoryTest {
         assertEquals(FrictionType.DELAY, read.block.frictionType)
         assertEquals(25, read.block.pauseMinutes)
         assertEquals(120, read.block.pauseChars)
-        assertEquals(320, read.block.turnoffChars)
-        assertEquals(45, read.block.countdownSeconds)
-        assertEquals(false, read.block.showTypos)
+        assertEquals(350, read.block.turnoffChars)
+        assertEquals(90, read.block.countdownSeconds)
+        assertEquals(720, read.block.turnoffSeconds)
         // PRD §4: a new block is saved OFF, whatever the draft carried.
         assertEquals(false, read.block.enabled)
         assertEquals(
@@ -199,9 +206,9 @@ class BlockRepositoryTest {
                 frictionType = FrictionType.DELAY,
                 pauseMinutes = 30,
                 pauseChars = 120,
-                turnoffChars = 320,
-                countdownSeconds = 45,
-                showTypos = false,
+                turnoffChars = 350,
+                countdownSeconds = 90,
+                turnoffSeconds = 720,
             ),
         )
 
@@ -209,6 +216,7 @@ class BlockRepositoryTest {
         assertEquals("Social renamed", updated.block.name)
         assertEquals(FrictionType.DELAY, updated.block.frictionType)
         assertEquals(30, updated.block.pauseMinutes)
+        assertEquals(720, updated.block.turnoffSeconds)
         assertEquals(false, updated.block.enabled)
         assertEquals(listOf("com.reddit.frontpage"), updated.apps.map { it.packageName })
         assertEquals(listOf("news.siteexample.com"), updated.sites.map { it.domain })
@@ -236,8 +244,8 @@ class BlockRepositoryTest {
                         pauseMinutes = 60,
                         pauseChars = 200,
                         turnoffChars = 350,
-                        countdownSeconds = 30,
-                        showTypos = true,
+                        countdownSeconds = 90,
+                        turnoffSeconds = 360,
                     ),
                 )
             }
@@ -300,8 +308,8 @@ class BlockRepositoryTest {
                         pauseMinutes = 60,
                         pauseChars = 200,
                         turnoffChars = 350,
-                        countdownSeconds = 30,
-                        showTypos = true,
+                        countdownSeconds = 90,
+                        turnoffSeconds = 360,
                     ),
                 )
             }
@@ -310,8 +318,8 @@ class BlockRepositoryTest {
         assertFalse(exception.isApp)
 
         // Data-class equality covers every stored column: the block row
-        // (name, friction, pause/turn-off/countdown settings, show_typos,
-        // enabled) and each child row (block_id, package/domain).
+        // (name, friction, pause/turn-off settings, enabled) and each
+        // child row (block_id, package/domain).
         assertEquals(beforeSocial, dao.getBlockWithContents(social))
         assertEquals(beforeNews, dao.getBlockWithContents(news))
         // The failing app mutation left nothing behind and nothing moved.
@@ -374,6 +382,38 @@ class BlockRepositoryTest {
         assertEquals(25, on.block.pauseMinutes)
     }
 
+    @Test
+    fun enabledTransitionCommitsStateAndEventAtMostOnce() = runBlocking {
+        val id = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+
+        assertTrue(repo.setEnabledRecordingTransition(id, true))
+        assertFalse(repo.setEnabledRecordingTransition(id, true))
+
+        assertTrue(repo.getBlockWithContents(id)!!.block.enabled)
+        val transitions = db.eventDao().getAll()
+            .filter { it.name == EventRepository.EVENT_BLOCK_TURNED_ON }
+        assertEquals(1, transitions.size)
+        assertEquals(id, transitions.single().blockId)
+    }
+
+    @Test
+    fun enabledTransitionRollsBackStateWhenEventInsertFails() = runBlocking {
+        val id = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+        db.openHelper.writableDatabase.execSQL(
+            """CREATE TRIGGER fail_enabled_event
+                BEFORE INSERT ON event
+                WHEN NEW.name = '${EventRepository.EVENT_BLOCK_TURNED_ON}'
+                BEGIN SELECT RAISE(ABORT, 'forced enabled event failure'); END""",
+        )
+
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            runBlocking { repo.setEnabledRecordingTransition(id, true) }
+        }
+
+        assertFalse(repo.getBlockWithContents(id)!!.block.enabled)
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_BLOCK_TURNED_ON))
+    }
+
     // PRD §17 R8: a block must cover at least one target — the boundary
     // guards every write path, not just the editor's own gating.
     @Test
@@ -401,15 +441,16 @@ class BlockRepositoryTest {
         assertEquals(listOf("reddit.com"), unchanged.sites.map { it.domain })
     }
 
-    // Owner addendum, 13 September: the UI offers waits up to 5 minutes;
-    // storage accepts at most 20 minutes (1200 s) on every write path.
+    // Wizard redesign (19 September): the old 1..1200-second allowance is
+    // superseded. The pause wait is 60..300 s in steps of 5 on every write
+    // path; out-of-range writes persist nothing.
     @Test
-    fun createBlockRejectsCountdownBeyondTwentyMinutes() = runBlocking {
-        assertThrows(IllegalArgumentException::class.java) {
-            runBlocking {
-                repo.createBlock(
-                    draft("Endless wait", apps = listOf("com.instagram.android"), countdownSeconds = 1205),
-                )
+    fun createBlockRejectsPauseWaitOutsideApprovedRange() = runBlocking {
+        listOf(45, 305).forEach { seconds ->
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repo.createBlock(draft("Bad wait", apps = listOf("com.instagram.android"), countdownSeconds = seconds))
+                }
             }
         }
 
@@ -417,18 +458,104 @@ class BlockRepositoryTest {
     }
 
     @Test
-    fun updateBlockRejectsCountdownBeyondTwentyMinutesAndChangesNothing() = runBlocking {
+    fun updateBlockRejectsPauseWaitOutsideApprovedRangeAndChangesNothing() = runBlocking {
+        val social = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repo.updateBlock(social, draft("Social", apps = listOf("com.instagram.android"), countdownSeconds = 310))
+            }
+        }
+
+        assertEquals(90, repo.getBlockWithContents(social)!!.block.countdownSeconds)
+    }
+
+    // Pause minutes: 5..100 in steps of 5.
+    @Test
+    fun createBlockRejectsPauseMinutesOutsideApprovedRange() = runBlocking {
+        listOf(0, 105).forEach { minutes ->
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repo.createBlock(draft("Bad pause", apps = listOf("com.instagram.android"), pauseMinutes = minutes))
+                }
+            }
+        }
+
+        assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    // Typing passage: 100..200 chars in steps of 10.
+    @Test
+    fun createBlockRejectsPassageLengthOutsideApprovedRange() = runBlocking {
+        listOf(90, 205, 155).forEach { chars ->
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repo.createBlock(draft("Bad passage", apps = listOf("com.instagram.android"), pauseChars = chars))
+                }
+            }
+        }
+
+        assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    // Fixed disable ladders: only the approved rungs may be written, on both
+    // per-method columns — the inactive column included.
+    @Test
+    fun createBlockRejectsDisableValuesOffTheLadders() = runBlocking {
+        listOf(300, 220 + 10).forEach { chars ->
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repo.createBlock(draft("Bad typing disable", apps = listOf("com.instagram.android"), turnoffChars = chars))
+                }
+            }
+        }
+        listOf(3600, 200).forEach { seconds ->
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repo.createBlock(
+                        draft("Bad wait disable", apps = listOf("com.instagram.android"), turnoffSeconds = seconds),
+                    )
+                }
+            }
+        }
+
+        assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    @Test
+    fun updateBlockRejectsDisableValueOffTheLadderAndChangesNothing() = runBlocking {
         val social = repo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
                 repo.updateBlock(
                     social,
-                    draft("Social", apps = listOf("com.instagram.android"), countdownSeconds = MAX_STORED_COUNTDOWN_SECONDS + 1),
+                    draft("Social", apps = listOf("com.instagram.android"), turnoffSeconds = 120),
                 )
             }
         }
 
-        assertEquals(45, repo.getBlockWithContents(social)!!.block.countdownSeconds)
+        assertEquals(360, repo.getBlockWithContents(social)!!.block.turnoffSeconds)
+    }
+
+    // Every approved rung of both ladders round-trips through the
+    // persistence boundary.
+    @Test
+    fun approvedDisableLadderValuesRoundTrip() = runBlocking {
+        DISABLE_CHARS_CHOICES.forEachIndexed { index, chars ->
+            val id = repo.createBlock(
+                draft(
+                    "Typing $chars",
+                    apps = listOf("com.instagram.android"),
+                    turnoffChars = chars,
+                    turnoffSeconds = DISABLE_WAIT_SECONDS_CHOICES[index],
+                ),
+            )
+            val read = repo.getBlockWithContents(id)!!
+            assertEquals(chars, read.block.turnoffChars)
+            assertEquals(DISABLE_WAIT_SECONDS_CHOICES[index], read.block.turnoffSeconds)
+            repo.deleteBlock(id)
+        }
+        assertTrue(repo.getBlocksWithContents().isEmpty())
     }
 }

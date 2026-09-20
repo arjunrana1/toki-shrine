@@ -121,6 +121,9 @@ fun TurnOnScreen(
             )
             Spacer(Modifier.height(14.dp))
 
+            // Wizard redesign (19 September): both costs follow the block's
+            // method, and the old "Phone in hand, every time." line is gone —
+            // a waiting challenge does not require holding the phone (PRD §7.2).
             Row {
                 PhosphorIcon(
                     if (loaded.block.frictionType == FrictionType.TYPING) Ph.Keyboard else Ph.Hourglass,
@@ -140,16 +143,14 @@ fun TurnOnScreen(
                         lineHeight = 20.sp,
                         color = NocturneTheme.colors.text,
                     )
-                    Text(
-                        if (loaded.block.frictionType == FrictionType.TYPING) {
-                            "${formatEstimate(typingEstimateSeconds(loaded.block.pauseChars))}, every time."
-                        } else {
-                            "Phone in hand, every time."
-                        },
-                        fontSize = 12.5.sp,
-                        lineHeight = 18.sp,
-                        color = NocturneTheme.colors.neutral.step500,
-                    )
+                    if (loaded.block.frictionType == FrictionType.TYPING) {
+                        Text(
+                            "${formatEstimate(typingEstimateSeconds(loaded.block.pauseChars))}, every time.",
+                            fontSize = 12.5.sp,
+                            lineHeight = 18.sp,
+                            color = NocturneTheme.colors.neutral.step500,
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -162,18 +163,27 @@ fun TurnOnScreen(
                 )
                 Spacer(Modifier.width(13.dp))
                 Column {
-                    Text(
-                        "To turn this whole block off, you'll type ${loaded.block.turnoffChars} characters!",
-                        fontSize = 14.5.sp,
-                        lineHeight = 20.sp,
-                        color = NocturneTheme.colors.text,
-                    )
-                    Text(
-                        "${formatEstimate(typingEstimateSeconds(loaded.block.turnoffChars))}.",
-                        fontSize = 12.5.sp,
-                        lineHeight = 18.sp,
-                        color = NocturneTheme.colors.neutral.step500,
-                    )
+                    if (loaded.block.frictionType == FrictionType.TYPING) {
+                        Text(
+                            "To turn this whole block off, you'll type ${loaded.block.turnoffChars} characters!",
+                            fontSize = 14.5.sp,
+                            lineHeight = 20.sp,
+                            color = NocturneTheme.colors.text,
+                        )
+                        Text(
+                            "${formatEstimate(typingEstimateSeconds(loaded.block.turnoffChars))}.",
+                            fontSize = 12.5.sp,
+                            lineHeight = 18.sp,
+                            color = NocturneTheme.colors.neutral.step500,
+                        )
+                    } else {
+                        Text(
+                            "To turn this whole block off, you'll wait ${formatCountdown(loaded.block.turnoffSeconds)}.",
+                            fontSize = 14.5.sp,
+                            lineHeight = 20.sp,
+                            color = NocturneTheme.colors.text,
+                        )
+                    }
                 }
             }
 

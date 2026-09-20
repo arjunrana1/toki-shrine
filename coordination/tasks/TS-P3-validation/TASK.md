@@ -1,0 +1,14 @@
+# TS-P3-validation — owner acceptance of Phase 3
+
+- **State:** `closed` — reviewer, owner and executed nonvisual evidence pass; Phase 4 is authorized. Final evidence is in [REVIEW](REVIEW.md) and [OWNER-CHECKS](OWNER-CHECKS.md).
+- **Goal:** reconcile Arjun's Phase 3 device/experience results and remaining nonvisual evidence; issue accurate phase status.
+- **Closure:** Arjun reports all P3-01–P3-15 owner checks passing. Codex executed 60 JVM tests and 51 Android tests with zero failures; P3-NV-02–P3-NV-04 are closed. No further Phase 3 actor remains.
+- **Code:** accumulated direct-correction range `7d779a6..f92661d` has reviewer PASS, after repair `cb1ad45..7d779a6` received PASS WITH NOTES. Phase 3 base remains `6c3b962`. Verify current Git state; preserve all unrelated work.
+- **Inputs:** [OWNER-CHECKS](OWNER-CHECKS.md) with stable P3-01–P3-15 IDs; [REVIEW](REVIEW.md); [HANDBACK](HANDBACK.md).
+- **Scope:** compare owner results to [Phase 3 acceptance](../../../docs/phases/phase-03.md). Investigate only concrete failures, ambiguous observations or required evidence gaps. Do not repeat the approved code audit.
+- **Context on demand:** [navigation/permissions](../../../docs/components/navigation-permissions.md); [persistence/events](../../../docs/components/persistence-events.md) for state/event defects; [blocks/targets](../../../docs/components/blocks-targets.md) for P3-14; [theme/UI](../../../docs/components/theme-ui.md) for visuals. PRD §§5/6/10/12 plus applicable §17 refinements.
+- **Invariants:** exactly four real-state permission rows; activation alone is gated; route/request restoration; serialized remove-after-success permission settlement; atomic activation/event and onboarding marker/event pairs; haptic/navigation only after successful changes. See contracts for exact boundaries and limitations.
+- **Checks:** record owner-visible results separately from P3-NV evidence; preserve build attribution. No builds/tests are needed merely to migrate/reconcile documentation. If implementing a real repair, assign and run focused non-device checks under WORKFLOW.
+- **Exclusions:** no Phase 4, rename, dependency upgrades, speculative refactors, device operations or automatic test-data resets. Phase 3 testing by Arjun may proceed during documentation work.
+- **Repair route:** small known UI/copy fixes may go directly from Arjun to GLM in this task. Codex handles critical state/data fixes. Create a child repair task only for a coherent larger assignment; link back here. One failed GLM repair submission requires reassessment.
+- **Stop:** missing owner/device or nonvisual evidence means wait, not implement. Clear Phase 3 only with no code blockers and completed required acceptance evidence. Preserve explicit open items; do not turn compile-only or visual evidence into an instrumented/database pass.

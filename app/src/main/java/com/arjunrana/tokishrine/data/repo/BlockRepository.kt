@@ -21,11 +21,33 @@ class ConflictingOwnershipException(
     val isApp: Boolean,
 ) : IllegalStateException("Target '$target' is already owned by another block")
 
-// Owner addendum, 13 September 2026: the wait/countdown is capped. The
-// configuration stepper offers at most 5 minutes (300 s); storage accepts at
-// most 20 minutes (1200 s) so no write path — stale drafts included — can
-// persist an endless wait. The UI never mentions this bound.
-const val MAX_STORED_COUNTDOWN_SECONDS = 1200
+// Owner addendum, 13 September 2026, superseded by the wizard redesign
+// (PRD §17, 19 September 2026): the old 1..1200-second storage allowance is
+// gone. The wizard steppers and this persistence boundary enforce the same
+// approved ranges and the fixed disable ladders on every write path.
+const val PAUSE_MINUTES_MIN = 5
+const val PAUSE_MINUTES_MAX = 100
+const val PAUSE_MINUTES_STEP = 5
+const val PAUSE_CHARS_MIN = 100
+const val PAUSE_CHARS_MAX = 200
+const val PAUSE_CHARS_STEP = 10
+const val PAUSE_WAIT_SECONDS_MIN = 60
+const val PAUSE_WAIT_SECONDS_MAX = 300
+const val PAUSE_WAIT_SECONDS_STEP = 5
+
+// Fixed disable ladders (PRD §7): the disable step offers exactly these
+// choices — no custom stepper, no second method selector. The middle entry
+// is the recommended preselection on both ladders.
+val DISABLE_CHARS_CHOICES = listOf(220, 350, 700)
+val DISABLE_WAIT_SECONDS_CHOICES = listOf(180, 360, 720)
+
+// Fresh-draft defaults (PRD §7): typing 150 chars, waiting 60 s, pause 15
+// min, and the middle rung of each disable ladder.
+const val PAUSE_MINUTES_DEFAULT = 15
+const val PAUSE_CHARS_DEFAULT = 150
+const val PAUSE_WAIT_SECONDS_DEFAULT = 60
+const val DISABLE_CHARS_DEFAULT = 350
+const val DISABLE_WAIT_SECONDS_DEFAULT = 360
 
 data class BlockDraft(
     val name: String,
@@ -36,7 +58,7 @@ data class BlockDraft(
     val pauseChars: Int,
     val turnoffChars: Int,
     val countdownSeconds: Int,
-    val showTypos: Boolean,
+    val turnoffSeconds: Int,
 )
 
 // open only so instrumented UI tests can gate the async reads the create
@@ -48,6 +70,32 @@ open class BlockRepository(
 
     private val dao: BlockDao = db.blockDao()
     private val metaDao = db.appMetaDao()
+
+    // Approved redesign values (PRD §7 / §17, 19 September 2026): pause 5..100
+    // min step 5, typing passage 100..200 chars step 10, pause wait 60..300 s
+    // step 5, and the fixed disable ladders. Both per-method columns must hold
+    // ladder/range values even when inactive, so no write path can persist a
+    // half-configured row.
+    private fun requireValidConfiguration(draft: BlockDraft) {
+        require(draft.pauseMinutes in PAUSE_MINUTES_MIN..PAUSE_MINUTES_MAX && draft.pauseMinutes % PAUSE_MINUTES_STEP == 0) {
+            "Pause must be between $PAUSE_MINUTES_MIN and $PAUSE_MINUTES_MAX minutes in steps of $PAUSE_MINUTES_STEP"
+        }
+        require(draft.pauseChars in PAUSE_CHARS_MIN..PAUSE_CHARS_MAX && draft.pauseChars % PAUSE_CHARS_STEP == 0) {
+            "Passage length must be between $PAUSE_CHARS_MIN and $PAUSE_CHARS_MAX characters in steps of $PAUSE_CHARS_STEP"
+        }
+        require(
+            draft.countdownSeconds in PAUSE_WAIT_SECONDS_MIN..PAUSE_WAIT_SECONDS_MAX &&
+                draft.countdownSeconds % PAUSE_WAIT_SECONDS_STEP == 0,
+        ) {
+            "Pause wait must be between $PAUSE_WAIT_SECONDS_MIN and $PAUSE_WAIT_SECONDS_MAX seconds in steps of $PAUSE_WAIT_SECONDS_STEP"
+        }
+        require(draft.turnoffChars in DISABLE_CHARS_CHOICES) {
+            "Disable typing choice must be one of $DISABLE_CHARS_CHOICES"
+        }
+        require(draft.turnoffSeconds in DISABLE_WAIT_SECONDS_CHOICES) {
+            "Disable wait choice must be one of $DISABLE_WAIT_SECONDS_CHOICES"
+        }
+    }
 
     // PRD §4: a new block is saved OFF and does nothing until turned on —
     // enabled is forced false regardless of any draft state.
@@ -63,10 +111,7 @@ open class BlockRepository(
         require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
             "A block must contain at least one app or site"
         }
-        // Owner addendum, 13 September: the stored wait is bounded at 20 min.
-        require(draft.countdownSeconds in 1..MAX_STORED_COUNTDOWN_SECONDS) {
-            "Countdown must be between 1 and $MAX_STORED_COUNTDOWN_SECONDS seconds"
-        }
+        requireValidConfiguration(draft)
         val id = dao.insertBlock(
             Block(
                 name = draft.name,
@@ -75,7 +120,7 @@ open class BlockRepository(
                 pauseChars = draft.pauseChars,
                 turnoffChars = draft.turnoffChars,
                 countdownSeconds = draft.countdownSeconds,
-                showTypos = draft.showTypos,
+                turnoffSeconds = draft.turnoffSeconds,
                 enabled = false,
             ),
         )
@@ -106,10 +151,7 @@ open class BlockRepository(
         require(draft.appPackageNames.isNotEmpty() || draft.siteDomains.isNotEmpty()) {
             "A block must contain at least one app or site"
         }
-        // Owner addendum, 13 September: the stored wait is bounded at 20 min.
-        require(draft.countdownSeconds in 1..MAX_STORED_COUNTDOWN_SECONDS) {
-            "Countdown must be between 1 and $MAX_STORED_COUNTDOWN_SECONDS seconds"
-        }
+        requireValidConfiguration(draft)
         val current = dao.getBlockWithContents(id) ?: error("Block $id does not exist")
         dao.updateBlock(
             current.block.copy(
@@ -119,7 +161,7 @@ open class BlockRepository(
                 pauseChars = draft.pauseChars,
                 turnoffChars = draft.turnoffChars,
                 countdownSeconds = draft.countdownSeconds,
-                showTypos = draft.showTypos,
+                turnoffSeconds = draft.turnoffSeconds,
             ),
         )
         val draftApps = draft.appPackageNames.toSet()

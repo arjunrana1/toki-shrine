@@ -12,7 +12,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
-import androidx.activity.ComponentActivity
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,6 +29,7 @@ import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.ui.screens.CreateFlowScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import androidx.compose.ui.semantics.SemanticsActions
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -47,8 +47,10 @@ import org.junit.runner.RunWith
 
 // Regressions for the Phase 2 code-review blockers: the terminal transition
 // (save/abandon) must happen exactly once, and no target may be selected or
-// saved before ownership is known — a rejected save keeps the draft. Drives
-// the real CreateFlowScreen against an in-memory Room database.
+// saved before ownership is known — a rejected save keeps the draft. Also
+// the wizard redesign (19 September): five steps, the details sheet inside
+// step 3, per-method drafts and the fixed disable ladders. Drives the real
+// CreateFlowScreen against an in-memory Room database.
 @RunWith(AndroidJUnit4::class)
 class CreateFlowScreenTest {
 
@@ -64,7 +66,7 @@ class CreateFlowScreenTest {
     }
 
     @get:Rule
-    val compose = createAndroidComposeRule<ComponentActivity>()
+    val compose = createAndroidComposeRule<CreateFlowTestActivity>()
 
     private lateinit var db: TokiDatabase
     private lateinit var dao: BlockDao
@@ -86,6 +88,7 @@ class CreateFlowScreenTest {
 
     @After
     fun tearDown() {
+        CreateFlowTestActivity.content = null
         db.close()
     }
 
@@ -93,9 +96,15 @@ class CreateFlowScreenTest {
 
     private class SuspensionGate {
         private val latch = CountDownLatch(1)
+        private val entered = CountDownLatch(1)
 
         suspend fun await() {
+            entered.countDown()
             withContext(Dispatchers.IO) { latch.await(10, TimeUnit.SECONDS) }
+        }
+
+        fun awaitEntered() {
+            assertTrue("suspending operation did not reach its gate", entered.await(5, TimeUnit.SECONDS))
         }
 
         fun release() {
@@ -152,7 +161,6 @@ class CreateFlowScreenTest {
         name: String,
         apps: List<String> = emptyList(),
         sites: List<String> = emptyList(),
-        showTypos: Boolean = false,
     ) = BlockDraft(
         name = name,
         appPackageNames = apps,
@@ -160,9 +168,9 @@ class CreateFlowScreenTest {
         frictionType = FrictionType.TYPING,
         pauseMinutes = 25,
         pauseChars = 120,
-        turnoffChars = 320,
-        countdownSeconds = 45,
-        showTypos = showTypos,
+        turnoffChars = 350,
+        countdownSeconds = 90,
+        turnoffSeconds = 360,
     )
 
     private fun showFlow(
@@ -170,9 +178,9 @@ class CreateFlowScreenTest {
         repo: BlockRepository = blockRepo,
         apps: InstalledAppsRepository = stubApps(),
         initialStep: Int = 1,
+        closeCount: AtomicInteger = AtomicInteger(0),
     ): AtomicInteger {
-        val closeCount = AtomicInteger(0)
-        compose.setContent {
+        CreateFlowTestActivity.content = {
             NocturneTheme {
                 CreateFlowScreen(
                     editBlockId = editBlockId,
@@ -184,6 +192,10 @@ class CreateFlowScreenTest {
                 )
             }
         }
+        // The rule launches before @Before; recreate the initially blank host
+        // so the configured root is installed from onCreate and participates
+        // in the same saved-state lifecycle used by subsequent recreations.
+        compose.activityRule.scenario.recreate()
         return closeCount
     }
 
@@ -214,6 +226,16 @@ class CreateFlowScreenTest {
 
     private fun next() {
         compose.onNodeWithText("Next").performClick()
+    }
+
+    // System-back route through the activity's dispatcher — the same path a
+    // hardware/gesture Back takes, including any callbacks registered by
+    // composed surfaces such as the modal sheet.
+    private fun pressSystemBack() {
+        compose.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        compose.waitForIdle()
     }
 
     private fun events(): List<Event> = runBlocking { eventDao.getAll() }
@@ -262,7 +284,9 @@ class CreateFlowScreenTest {
     // Two Save taps while the block_created write is suspended: the second
     // finds the guard taken and does nothing. Exactly one block, exactly one
     // block_created, exactly one navigation — and no abandonment after it.
-    // PRD §17 R8 made empty saves impossible, so the block carries a target.
+    // The five-step wizard logs steps 1..5; the created payload carries the
+    // redesign defaults (150 chars / 60 s wait / 15 min pause, middle ladder
+    // rungs 350 chars and 360 s).
     @Test
     fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
         eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
@@ -278,13 +302,19 @@ class CreateFlowScreenTest {
         typeBlockName("Evening lockout")
         next()
         next()
-        awaitText("4 / 4")
-        compose.onNodeWithText("Save block").performClick()
-        compose.onNodeWithText("Save block").performClick()
-
-        compose.waitForIdle()
+        next()
+        awaitText("5 / 5")
+        // Invoke the semantics action twice on the UI thread without an
+        // intervening test-idleness wait; the first callback launches the
+        // gated transaction and the second must observe the retained guard.
+        val saveClick = compose.onNodeWithText("Save block").fetchSemanticsNode()
+            .config[SemanticsActions.OnClick].action
+        compose.activity.runOnUiThread {
+            saveClick?.invoke()
+            saveClick?.invoke()
+        }
+        eventRepo.gate.awaitEntered()
         assertEquals(0, closeCount.get())
-        assertEquals(0, runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATED) })
 
         eventRepo.gate.release()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
@@ -299,20 +329,22 @@ class CreateFlowScreenTest {
                 EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
                 EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
                 EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
                 EventRepository.EVENT_BLOCK_CREATED,
             ),
             recorded.map { it.name },
         )
-        assertEquals(listOf(1, 2, 3, 4), recorded.drop(1).take(4).map { JSONObject(it.paramsJson!!).getInt("step") })
+        assertEquals(listOf(1, 2, 3, 4, 5), recorded.drop(1).take(5).map { JSONObject(it.paramsJson!!).getInt("step") })
         val created = recorded.last()
         val params = JSONObject(created.paramsJson!!)
         assertEquals(1, params.getInt("app_count"))
         assertEquals(0, params.getInt("site_count"))
         assertEquals("typing", params.getString("friction_type"))
         assertEquals(15, params.getInt("pause_minutes"))
-        assertEquals(100, params.getInt("pause_chars"))
-        assertEquals(300, params.getInt("turnoff_chars"))
-        assertEquals(30, params.getInt("countdown_seconds"))
+        assertEquals(150, params.getInt("pause_chars"))
+        assertEquals(350, params.getInt("turnoff_chars"))
+        assertEquals(60, params.getInt("countdown_seconds"))
+        assertEquals(360, params.getInt("turnoff_seconds"))
 
         // The seeded holder plus exactly one new block.
         val blocks = runBlocking { blockRepo.getBlocksWithContents() }
@@ -321,6 +353,66 @@ class CreateFlowScreenTest {
         assertEquals(listOf("com.sleeper.app"), saved.apps.map { it.packageName })
         assertEquals(false, saved.block.enabled)
         assertNoRetiredConflictEvents()
+    }
+
+    // WZ-F01: block_created is suspended after the block and step 5 commit.
+    // Recreation must retain the terminal owner, reject a second Save, then
+    // deliver the completed close to the new composition exactly once.
+    @Test
+    fun recreationDuringTerminalCreateDoesNotStrandOrDuplicateTheBlock() {
+        eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = AtomicInteger(0)
+        val apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp)
+        showFlow(editBlockId = null, apps = apps, closeCount = closeCount)
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        next()
+        next()
+        awaitText("5 / 5")
+        compose.onNodeWithText("Save block").performClick()
+        eventRepo.gate.awaitEntered()
+
+        compose.activityRule.scenario.recreate()
+        awaitText("5 / 5")
+        compose.onNodeWithText("Save block").performClick() // retained guard: no-op
+
+        eventRepo.gate.release()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+        assertEquals(2, runBlocking { blockRepo.getBlocksWithContents().size })
+        assertEquals(1, runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATED) })
+        assertEquals(
+            listOf(1, 2, 3, 4, 5),
+            events().filter { it.name == EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED }
+                .map { JSONObject(it.paramsJson!!).getInt("step") },
+        )
+    }
+
+    // WZ-F01: the start write itself may be suspended during recreation. Its
+    // retained worker completes once; the recreated screen does not enqueue a
+    // second start and does not suppress the pending first one.
+    @Test
+    fun recreationDuringCreateStartLogsExactlyOnce() {
+        eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATE_STARTED)
+        val closeCount = AtomicInteger(0)
+        showFlow(editBlockId = null, closeCount = closeCount)
+        awaitText("What should this cover?")
+        eventRepo.gate.awaitEntered()
+
+        compose.activityRule.scenario.recreate()
+        awaitText("What should this cover?")
+        eventRepo.gate.release()
+
+        compose.waitUntil(timeoutMillis = 5_000) {
+            runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATE_STARTED) == 1 }
+        }
+        assertEquals(1, runBlocking { eventDao.countByName(EventRepository.EVENT_BLOCK_CREATE_STARTED) })
+        assertEquals(0, closeCount.get())
     }
 
     // — blocker 2: selection waits for ownership; rejected saves keep the draft —
@@ -394,7 +486,9 @@ class CreateFlowScreenTest {
         awaitText("1 selected")
         compose.onNodeWithText("free.example.com").assertExists()
         assertNoRetiredConflictEvents()
-    }    // A stale draft (the drafted app was claimed by another block while the
+    }
+
+    // A stale draft (the drafted app was claimed by another block while the
     // editor was open) is rejected at the repository: the flow stays open,
     // the draft survives, the inline label shows without naming the owner,
     // and nothing is written. Removing the held app then saves normally,
@@ -402,11 +496,8 @@ class CreateFlowScreenTest {
     @Test
     fun rejectedSaveRetainsDraftAndShowsInlineMessage() {
         val socialId = runBlocking {
-            // Always-on typos fixture: UI drafts force show_typos = true, so
-            // only an always-on seed keeps the recovery save's
-            // fields_changed genuinely "none".
             blockRepo.createBlock(
-                draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com"), showTypos = true),
+                draft("Social", apps = listOf("com.instagram.android"), sites = listOf("reddit.com")),
             )
         }
         val newsId = runBlocking {
@@ -439,13 +530,14 @@ class CreateFlowScreenTest {
         next()
         next()
         next()
-        awaitText("4 / 4")
+        next()
+        awaitText("5 / 5")
         compose.onNodeWithText("Sleeper").assertExists() // review chip: draft intact
         compose.onNodeWithText("Save block").performClick()
 
         awaitText("Already added to a block") // inline explanation on the review step
         assertEquals(0, closeCount.get())
-        compose.onNodeWithText("4 / 4").assertExists()
+        compose.onNodeWithText("5 / 5").assertExists()
         compose.onNodeWithText("Sleeper").assertExists()
 
         // Nothing persisted; the holder still owns the app.
@@ -458,13 +550,12 @@ class CreateFlowScreenTest {
         assertNoRetiredConflictEvents()
 
         // Recovery: unwind, drop the held app, save again — the guard is free.
-        compose.onNodeWithText(BACK_GLYPH).performClick()
-        compose.onNodeWithText(BACK_GLYPH).performClick()
-        compose.onNodeWithText(BACK_GLYPH).performClick()
+        repeat(4) { compose.onNodeWithText(BACK_GLYPH).performClick() }
         awaitText("What should this cover?")
         // Selected rows: apps [Instagram, Sleeper] then sites [reddit.com].
         compose.onAllNodesWithText(REMOVE_GLYPH)[1].performClick()
         awaitText("2 selected")
+        next()
         next()
         next()
         next()
@@ -524,37 +615,12 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("free.example.com").assertExists()
     }
 
-    // Always-on typos (Codex corrective finding, 13 September): saving any
-    // edit rewrites a legacy show_typos = false value to true, and the
-    // block_edited event reports that single change — never "none".
-    @Test
-    fun editRewritesLegacyShowTyposFalseToTrue() {
-        val socialId = runBlocking {
-            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android"), showTypos = false))
-        }
-        val closeCount = showFlow(
-            editBlockId = socialId,
-            apps = stubApps(appEntry("com.instagram.android", "Instagram")),
-        )
-
-        awaitText("Instagram") // edit prefill landed
-        next()
-        next()
-        next()
-        awaitText("4 / 4")
-        compose.onNodeWithText("Save block").performClick()
-        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
-
-        assertEquals(listOf(EventRepository.EVENT_BLOCK_EDITED), events().map { it.name })
-        assertEquals("show_typos", JSONObject(events().last().paramsJson!!).getString("fields_changed"))
-        assertEquals(true, runBlocking { blockRepo.getBlockWithContents(socialId)!!.block.showTypos })
-    }
-
     // — event-table evidence: create success/cancel, search/step Back, edit cancel —
 
     // Search Back and step Back never leave the flow, so they log nothing
     // terminal; every Next logs its step; the save is the single terminal
-    // event. PRD §17 R8: the block carries a target — empty saves are gone.
+    // event. Five steps: Back from the disable step re-logs step 3, and the
+    // save logs step 5 before block_created.
     @Test
     fun searchBackAndStepBackLogExactSequence() {
         val freeApp = appEntry("com.sleeper.app", "Sleeper")
@@ -573,13 +639,66 @@ class CreateFlowScreenTest {
         typeBlockName("Evening lockout")
         next() // step_completed(2)
         next() // step_completed(3)
+        awaitText("Type a bit more") // disable step 4/5 with the typing ladder
         compose.onNodeWithText(BACK_GLYPH).performClick() // 4 → 3, nothing logged
+        awaitText("Type a passage")
         next() // step_completed(3) again
-        awaitText("4 / 4")
+        awaitText("Type a bit more")
+        next() // step_completed(4)
+        awaitText("5 / 5")
         compose.onNodeWithText("Save block").performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(1, closeCount.get())
 
+        assertEquals(
+            listOf(
+                EventRepository.EVENT_BLOCK_CREATE_STARTED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED,
+                EventRepository.EVENT_BLOCK_CREATED,
+            ),
+            events().map { it.name },
+        )
+        assertEquals(
+            listOf(1, 2, 3, 3, 4, 5),
+            events().drop(1).take(6).map { JSONObject(it.paramsJson!!).getInt("step") },
+        )
+        assertNoRetiredConflictEvents()
+    }
+
+    // WZ-F02: every step event uses one retained FIFO. Even when the first
+    // step write is suspended, later navigation and Save cannot overtake it or
+    // persist a block before the ordered history reaches the terminal save.
+    @Test
+    fun suspendedStepEventsRemainOrderedAheadOfSave() {
+        eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATE_STEP_COMPLETED)
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        eventRepo.gate.awaitEntered()
+        typeBlockName("Evening lockout")
+        next()
+        next()
+        next()
+        awaitText("5 / 5")
+        compose.onNodeWithText("Save block").performClick()
+
+        // Holder only: terminal creation is queued behind the suspended step.
+        assertEquals(1, runBlocking { blockRepo.getBlocksWithContents().size })
+        assertEquals(0, closeCount.get())
+
+        eventRepo.gate.release()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(
             listOf(
                 EventRepository.EVENT_BLOCK_CREATE_STARTED,
@@ -593,10 +712,10 @@ class CreateFlowScreenTest {
             events().map { it.name },
         )
         assertEquals(
-            listOf(1, 2, 3, 3, 4),
+            listOf(1, 2, 3, 4, 5),
             events().drop(1).take(5).map { JSONObject(it.paramsJson!!).getInt("step") },
         )
-        assertNoRetiredConflictEvents()
+        assertEquals(2, runBlocking { blockRepo.getBlocksWithContents().size })
     }
 
     // Cancelling an edit logs nothing at all: no create_started, no
@@ -685,9 +804,10 @@ class CreateFlowScreenTest {
         compose.onNodeWithText(thirty).assertExists()
     }
 
-    // R9: detail's THE FRICTION → Edit opens the editor directly at 3/4
-    // with the stored values loaded; Back at that entry step closes the
-    // flow (returning to detail in real navigation) without any event.
+    // Wizard redesign (19 September): detail's THE FRICTION → Edit opens the
+    // editor directly at 3/5 with the stored values loaded into the method
+    // cards; Back at that entry step closes the flow (returning to detail in
+    // real navigation) without any event.
     @Test
     fun frictionEditEntersAtStepThreeAndBackClosesSilently() {
         val socialId = runBlocking {
@@ -699,11 +819,12 @@ class CreateFlowScreenTest {
             initialStep = 3,
         )
 
-        awaitText("3 / 4")
-        awaitText("Type to pause")
-        // Stored pauseChars (120, not the 100 default) proves the prefill
-        // landed; the nonempty draft may proceed from the friction step.
-        awaitText("120 characters")
+        awaitText("3 / 5")
+        awaitText("Type a passage")
+        // Stored pauseChars (120, not the 150 default) proves the prefill
+        // landed in the card summary; the nonempty draft may proceed from
+        // the method step.
+        awaitText("120 characters. Random words. Then 25 minutes before the block comes back.")
         compose.onNodeWithText("Next").assertIsEnabled()
 
         compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits, not step 2
@@ -713,8 +834,8 @@ class CreateFlowScreenTest {
     }
 
     // R8: a legacy empty block (seeded directly — the repository now rejects
-    // empty drafts) opened at the friction step can neither advance nor
-    // save; Back still exits.
+    // empty drafts) opened at the method step can neither advance nor save;
+    // Back still exits.
     @Test
     fun frictionEditOnAnEmptyBlockCannotAdvance() {
         val emptyId = runBlocking {
@@ -724,23 +845,190 @@ class CreateFlowScreenTest {
                     frictionType = FrictionType.TYPING,
                     pauseMinutes = 25,
                     pauseChars = 120,
-                    turnoffChars = 320,
-                    countdownSeconds = 45,
-                    showTypos = false,
+                    turnoffChars = 350,
+                    countdownSeconds = 90,
+                    turnoffSeconds = 360,
                     enabled = false,
                 ),
             )
         }
         val closeCount = showFlow(editBlockId = emptyId, initialStep = 3)
 
-        awaitText("3 / 4")
+        awaitText("3 / 5")
         compose.onNodeWithText("Next").assert(isNotEnabled())
         compose.onNodeWithText("Next").performTouchInput { click() }
-        compose.onNodeWithText("4 / 4").assertDoesNotExist()
+        compose.onNodeWithText("4 / 5").assertDoesNotExist()
 
         compose.onNodeWithText(BACK_GLYPH).performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(1, closeCount.get())
         assertTrue(events().isEmpty())
+    }
+
+    // — wizard redesign: sheet, disable step, per-method drafts —
+
+    // The waiting path end to end: switching the method card, the details
+    // sheet showing only the waiting field plus pause, the inherited disable
+    // ladder with the middle rung preselected (Next alone is valid), and a
+    // round-trip of every per-method column through the save.
+    @Test
+    fun waitingMethodRoundTripsThroughSheetDisableAndSave() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening wind-down")
+        next()
+        awaitText("3 / 5")
+
+        // Switch to the waiting card, then refine it in the sheet.
+        compose.onNodeWithText("Wait it out").performClick()
+        compose.onNodeWithText("Adjust the details").performClick()
+        awaitText("The details")
+        compose.onNodeWithText("Passage length").assertDoesNotExist() // typing field hidden
+        awaitText("Wait before you're in")
+        awaitText("1 min")
+        awaitText("Block stays off for")
+        awaitText("15 min")
+        awaitText("Then it comes back on its own. Minimum 5 minutes.")
+        compose.onNodeWithText("Done").performClick()
+        awaitText("Adjust the details") // sheet dismissed, still step 3
+
+        next() // step_completed(3)
+        awaitText("4 / 5")
+        awaitText("Disabling the block")
+        // Waiting ladder inherited, middle rung preselected: Next alone is valid.
+        awaitText("Wait a bit")
+        awaitText("Wait a bit more")
+        awaitText("Make it hurt")
+        awaitText("Recommended")
+        compose.onNodeWithText("Next").assertIsEnabled()
+        compose.onNodeWithText("Wait a bit more").performClick() // 6 min rung
+        next() // step_completed(4)
+
+        awaitText("5 / 5")
+        awaitText("Wait 1 min") // pause cost row: no phone-in-hand copy
+        awaitText("Wait 6 min") // disable cost row follows the chosen rung
+        compose.onNodeWithText("Save block").performClick()
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+
+        val saved = runBlocking { blockRepo.getBlocksWithContents() }
+            .first { it.block.name == "Evening wind-down" }
+        assertEquals(FrictionType.DELAY, saved.block.frictionType)
+        assertEquals(60, saved.block.countdownSeconds)
+        assertEquals(15, saved.block.pauseMinutes)
+        assertEquals(360, saved.block.turnoffSeconds)
+        // The typing method's columns keep their untouched drafts.
+        assertEquals(150, saved.block.pauseChars)
+        assertEquals(350, saved.block.turnoffChars)
+        assertEquals(false, saved.block.enabled)
+
+        val created = events().last()
+        assertEquals(EventRepository.EVENT_BLOCK_CREATED, created.name)
+        val params = JSONObject(created.paramsJson!!)
+        assertEquals("delay", params.getString("friction_type"))
+        assertEquals(60, params.getInt("countdown_seconds"))
+        assertEquals(360, params.getInt("turnoff_seconds"))
+    }
+
+    // Sheet Back dismisses only the sheet; the next Back navigates the
+    // wizard. Dismissal keeps the draft changes and logs nothing.
+    @Test
+    fun sheetBackDismissesTheSheetBeforeWizardBack() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        awaitText("3 / 5")
+
+        compose.onNodeWithText("Adjust the details").performClick()
+        awaitText("The details")
+        pressSystemBack()
+        awaitText("Adjust the details") // sheet closed, wizard unmoved
+        awaitText("3 / 5")
+
+        pressSystemBack() // now wizard Back: 3 → 2
+        awaitText("Give it a name")
+        awaitText("2 / 5")
+    }
+
+    // BW-06: an in-progress create survives activity recreation — the
+    // saveable draft restores the step, method switch and name.
+    @Test
+    fun createDraftSurvivesActivityRecreation() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        val closeCount = AtomicInteger(0)
+        val apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp)
+        showFlow(editBlockId = null, apps = apps, closeCount = closeCount)
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        awaitText("3 / 5")
+        compose.onNodeWithText("Wait it out").performClick()
+
+        compose.activityRule.scenario.recreate()
+
+        awaitText("3 / 5")
+        // The method switch survived: the sheet shows the waiting field.
+        compose.onNodeWithText("Adjust the details").performClick()
+        awaitText("Wait before you're in")
+        pressSystemBack()
+        awaitText("Adjust the details")
+
+        // Backtracking keeps the unwound draft: the typed name is intact.
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        awaitText("2 / 5")
+        awaitText("Evening lockout")
+        assertEquals(0, closeCount.get())
+    }
+
+    // BW-06, edit side: a restored edit draft is not clobbered by the
+    // stored block on recreation — the in-session method switch survives.
+    @Test
+    fun editDraftSurvivesRecreationWithoutPrefillOverwrite() {
+        val socialId = runBlocking {
+            blockRepo.createBlock(draft("Social", apps = listOf("com.instagram.android")))
+        }
+        val closeCount = AtomicInteger(0)
+        val apps = stubApps(appEntry("com.instagram.android", "Instagram"))
+        showFlow(editBlockId = socialId, apps = apps, closeCount = closeCount)
+
+        awaitText("Instagram")
+        next()
+        next()
+        awaitText("3 / 5")
+        compose.onNodeWithText("Wait it out").performClick() // diverges from stored TYPING
+
+        compose.activityRule.scenario.recreate()
+
+        awaitText("3 / 5")
+        compose.onNodeWithText("Adjust the details").performClick()
+        // The restored draft still says waiting — prefill did not overwrite it.
+        awaitText("Wait before you're in")
+        pressSystemBack()
+
+        compose.onNodeWithText(BACK_GLYPH).performClick() // 3 → 2, then exit
+        awaitText("2 / 5")
+        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits
+        compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
+        assertEquals(1, closeCount.get())
+        assertTrue(events().isEmpty()) // canceled edit writes nothing
+        assertEquals(FrictionType.TYPING, runBlocking { blockRepo.getBlockWithContents(socialId)!!.block.frictionType })
     }
 }
