@@ -1,6 +1,6 @@
 # TS-P5-owner-corrections — Owner-tested interruption corrections
 
-- **State:** `ready_for_review` — senior Codex submitted `7fbb692` on base `59596a8`; see [HANDBACK](HANDBACK.md). Fresh independent review is required before a new owner build.
+- **State:** `awaiting_owner` — independent review of `7fbb692` on base `59596a8` returned **PASS WITH NOTES** (see [REVIEW](REVIEW.md)); owner retesting is the next step. No installation or retest began before review PASS, and Phase 6 remains unstarted.
 - **Goal:** apply Arjun's Phase 5 device-testing feedback to the interruption gate, walk-away moment, typing challenge, waiting challenge, and temporary debug-only configuration bounds without beginning Phase 6.
 - **Implementation owner:** senior Codex. The visual/copy changes are routine, but preserving typing state and resetting waiting state across app-switch/lock without creating a terminal outcome changes the lifecycle state machine and is senior-owned under WORKFLOW.
 - **Base:** `59596a8`. The owner-supplied untracked `design/humor-assets/sys_block_7–11.jpg` files are explicitly part of this task; preserve unrelated work.
