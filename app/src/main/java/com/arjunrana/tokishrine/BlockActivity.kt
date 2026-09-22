@@ -436,7 +436,7 @@ class BlockActivity : ComponentActivity() {
                         }
                     }
                     clearLiveChallenge()
-                    finish()
+                    returnToTriggeringApp()
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -507,6 +507,28 @@ class BlockActivity : ComponentActivity() {
             .addCategory(Intent.CATEGORY_HOME)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { startActivity(home) }
+        finish()
+    }
+
+    /**
+     * A completed detection-triggered pause lands back on the app that
+     * started the session. Site-triggered sessions carry a domain, not a
+     * browser package, so they keep the plain finish; turn-off completions
+     * stay in Toki where the user initiated them.
+     */
+    private fun returnToTriggeringApp() {
+        val session = loaded
+        val target = session?.target
+        val launch = if (session?.purpose == ChallengePurpose.PAUSE &&
+            session.triggerType == EventRepository.TARGET_TYPE_APP && !target.isNullOrBlank()
+        ) {
+            packageManager.getLaunchIntentForPackage(target)
+        } else {
+            null
+        }
+        if (launch != null) {
+            runCatching { startActivity(launch) }
+        }
         finish()
     }
 
