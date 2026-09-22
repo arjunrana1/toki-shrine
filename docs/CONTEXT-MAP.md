@@ -18,7 +18,7 @@ Do not read every linked document. TASK gives starting references; use this map 
 
 - Five-screen editor redesign: implemented and closed in [its task](../coordination/tasks/TS-block-wizard-redesign/TASK.md), with reviewer, owner and executed nonvisual PASS. PRD §7 and the latest §17 wizard amendment remain authoritative. Waiting is visible-and-unlocked, with no hold detection; challenge runtime remains Phase 5.
 
-- Phase 5 delivery: [P5A](../coordination/tasks/TS-P5A-interruption-ui/TASK.md) owns only stateless interruption UI/resources; [P5B](../coordination/tasks/TS-P5B-challenge-runtime/TASK.md) owns Activity integration and all lifecycle/event correctness. Phase 6 retains pause/re-arm, bubble and notification.
+- Phase 5 delivery: closed. P5A/P5B and the owner-corrections task are history ([P5 closure](../coordination/tasks/TS-P5-owner-corrections/OWNER-CHECKS.md)); reviewer notes RV2-N1–N3 are recorded obligations for later phases. Phase 6 pause/access/re-arm, bubble and notification are active in [TS-P6-pause-lifecycle](../coordination/tasks/TS-P6-pause-lifecycle/TASK.md).
 
 - Phase 3 owner results and executed nonvisual evidence are closed in the [Phase 3 checklist](../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md).
 - Create-flow draft restoration/shared accessibility semantics: blocks/targets and theme/UI contracts; do not mislabel the repaired Phase 3 route stack as still broken.
