@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,15 +72,49 @@ class TokiAccessibilityService : AccessibilityService() {
             applyServiceInfoOnMain()
         }
 
-        // Match maps follow the database: turn a block off and it leaves
-        // detection with the next emission — no event-path DB reads.
+        // Match maps follow the database and the live pause set (Phase 6):
+        // turn a block off and it leaves detection with the next emission —
+        // no event-path DB reads — while a paused block's targets are open
+        // for the pause and return the same way at re-arm.
         serviceScope.launch {
-            app.blockRepository.observeBlocksWithContents().distinctUntilChanged().collect { blocks ->
-                val index = ActiveBlockIndex.from(blocks, excludePackage = packageName)
+            var lastPausedIds: Set<Long> = emptySet()
+            combine(
+                app.blockRepository.observeBlocksWithContents().distinctUntilChanged(),
+                app.pauseCoordinator.pauses,
+            ) { blocks, pauses ->
+                ActiveBlockIndex.from(
+                    blocks,
+                    excludePackage = packageName,
+                    pausedBlockIds = pauses.keys,
+                ) to pauses.keys
+            }.collect { (index, pausedIds) ->
                 appBlocks = index.apps
                 engine?.onBlocksChanged(index.apps, index.sites)?.forEach(::execute)
                 applyServiceInfoOnMain()
+                if (pausedIds != lastPausedIds) {
+                    lastPausedIds = pausedIds
+                    // A pause started or ended: the foreground window's
+                    // enforcement changed, so it is re-evaluated once
+                    // without waiting for a fresh window event. This is
+                    // what makes re-arm immediate even while a blocked app
+                    // is already on screen (PRD §4: re-arms immediately).
+                    reevaluateActiveWindow()
+                }
             }
+        }
+    }
+
+    // Feeds the current foreground window through the engine exactly like a
+    // TYPE_WINDOW_STATE_CHANGED event: a paused-then-re-armed app in front
+    // triggers its gate now, not on the next window change.
+    private fun reevaluateActiveWindow() {
+        val activeEngine = engine ?: return
+        val root = rootInActiveWindow ?: return
+        val packageName = root.packageName?.toString() ?: return
+        if (packageName == this.packageName) return
+        activeEngine.onWindowStateChanged(root.windowId, packageName).forEach(::execute)
+        if (browserViewIds.containsKey(packageName)) {
+            readAddressBar(activeEngine, root.windowId, packageName, canaryOnMissing = true)
         }
     }
 
@@ -219,6 +254,12 @@ class TokiAccessibilityService : AccessibilityService() {
     }
 
     private fun launchBlockScreen(trigger: DetectionTrigger) {
+        // Phase 6 pause access: a paused block's targets are open (PRD §4).
+        // The guard is synchronous against the coordinator so a trigger
+        // racing the index re-emission right after a pause starts (or right
+        // before its re-arm) is still decided by the pause state itself.
+        val app = application as? TokiApplication
+        if (app?.pauseCoordinator?.isPaused(trigger.blockId) == true) return
         val intent = Intent(this, BlockActivity::class.java)
             .addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or

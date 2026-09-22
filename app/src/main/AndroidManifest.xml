@@ -22,6 +22,14 @@
          the baseline battery path for non-Samsung manufacturers). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- Normal permissions backing the Phase 6 pause countdown service: it
+         stays foreground while any block is paused so re-arm timing, the
+         countdown notification and the bubble survive backgrounding. The
+         declared type is specialUse (no standard type covers a blocking
+         countdown); the subtype below states the purpose. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <!-- The app picker lists launchable apps; this keeps package visibility
          scoped to launchable activities instead of QUERY_ALL_PACKAGES. -->
     <queries>
@@ -81,6 +89,20 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Phase 6 pause lifecycle host: started by the pause coordinator
+             with the first pause, stops itself when the last pause ends
+             (automatic re-arm). Owns the ongoing countdown notification
+             (PRD §6 screen 21) and the overlay bubble (screen 20). Not
+             exported: only Toki Shrine starts it. -->
+        <service
+            android:name=".pause.PauseService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the pause countdown, automatic re-arm and timer bubble alive while a block is paused." />
         </service>
     </application>
 

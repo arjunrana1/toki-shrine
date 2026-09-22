@@ -74,4 +74,33 @@ class ActiveBlockIndexTest {
         assertEquals(emptyMap<String, BlockRef>(), index.apps)
         assertEquals(emptyMap<String, BlockRef>(), index.sites)
     }
+
+    // — Phase 6 pause access: a paused block's whole target set (apps and
+    // sites) opens for the pause and no others (PRD §4) —
+
+    @Test
+    fun pausedBlockLeavesDetectionButItsEnabledNeighbourStays() {
+        val index = ActiveBlockIndex.from(
+            listOf(
+                withContents(block(1, "Dooms", enabled = true), apps = listOf("com.instagram.android"), sites = listOf("reddit.com")),
+                withContents(block(2, "Focus", enabled = true), apps = listOf("com.twitter.android"), sites = listOf("x.com")),
+            ),
+            excludePackage = "com.arjunrana.tokishrine",
+            pausedBlockIds = setOf(1),
+        )
+        assertEquals(setOf("com.twitter.android"), index.apps.keys)
+        assertEquals(setOf("x.com"), index.sites.keys)
+    }
+
+    @Test
+    fun reArmWithAnEmptyPauseSetRestoresTheBlocksTargets() {
+        val blocks = listOf(
+            withContents(block(1, "Dooms", enabled = true), apps = listOf("com.instagram.android"), sites = listOf("reddit.com")),
+        )
+        val paused = ActiveBlockIndex.from(blocks, "com.arjunrana.tokishrine", pausedBlockIds = setOf(1))
+        val reArmed = ActiveBlockIndex.from(blocks, "com.arjunrana.tokishrine", pausedBlockIds = emptySet())
+        assertEquals(emptyMap<String, BlockRef>(), paused.apps)
+        assertEquals(setOf("com.instagram.android"), reArmed.apps.keys)
+        assertEquals(setOf("reddit.com"), reArmed.sites.keys)
+    }
 }

@@ -75,8 +75,15 @@ private val PendingPermissionsSaver: Saver<SnapshotStateList<AppPermission>, Arr
     )
 
 class MainActivity : ComponentActivity() {
+
+    // Phase 6 pause-notification tap destination (PRD §6 screen 21): the
+    // block's detail screen. Compose-owned, cleared once consumed so the
+    // same detail never stacks twice.
+    private var pendingDetailBlockId by mutableStateOf<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        readDetailHint(intent)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
@@ -184,6 +191,19 @@ class MainActivity : ComponentActivity() {
                         stack.add(Route.TurnOn(blockId))
                     } else if (stack.last() !is Route.Checklist) {
                         stack.add(Route.Checklist(ChecklistMode.GATE))
+                    }
+                }
+
+                // A pause-notification tap (Phase 6) lands on that block's
+                // detail screen once the normal launch resolution has run,
+                // then clears the hint so it cannot replay on recreation.
+                LaunchedEffect(pendingDetailBlockId, launchResolved) {
+                    val blockId = pendingDetailBlockId
+                    if (blockId != null && launchResolved) {
+                        pendingDetailBlockId = null
+                        if (stack.last() != Route.Detail(blockId)) {
+                            stack.add(Route.Detail(blockId))
+                        }
                     }
                 }
 
@@ -349,5 +369,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        readDetailHint(intent)
+    }
+
+    private fun readDetailHint(intent: Intent?) {
+        pendingDetailBlockId = intent
+            ?.getLongExtra(EXTRA_OPEN_DETAIL_BLOCK_ID, -1L)
+            ?.takeIf { it >= 0 }
+    }
+
+    companion object {
+        const val EXTRA_OPEN_DETAIL_BLOCK_ID = "open_detail_block_id"
     }
 }

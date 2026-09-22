@@ -315,9 +315,11 @@ class DetectionEngine(
         // from firing mid-typing. Tunable, not a platform limit.
         const val SETTLE_DELAY_MS = 2000L
 
-        // Until Phase 6 consumes PauseRequested and grants temporary access,
-        // this window prevents an immediate re-trigger loop after the Phase 5
-        // interruption is dismissed. Tunable.
+        // Phase 6 pause access is the loop prevention for completed
+        // challenges (a paused block leaves the detection index until
+        // re-arm); this debounce remains the backstop for no-access
+        // dismissals, where the exact key is also released by the
+        // interruption activity. Tunable.
         const val REPEAT_TRIGGER_DEBOUNCE_MS = 10_000L
 
         private const val MAX_CACHED_WINDOWS = 16

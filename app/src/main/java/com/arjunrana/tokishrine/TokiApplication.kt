@@ -10,6 +10,7 @@ import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.detection.AssetDetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionCoordinator
+import com.arjunrana.tokishrine.pause.PauseCoordinator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,6 +36,12 @@ class TokiApplication : Application() {
     }
     val installedAppsRepository: InstalledAppsRepository by lazy { InstalledAppsRepository(this) }
     val detectionCoordinator = DetectionCoordinator()
+
+    // Process owner of the live pause set (Phase 6): pause access for
+    // detection, monotonic expiry/re-arm, and the PauseService lifecycle.
+    val pauseCoordinator: PauseCoordinator by lazy {
+        PauseCoordinator(this, eventRepository, blockRepository, applicationScope)
+    }
 
     // Bundled detection JSON (browser map + OEM battery text) behind the
     // replaceable loader seam (PRD §13, Phase 4).

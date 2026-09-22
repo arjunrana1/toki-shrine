@@ -168,5 +168,13 @@ open class EventRepository(
         const val EVENT_ACCESSIBILITY_CONNECTED = "accessibility_connected"
         const val EVENT_ACCESSIBILITY_DISCONNECTED = "accessibility_disconnected"
         const val EVENT_URL_READ_FAILED = "url_read_failed"
+
+        // Pause lifecycle events (§10) fired by the Phase 6 pause
+        // coordinator and the bubble.
+        const val EVENT_PAUSE_STARTED = "pause_started"
+        const val EVENT_PAUSE_EXPIRED = "pause_expired"
+        const val EVENT_BUBBLE_SHOWN = "bubble_shown"
+        const val EVENT_BUBBLE_DRAGGED = "bubble_dragged"
+        const val EVENT_BUBBLE_TAPPED = "bubble_tapped"
     }
 }

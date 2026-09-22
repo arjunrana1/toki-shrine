@@ -7,4 +7,12 @@
     <string name="accessibility_service_description">Toki Shrine uses this to tell which app or website is in front of you, and to read the address bar in supported browsers. It never reads the contents of any page, never logs or stores your browsing, and never sends anything off your phone.</string>
     <!-- Phase 5 interruption/challenge Activity title. -->
     <string name="block_activity_label">Blocked</string>
+
+    <!-- Phase 6 ongoing pause notification (PRD §6 screen 21) and its
+         channel; %1$s is the block name / remaining clock text. -->
+    <string name="pause_notification_channel_name">Pause countdown</string>
+    <string name="pause_notification_channel_description">Shows how long a paused block stays open. It goes away when the block re-arms.</string>
+    <string name="pause_notification_title">%1$s is paused</string>
+    <string name="pause_notification_generic_title">Block paused</string>
+    <string name="pause_notification_body">%1$s left · re-arms on its own</string>
 </resources>

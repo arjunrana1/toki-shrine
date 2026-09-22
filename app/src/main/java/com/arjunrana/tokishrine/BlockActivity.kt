@@ -423,13 +423,21 @@ class BlockActivity : ComponentActivity() {
                         return@withContext
                     }
                     when (val result = runtime?.commitSucceeded(effect.request.token) ?: return@withContext) {
-                        is ChallengeTerminalResult.PauseRequested -> setResult(
-                            RESULT_OK,
-                            Intent().putExtra(EXTRA_RESULT, RESULT_PAUSE_REQUESTED)
-                                .putExtra(EXTRA_BLOCK_ID, result.blockId)
-                                .putExtra(EXTRA_PAUSE_MINUTES, result.pauseMinutes)
-                                .putExtra(EXTRA_SESSION_ID, result.sessionId),
-                        )
+                        is ChallengeTerminalResult.PauseRequested -> {
+                            // Phase 6 consumes the seam: the block's targets
+                            // are open from this synchronous main-thread
+                            // update, before the user returns to the
+                            // triggering app. The activity result stays as
+                            // the recording seam (Phase 5).
+                            app.pauseCoordinator.startPause(result.blockId, result.pauseMinutes)
+                            setResult(
+                                RESULT_OK,
+                                Intent().putExtra(EXTRA_RESULT, RESULT_PAUSE_REQUESTED)
+                                    .putExtra(EXTRA_BLOCK_ID, result.blockId)
+                                    .putExtra(EXTRA_PAUSE_MINUTES, result.pauseMinutes)
+                                    .putExtra(EXTRA_SESSION_ID, result.sessionId),
+                            )
+                        }
                         is ChallengeTerminalResult.BlockDisabled -> {
                             BlockHaptics.turnedOff(this@BlockActivity)
                             setResult(

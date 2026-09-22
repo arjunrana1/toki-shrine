@@ -7,18 +7,24 @@ import com.arjunrana.tokishrine.data.db.BlockWithContents
 // database read on the event path.
 data class BlockRef(val blockId: Long, val blockName: String)
 
-// Enabled blocks only, as package/domain → owning block lookup maps.
-// The service keeps a volatile snapshot built from the repository's
-// blocks flow, so per-event matching never touches the database, and
-// OFF blocks vanish from detection the moment they are turned off.
+// Enabled, non-paused blocks as package/domain → owning block lookup maps.
+// The service keeps a volatile snapshot built from the repository's blocks
+// flow combined with the live pause set, so per-event matching never touches
+// the database: OFF blocks vanish from detection the moment they are turned
+// off, and a paused block's whole target set opens for the pause (PRD §4)
+// and returns at re-arm with the next emission.
 data class ActiveBlockIndex(
     val apps: Map<String, BlockRef>,
     val sites: Map<String, BlockRef>,
 ) {
     companion object {
 
-        fun from(blocks: List<BlockWithContents>, excludePackage: String): ActiveBlockIndex {
-            val enabled = blocks.filter { it.block.enabled }
+        fun from(
+            blocks: List<BlockWithContents>,
+            excludePackage: String,
+            pausedBlockIds: Set<Long> = emptySet(),
+        ): ActiveBlockIndex {
+            val enabled = blocks.filter { it.block.enabled && it.block.id !in pausedBlockIds }
             return ActiveBlockIndex(
                 // Toki Shrine's own package is never a matchable app: the
                 // interruption Activity itself would otherwise re-trigger
