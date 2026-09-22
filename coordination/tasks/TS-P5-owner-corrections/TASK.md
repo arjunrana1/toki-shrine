@@ -1,6 +1,6 @@
 # TS-P5-owner-corrections — Owner-tested interruption corrections
 
-- **State:** `awaiting_owner` — review of `7fbb692` returned **PASS WITH NOTES** (see [REVIEW](REVIEW.md)); direct owner corrections then moved the gate headline cluster to the top segment (`9d411d4`) and made app-triggered pause completions land on the triggering app (`2543329`, assembleDebug + 146/146 JVM verified). The rebuilt build was installed on SM-S918B; attribution in [OWNER-CHECKS](OWNER-CHECKS.md). Owner retesting of P5C-O1–O13 is the next step; both corrections await owner visual/behavioral confirmation. Phase 6 remains unstarted.
+- **State:** `ready_for_review` — senior repair submission `68fdcb3` on base `4ed621b` releases the exact detection debounce key after a walk-away or nonterminal challenge background, closing owner finding P5C-O14. Prior review of `7fbb692` remains valid only for that submission; the new repair needs fresh independent review before installation. Direct owner corrections `9d411d4` and `2543329` are preserved. Phase 6 remains unstarted.
 - **Goal:** apply Arjun's Phase 5 device-testing feedback to the interruption gate, walk-away moment, typing challenge, waiting challenge, and temporary debug-only configuration bounds without beginning Phase 6.
 - **Implementation owner:** senior Codex. The visual/copy changes are routine, but preserving typing state and resetting waiting state across app-switch/lock without creating a terminal outcome changes the lifecycle state machine and is senior-owned under WORKFLOW.
 - **Base:** `59596a8`. The owner-supplied untracked `design/humor-assets/sys_block_7–11.jpg` files are explicitly part of this task; preserve unrelated work.
@@ -22,6 +22,7 @@
 - Waiting always returns at the full configured duration. Typing returns with the same passage and text. Explicit escape and completion remain exactly-once terminal outcomes.
 - The raw package/domain remains the detection validation and event target; the resolved label is presentation-only with a safe package-name fallback.
 - Existing Phase 5 persistence/event atomicity and the Phase 6 `PauseRequested` seam remain unchanged.
+- A declined interruption or backgrounded live challenge grants no access: reopening the same triggering app/site must be eligible for a new detection immediately. Repeat suppression remains scoped to duplicate events for the exact target/block while its interruption is active, and successful completion does not use this release path.
 
 ## Checks and stop
 

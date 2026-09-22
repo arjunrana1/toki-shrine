@@ -1,7 +1,8 @@
 # Senior Codex handback — TS-P5-owner-corrections
 
-- **Submission:** `7fbb692` (`Apply Phase 5 owner testing corrections`).
-- **Base:** `59596a8`.
+- **Current repair submission:** `68fdcb3` (`Re-arm detection after declined interruptions`).
+- **Repair base:** `4ed621b` (includes reviewed submission `7fbb692`, direct corrections `9d411d4`/`2543329`, and their records commits).
+- **Original submission:** `7fbb692` on base `59596a8`.
 - **Implementer:** senior Codex, 23 September 2026.
 - **Owner evidence:** [OWNER-CHECKS](OWNER-CHECKS.md) records the installed-build observations that define this correction set.
 
@@ -31,6 +32,21 @@ Arjun's direct follow-up after install: move the gate headline and humour line i
 
 Arjun's second direct follow-up: completed challenges should land on the application that triggered them, not the Toki homescreen. Implemented as commit `2543329` (`Return completed app-triggered pauses to the triggering app`): `BlockActivity.persistCompletion`'s success path now calls `returnToTriggeringApp()`, which resolves the session's app-package target via `getLaunchIntentForPackage` and starts it before finishing. Scope is deliberately narrow: detection-triggered **app** pauses only. Turn-off completions keep `setResult` + plain finish (they begin inside Toki), and site-triggered pauses keep the previous finish because `DetectionTrigger` carries a domain, not the browser package — routing those needs a detection-pipeline addition that is Arjun's call (flagged in OWNER-CHECKS P5C-O13). Failed launches fall back to plain finish; the runtime, events, and the `PauseRequested` seam are untouched. Verification: `./build.sh assembleDebug` **PASS** and `./build.sh testDebugUnitTest` **PASS 146/146** (re-counted from fresh XML; the change is in the untested Android adapter, so the suite is regression insurance only). The rebuilt APK was installed on SM-S918B the same day; attribution in [OWNER-CHECKS](OWNER-CHECKS.md).
 
+## P5C-O14 repair — immediate same-target bypass
+
+Owner testing found that choosing **Not now** and immediately reopening App A could suppress App A's only new window event inside the ten-second repeat-debounce interval. Expiry did not schedule another evaluation, so App A could remain accessible until another qualifying window transition; App B still triggered because the debounce key is target-specific.
+
+Submission `68fdcb3` keeps duplicate-event debounce but adds an exact-key release through a process-local `DetectionCoordinator` between `BlockActivity` and the currently bound detection engine. Walk-away, gate exit, screen-off and nonterminal backgrounding release only that session's `(trigger type, target, block)` key. Configuration changes and committing/completed challenges do not release it. A returned foreground event can therefore relaunch a fresh gate or bring the retained live challenge forward immediately, while the successful-completion route added in `2543329` is unchanged.
+
+Verification for `68fdcb3`:
+
+- `./build.sh testDebugUnitTest` — **PASS, 150/150** from fresh XML results. Four new tests cover immediate exact-key release, wrong-key isolation, coordinator delivery and safe engine replacement/detachment.
+- `./build.sh assembleDebug` — **PASS**.
+- `./build.sh assembleDebugAndroidTest` — **PASS, compile-only**; no Android test was executed.
+- `git diff --check` — **PASS** before commit.
+
+No device operation or installation was performed for this repair. The Android accessibility-event handoff and the owner reproduction remain device acceptance items under P5C-O14 after independent review.
+
 ## Limits and review focus
 
 - No device, emulator, adb, install, screenshot, database extraction, or instrumented execution occurred. UI appearance, app-label behavior, Android-home routing, recents/relaunch behavior, screen-lock handling, and IME behavior remain owner-device evidence after independent review.
@@ -38,4 +54,4 @@ Arjun's second direct follow-up: completed challenges should land on the applica
 - Phase 6 pause/access/re-arm, bubble, and notification remain untouched. Successful Phase 5 challenge completion still ends at the existing `PauseRequested` seam.
 - Reviewer should focus on lifecycle ordering (`onStop`/screen-off/relaunch), stale waiting ticks, exactly-once explicit outcomes, raw-target versus display-label separation, release/debug bounds, and submission-gated mismatch state.
 
-Next prompt: `Read AGENTS.md and independently review TS-P5-owner-corrections submission 7fbb692 against base 59596a8. Record the verdict and stop before installation, owner retesting, or Phase 6.`
+Next prompt: `Read AGENTS.md and independently review TS-P5-owner-corrections repair submission 68fdcb3 against base 4ed621b, focused on P5C-O14 detection suppression release and preservation of successful completion. Record the verdict and stop before installation, owner retesting, or Phase 6.`

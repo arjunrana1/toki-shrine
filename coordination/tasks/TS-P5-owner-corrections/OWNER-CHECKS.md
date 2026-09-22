@@ -23,3 +23,13 @@ Owner observations are from Arjun's 23 September 2026 testing of the Phase 5B AP
 | P5C-O13 | Completing a typing or waiting challenge landed on the Toki homescreen instead of the triggering app | App-triggered pause completions launch the triggering app's launcher intent and land there; turn-off completions stay in Toki. Site triggers carry a domain, not a browser package, and keep the previous finish behavior pending an owner decision on carrying the browser package through the detection pipeline |
 
 Typing paste suppression and autocorrect/prediction safeguards were explicitly reported working well and must remain unchanged.
+
+## Follow-up owner finding — installed code `2543329` (records HEAD `4ed621b`)
+
+Arjun confirmed the top-positioned headline/subtext and completed-challenge return to the triggering app work well. A separate enforcement defect was then reproduced on the same installed build: after choosing **Not now** for App A, reopening App A immediately could bypass the interruption, while App B in the same block still triggered. Waiting before reopening, navigating through other apps, or locking/unlocking caused App A to trigger again. Android Back from a challenge could expose the same immediate-return window. Source diagnosis found that the per-target ten-second repeat debounce suppressed the immediate App A event, with no scheduled reevaluation after expiry.
+
+| ID | What to test | Steps to follow | Fail conditions | Pass conditions |
+|---|---|---|---|---|
+| P5C-O14 | Immediate same-target enforcement after no-access outcomes | Open blocked App A → choose **Not now** → dismiss the walk-away moment → immediately reopen App A. Repeat by pressing Android Back during both the gate and an active challenge, then return immediately to App A. Also confirm App B still triggers independently. | App A is accessible without the interruption; the retained live challenge is lost/replaced; successful challenge completion no longer follows its separately specified route. | **Not now** and gate Back make App A trigger a fresh gate immediately. Back/background during a live challenge brings that retained challenge forward. App B remains independently enforced. Successful completion behavior is unchanged. |
+
+P5C-O14 is fixed in code submission `68fdcb3` and awaits independent review and a newly attributed install before owner retest.
