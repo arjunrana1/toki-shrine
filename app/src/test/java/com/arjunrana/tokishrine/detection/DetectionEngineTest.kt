@@ -80,6 +80,28 @@ class DetectionEngineTest {
         )
     }
 
+    @Test
+    fun releasedAppSuppressionAllowsImmediateRetrigger() {
+        engine.onWindowStateChanged(10, "com.instagram.android")
+        engine.releaseRepeatSuppression(EventRepository.TARGET_TYPE_APP, "com.instagram.android", 1)
+        now = 1
+
+        assertEquals(
+            listOf(appTrigger(startedAt = 1)),
+            engine.onWindowStateChanged(10, "com.instagram.android"),
+        )
+    }
+
+    @Test
+    fun releasingDifferentDetectionKeyDoesNotAllowImmediateRetrigger() {
+        engine.onWindowStateChanged(10, "com.instagram.android")
+        engine.releaseRepeatSuppression(EventRepository.TARGET_TYPE_APP, "com.other.app", 1)
+        engine.releaseRepeatSuppression(EventRepository.TARGET_TYPE_APP, "com.instagram.android", 99)
+        now = 1
+
+        assertEquals(emptyList<DetectionAction>(), engine.onWindowStateChanged(10, "com.instagram.android"))
+    }
+
     // — site settle path —
 
     @Test

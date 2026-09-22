@@ -104,6 +104,16 @@ class DetectionEngine(
         }
     }
 
+    /**
+     * Ends loop prevention for a challenge that returned no access grant.
+     * The next foreground event for this exact target must be evaluated as
+     * a new visit, even when it arrives inside the normal debounce window.
+     */
+    @Synchronized
+    fun releaseRepeatSuppression(triggerType: String, target: String, blockId: Long) {
+        lastFired.remove(debounceKey(triggerType, target, blockId))
+    }
+
     @Synchronized
     fun onWindowStateChanged(windowId: Int, packageName: String): List<DetectionAction> {
         val now = clock()
@@ -254,7 +264,7 @@ class DetectionEngine(
         startedAtElapsedMs: Long,
         now: Long,
     ): DetectionAction.Trigger? {
-        val key = "$triggerType:$target:${ref.blockId}"
+        val key = debounceKey(triggerType, target, ref.blockId)
         val last = lastFired[key]
         if (last != null && now - last < debounceMs) return null
         pruneDebounce(now)
@@ -274,6 +284,9 @@ class DetectionEngine(
         if (lastFired.size < MAX_DEBOUNCE_ENTRIES) return
         lastFired.entries.removeAll { now - it.value >= debounceMs }
     }
+
+    private fun debounceKey(triggerType: String, target: String, blockId: Long) =
+        "$triggerType:$target:$blockId"
 
     private fun touchWindow(windowId: Int, packageName: String): WindowTouch {
         val existing = windows.remove(windowId)

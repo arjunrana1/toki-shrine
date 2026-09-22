@@ -55,7 +55,8 @@ class TokiAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         val app = application as? TokiApplication ?: return
-        engine = DetectionEngine(clock = SystemClock::elapsedRealtime)
+        engine?.let(app.detectionCoordinator::detach)
+        engine = DetectionEngine(clock = SystemClock::elapsedRealtime).also(app.detectionCoordinator::attach)
         logServiceEvent { log(EventRepository.EVENT_ACCESSIBILITY_CONNECTED) }
 
         // Bundled JSON (PRD §13): supported browsers plus the OEM battery
@@ -118,6 +119,9 @@ class TokiAccessibilityService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        val app = application as? TokiApplication
+        engine?.let { app?.detectionCoordinator?.detach(it) }
+        engine = null
         serviceScope.cancel()
         cancelSettle()
         super.onDestroy()

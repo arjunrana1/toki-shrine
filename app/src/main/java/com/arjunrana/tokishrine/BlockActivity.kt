@@ -286,8 +286,11 @@ class BlockActivity : ComponentActivity() {
             if (isChangingConfigurations) {
                 engine.onConfigurationHidden(now())
             } else {
+                releaseDetectionSuppression()
                 engine.onBackgrounded()
             }
+        } else if (!isChangingConfigurations && engine?.view(now())?.phase == ChallengePhase.GATE) {
+            releaseDetectionSuppression()
         }
         resumed = false
         super.onStop()
@@ -330,6 +333,7 @@ class BlockActivity : ComponentActivity() {
             }
             is ChallengeEffect.WalkAway -> {
                 pendingWalkAwaySource = effect.source
+                releaseDetectionSuppression()
                 clearLiveChallenge()
                 app.applicationScope.launch {
                     val count = app.challengeRepository.recordWalkAwayAndCount(
@@ -456,8 +460,24 @@ class BlockActivity : ComponentActivity() {
     private fun backgroundChallenge() {
         ticker?.cancel()
         ticker = null
+        val phase = runtime?.view(now())?.phase
+        if (phase == ChallengePhase.ACTIVE || phase == ChallengePhase.GATE) {
+            releaseDetectionSuppression()
+        }
         runtime?.onBackgrounded()
         refreshRuntimeUi()
+    }
+
+    private fun releaseDetectionSuppression() {
+        val session = loaded ?: return
+        val target = session.target ?: return
+        val triggerType = session.triggerType ?: return
+        if (session.purpose != ChallengePurpose.PAUSE) return
+        app.detectionCoordinator.releaseRepeatSuppression(
+            triggerType = triggerType,
+            target = target,
+            blockId = session.block.block.id,
+        )
     }
 
     private fun maybeRecordShown() {

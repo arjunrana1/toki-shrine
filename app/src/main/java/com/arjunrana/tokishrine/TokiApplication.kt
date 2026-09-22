@@ -9,6 +9,7 @@ import com.arjunrana.tokishrine.data.repo.ChallengeRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.detection.AssetDetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionConfigLoader
+import com.arjunrana.tokishrine.detection.DetectionCoordinator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +34,7 @@ class TokiApplication : Application() {
         EventRepository(database)
     }
     val installedAppsRepository: InstalledAppsRepository by lazy { InstalledAppsRepository(this) }
+    val detectionCoordinator = DetectionCoordinator()
 
     // Bundled detection JSON (browser map + OEM battery text) behind the
     // replaceable loader seam (PRD §13, Phase 4).
