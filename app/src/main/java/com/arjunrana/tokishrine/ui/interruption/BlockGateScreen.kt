@@ -85,7 +85,9 @@ fun BlockGateScreen(
                 color = NocturneTheme.colors.neutral.step600,
                 modifier = Modifier.padding(top = 8.dp),
             )
-            Spacer(Modifier.weight(1f))
+            // Owner-tested placement: the headline cluster sits in the top
+            // segment under the block name — generous 20–25px pad above the
+            // heading, centered — leaving the photo subject clear mid-screen.
             Text(
                 text = headline,
                 fontFamily = MaterialTheme.typography.headlineMedium.fontFamily,
@@ -94,7 +96,9 @@ fun BlockGateScreen(
                 lineHeight = 37.sp,
                 textAlign = TextAlign.Center,
                 color = NocturneTheme.colors.text,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 22.dp),
             )
             Spacer(Modifier.height(10.dp))
             Text(
