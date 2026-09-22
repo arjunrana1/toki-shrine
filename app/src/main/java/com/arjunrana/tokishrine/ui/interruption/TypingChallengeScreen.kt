@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,18 +69,18 @@ private object NoMenuTextToolbar : TextToolbar {
 
     override fun showMenu(
         rect: Rect,
-        onCopy: (() -> Unit)?,
-        onPaste: (() -> Unit)?,
-        onCut: (() -> Unit)?,
-        onSelectAll: (() -> Unit)?,
+        onCopyRequested: (() -> Unit)?,
+        onPasteRequested: (() -> Unit)?,
+        onCutRequested: (() -> Unit)?,
+        onSelectAllRequested: (() -> Unit)?,
     ) {}
 
     override fun hide() {}
 }
 
 /**
- * Styles the typed text with the unconditional per-character mismatch marks
- * (PRD §17 — typo positions are always shown). Editing offsets are identity:
+ * Styles the typed text with per-character mismatch marks after a failed
+ * explicit Submit. Editing offsets are identity:
  * the transformation only recolors, so cursor/selection semantics are intact.
  * The mock's #8B0000 underline is approximated with the approved error
  * family's container pairing — a token-pure mark, owner visual pass pending.
@@ -106,9 +108,9 @@ private class MismatchTransformation(
  * one surface, copy chosen by [purpose]). Fully hoisted: the passage and
  * typed text are supplied, every user action is an explicit callback, and
  * the screen never clears or regenerates anything. [onSubmit] reports the
- * current text; completion and duplicate suppression are TS-P5B's. Enter
- * submits (a newline never enters the field); the walk-away/leave-it-on
- * action is the header's ghost control.
+ * current text; completion and duplicate suppression are TS-P5B's. The
+ * visible button is the only submit path; the escape action is the header's
+ * ghost control.
  */
 @Composable
 fun TypingChallengeScreen(
@@ -116,6 +118,7 @@ fun TypingChallengeScreen(
     blockName: String,
     passage: String,
     typedText: String,
+    showTypingMismatches: Boolean,
     onTypedTextChanged: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onWalkAway: () -> Unit,
@@ -123,8 +126,9 @@ fun TypingChallengeScreen(
     turnOffChars: Int = 0,
 ) {
     val colors = NocturneTheme.colors
-    val mismatches = mismatchSpans(passage, typedText)
+    val mismatches = if (showTypingMismatches) mismatchSpans(passage, typedText) else emptyList()
     val hasMismatch = mismatches.isNotEmpty()
+    val submitEnabled = canSubmitTyping(typedText.length, passage.length)
 
     Column(
         modifier
@@ -208,18 +212,9 @@ fun TypingChallengeScreen(
             BasicTextField(
                 value = typedText,
                 onValueChange = { raw ->
-                    when {
-                        // Enter is the submit key; the newline itself never
-                        // becomes part of the attempt.
-                        raw.length == typedText.length + 1 && raw.contains('\n') ->
-                            onSubmit(typedText)
-
-                        else -> {
-                            val accepted = acceptTypingEdit(typedText, raw)
-                            if ('\n' !in accepted && accepted != typedText) {
-                                onTypedTextChanged(accepted)
-                            }
-                        }
+                    val accepted = acceptTypingEdit(typedText, raw)
+                    if ('\n' !in accepted && accepted != typedText) {
+                        onTypedTextChanged(accepted)
                     }
                 },
                 textStyle = TextStyle(
@@ -232,12 +227,18 @@ fun TypingChallengeScreen(
                     keyboardType = KeyboardType.Text,
                     autoCorrect = false,
                     capitalization = KeyboardCapitalization.None,
+                    imeAction = ImeAction.None,
                 ),
-                visualTransformation = MismatchTransformation(
-                    passage = passage,
-                    markBackground = MaterialTheme.colorScheme.errorContainer,
-                    markText = MaterialTheme.colorScheme.onErrorContainer,
-                ),
+                keyboardActions = KeyboardActions(),
+                visualTransformation = if (showTypingMismatches) {
+                    MismatchTransformation(
+                        passage = passage,
+                        markBackground = MaterialTheme.colorScheme.errorContainer,
+                        markText = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                } else {
+                    VisualTransformation.None
+                },
                 cursorBrush = SolidColor(colors.accent),
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = { inner ->
@@ -296,6 +297,39 @@ fun TypingChallengeScreen(
                 Hint(PhMagicWand, "Autocorrect off")
             }
         }
+        TypingSubmitButton(
+            enabled = submitEnabled,
+            onClick = { onSubmit(typedText) },
+            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun TypingSubmitButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = NocturneTheme.colors
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .background(
+                if (enabled) colors.accentRamp.step300 else colors.neutral.step800,
+                shape,
+            )
+            .clickable(enabled = enabled) { onClick() },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Submit",
+            fontSize = 15.sp,
+            color = if (enabled) Color.Black.copy(alpha = 0.96f) else colors.neutral.step600,
+        )
     }
 }
 

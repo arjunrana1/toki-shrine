@@ -20,10 +20,10 @@ enum class ChallengePurpose { PAUSE, TURN_OFF }
 data class CharSpan(val start: Int, val length: Int)
 
 /**
- * Per-character mismatch positions of [typed] against [passage]
- * (PRD §17: typos are always shown — there is no setting). Each index where
- * the characters differ is marked; consecutive positions merge into one
- * span. Characters typed beyond the end of the passage are mismatches too.
+ * Per-character mismatch positions of [typed] against [passage]. The runtime
+ * decides when a failed Submit reveals these positions; there is no user
+ * preference. Consecutive positions merge into one span. Characters typed
+ * beyond the end of the passage are mismatches too.
  */
 fun mismatchSpans(passage: String, typed: String): List<CharSpan> {
     if (typed.isEmpty()) return emptyList()
@@ -91,6 +91,10 @@ private fun differsInAtMostOneChar(previous: String, next: String): Boolean {
 fun typingProgressChars(typedLength: Int, passageLength: Int): Float =
     if (passageLength <= 0) 0f else (typedLength.toFloat() / passageLength).coerceIn(0f, 1f)
 
+/** Submit is available only after the configured passage length is reached. */
+fun canSubmitTyping(typedLength: Int, passageLength: Int): Boolean =
+    passageLength > 0 && typedLength >= passageLength
+
 /**
  * Fraction of the wait still remaining, clamped to 0..1. The countdown ring
  * drains as the wait elapses; the runtime supplies both values.
@@ -125,7 +129,7 @@ fun challengeTitle(purpose: ChallengePurpose, blockName: String): String =
     if (purpose == ChallengePurpose.TURN_OFF) "Turning off · $blockName" else blockName
 
 fun typingEscapeLabel(purpose: ChallengePurpose): String =
-    if (purpose == ChallengePurpose.TURN_OFF) "Leave it on" else "I'll walk away"
+    if (purpose == ChallengePurpose.TURN_OFF) "Leave it on" else "Never mind"
 
 fun delayEscapeLabel(purpose: ChallengePurpose): String =
     if (purpose == ChallengePurpose.TURN_OFF) "Leave it on" else "Never mind"

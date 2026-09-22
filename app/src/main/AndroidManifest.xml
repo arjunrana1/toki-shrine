@@ -56,14 +56,13 @@
              only Toki Shrine's own service starts it, and the
              accessibility background-launch exemption covers that start
              (PRD §13/§14), so no overlay permission is involved.
-             Excluded from recents and never retained after leaving —
-             abandonment resets the live challenge. -->
+             Kept in its task while the process lives so ordinary app-switch
+             and lock/unlock can resume the active challenge. -->
         <activity
             android:name=".BlockActivity"
             android:exported="false"
-            android:label="@string/block_activity_label"
-            android:excludeFromRecents="true"
-            android:noHistory="true" />
+            android:launchMode="singleTop"
+            android:label="@string/block_activity_label" />
 
         <!-- Permission prerequisite turned detection engine (Phase 4): the
              declaration that makes the app grantable from system

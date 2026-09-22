@@ -114,6 +114,14 @@ class InterruptionModelsTest {
     }
 
     @Test
+    fun submitRequiresTheConfiguredCharacterCount() {
+        assertEquals(false, canSubmitTyping(19, 20))
+        assertEquals(true, canSubmitTyping(20, 20))
+        assertEquals(true, canSubmitTyping(21, 20))
+        assertEquals(false, canSubmitTyping(0, 0))
+    }
+
+    @Test
     fun countdownProgressIsRemainingFractionAndClamps() {
         assertEquals(1f, countdownProgress(60, 60), 0f)
         assertEquals(0.5f, countdownProgress(60, 30), 0f)
@@ -159,7 +167,7 @@ class InterruptionModelsTest {
             "Turning off · The scroll pit",
             challengeTitle(ChallengePurpose.TURN_OFF, "The scroll pit"),
         )
-        assertEquals("I'll walk away", typingEscapeLabel(ChallengePurpose.PAUSE))
+        assertEquals("Never mind", typingEscapeLabel(ChallengePurpose.PAUSE))
         assertEquals("Leave it on", typingEscapeLabel(ChallengePurpose.TURN_OFF))
         assertEquals("Never mind", delayEscapeLabel(ChallengePurpose.PAUSE))
         assertEquals("Leave it on", delayEscapeLabel(ChallengePurpose.TURN_OFF))

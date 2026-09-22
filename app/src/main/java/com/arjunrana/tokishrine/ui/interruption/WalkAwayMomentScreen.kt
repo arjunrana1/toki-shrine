@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arjunrana.tokishrine.ui.icons.Ph
@@ -79,13 +80,15 @@ fun WalkAwayMomentScreen(
                 fontWeight = FontWeight.Medium,
                 lineHeight = 32.sp,
                 color = colors.text,
+                textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "That's the ${ordinal(dailyCount)} time today",
+                text = "That's the ${ordinal(dailyCount)} time today 🎉",
                 fontSize = 15.sp,
                 lineHeight = 23.sp,
                 color = colors.neutral.step300,
+                textAlign = TextAlign.Center,
             )
             Spacer(Modifier.weight(1f))
             Text(

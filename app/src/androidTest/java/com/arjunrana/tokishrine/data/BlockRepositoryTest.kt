@@ -442,11 +442,11 @@ class BlockRepositoryTest {
     }
 
     // Wizard redesign (19 September): the old 1..1200-second allowance is
-    // superseded. The pause wait is 60..300 s in steps of 5 on every write
-    // path; out-of-range writes persist nothing.
+    // superseded. Debug owner testing temporarily lowers the pause-wait floor
+    // to 20 seconds; out-of-range writes persist nothing.
     @Test
     fun createBlockRejectsPauseWaitOutsideApprovedRange() = runBlocking {
-        listOf(45, 305).forEach { seconds ->
+        listOf(15, 305).forEach { seconds ->
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad wait", apps = listOf("com.instagram.android"), countdownSeconds = seconds))
@@ -484,10 +484,10 @@ class BlockRepositoryTest {
         assertTrue(repo.getBlocksWithContents().isEmpty())
     }
 
-    // Typing passage: 100..200 chars in steps of 10.
+    // Debug owner testing temporarily lowers typing to 20..200 chars step 10.
     @Test
     fun createBlockRejectsPassageLengthOutsideApprovedRange() = runBlocking {
-        listOf(90, 205, 155).forEach { chars ->
+        listOf(10, 205, 155).forEach { chars ->
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad passage", apps = listOf("com.instagram.android"), pauseChars = chars))

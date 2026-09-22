@@ -17,16 +17,16 @@ Screens 15–19 and 22. Real block screen with humour assets, walk-away moment, 
 **Acceptance**
 
 - Block screen: the walk-away is the filled prominent button; the way in is the outlined secondary. Verify against `design/screens/15-block-screen.png`.
-- The humour line is drawn from the ten strings in `PRD.md` §11 and changes between showings.
-- The background image is one of `sys_block_1–6.jpg`, dimmed such that foreground text remains legible.
+- The target-aware headline rotates across the seven approved templates; the humour line independently rotates across the eleven strings in `PRD.md` §11. Installed apps display their user-visible label.
+- The background image is one of `sys_block_1–11.jpg`, rendered as a cropped full-screen ground plus a centered aspect-preserving copy and dimmed for legibility.
 - Long-pressing the typing input offers **no Paste option**.
 - The typing field reports no autocorrect or predictive suggestions while typing random words.
-- Typing a wrong character marks the position and keeps the typed text.
+- Typing does not reveal mistakes live. Submit is the only validation path, remains disabled until the required length, and a failed Submit then marks wrong positions while keeping the typed text.
 - Completing the passage exactly advances; a mismatch does not, and can be retried without limit.
-- Tapping *I'll walk away* or *Never mind* records a `walk_away` event; switching apps mid-challenge records `challenge_abandoned` and **no** `walk_away`.
-- Switching away mid-countdown and returning restarts the countdown at zero.
-- Placing the phone flat and still does not stall the countdown. It advances only while the Toki Shrine waiting screen is visible and the device unlocked; no motion sensor requirement. Leaving, locking or escape cancels and resets progress for both pause and disable waits.
-- Disable uses the stored fixed ladder choice: typing 220/350/700 characters or waiting 3/6/12 minutes. Completion turns OFF until manually re-enabled; it does not begin a temporary pause. Escape leaves the block ON.
+- Tapping *Never mind* records a pause-challenge `walk_away`; switching apps, locking, or Android Back records no terminal event and preserves the in-process challenge.
+- Switching away mid-countdown and returning restarts the countdown at zero. Typing retains the same passage and entered text. Process-death/reboot restoration is not required.
+- Placing the phone flat and still does not stall the countdown. It advances only while the Toki Shrine waiting screen is visible and the device unlocked; no motion sensor requirement. Leaving or locking resets progress without ending the challenge; explicit escape ends it.
+- Release disable uses typing 220/350/700 characters or waiting 3/6/12 minutes. Debug owner testing temporarily uses 20/350/700 and 20/360/720 seconds. Completion turns OFF until manually re-enabled; it does not begin a temporary pause. Escape leaves the block ON.
 - Cover lock/unlock, leave/return, screen visibility, cancellation/completion races and duplicate callbacks with senior-owned lifecycle logic; no completion after cancellation. Turn-off events remain separate from walk-away Stats.
 - The screen does not sleep during a challenge — leave it untouched for twice the device display timeout and the challenge is still live.
-- Walk-away screen auto-dismisses after 2 seconds and shows the correct daily count.
+- Walk-away screen shows the correct daily count plus 🎉 and goes to Android home on tap or after 10 seconds.

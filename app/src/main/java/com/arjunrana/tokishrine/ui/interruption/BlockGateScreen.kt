@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,17 +25,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.arjunrana.tokishrine.R
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
-
-// The interruption display face, carried from the CaffyBlock humour assets
-// (PRD §11). Anton is available to the block gate only — never elsewhere.
-internal val Anton = FontFamily(Font(R.font.anton))
 
 // Full-bleed photo dim (PRD §11): dark enough that the Nocturne foreground
 // stays legible and the photo recedes into the dark ground.
@@ -51,7 +46,7 @@ private const val GATE_SCRIM_ALPHA = 0.78f
 @Composable
 fun BlockGateScreen(
     blockName: String,
-    targetName: String,
+    headline: String,
     humourLine: String,
     backgroundRes: Int,
     onWalkAway: () -> Unit,
@@ -63,6 +58,16 @@ fun BlockGateScreen(
             painter = painterResource(backgroundRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        // Repeat the same asset without distortion so its complete subject is
+        // always visible. The cropped copy behind it supplies the uncovered
+        // top/bottom ground on tall screens.
+        Image(
+            painter = painterResource(backgroundRes),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center,
             modifier = Modifier.fillMaxSize(),
         )
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = GATE_SCRIM_ALPHA)))
@@ -82,19 +87,23 @@ fun BlockGateScreen(
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = "Open $targetName?",
-                fontFamily = Anton,
+                text = headline,
+                fontFamily = MaterialTheme.typography.headlineMedium.fontFamily,
                 fontWeight = FontWeight.Normal,
-                fontSize = 26.sp,
-                lineHeight = 32.sp,
+                fontSize = 30.sp,
+                lineHeight = 37.sp,
+                textAlign = TextAlign.Center,
                 color = NocturneTheme.colors.text,
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(10.dp))
             Text(
                 text = humourLine,
                 fontSize = 14.sp,
                 lineHeight = 22.sp,
+                textAlign = TextAlign.Center,
                 color = NocturneTheme.colors.neutral.step400,
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.weight(1f))
             GateFilledButton(
@@ -104,8 +113,8 @@ fun BlockGateScreen(
                 onClick = onWalkAway,
             )
             GateOutlinedButton(
-                text = "I'll do the challenge. Let me in",
-                height = 50,
+                text = "I'll do the challenge. Let me in 🚩🤨",
+                height = 58,
                 fontSize = 14.5f,
                 onClick = onEnterChallenge,
                 modifier = Modifier.padding(top = 12.dp),

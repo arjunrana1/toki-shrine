@@ -218,8 +218,8 @@ class TokiAccessibilityService : AccessibilityService() {
         val intent = Intent(this, BlockActivity::class.java)
             .addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
             )
             .putExtra(BlockActivity.EXTRA_TRIGGER_TYPE, trigger.triggerType)
             .putExtra(BlockActivity.EXTRA_TARGET, trigger.target)

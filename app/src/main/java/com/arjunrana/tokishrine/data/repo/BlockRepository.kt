@@ -21,25 +21,24 @@ class ConflictingOwnershipException(
     val isApp: Boolean,
 ) : IllegalStateException("Target '$target' is already owned by another block")
 
-// Owner addendum, 13 September 2026, superseded by the wizard redesign
-// (PRD §17, 19 September 2026): the old 1..1200-second storage allowance is
-// gone. The wizard steppers and this persistence boundary enforce the same
-// approved ranges and the fixed disable ladders on every write path.
+// Production values follow the wizard redesign. The 23 September owner-test
+// addendum replaces only the debug variant's minima/first ladder rungs; the
+// release source set retains the production values. This persistence boundary
+// enforces the active build variant on every write path.
 const val PAUSE_MINUTES_MIN = 5
 const val PAUSE_MINUTES_MAX = 100
 const val PAUSE_MINUTES_STEP = 5
-const val PAUSE_CHARS_MIN = 100
+val PAUSE_CHARS_MIN = BuildVariantChallengeLimits.pauseCharsMin
 const val PAUSE_CHARS_MAX = 200
 const val PAUSE_CHARS_STEP = 10
-const val PAUSE_WAIT_SECONDS_MIN = 60
+val PAUSE_WAIT_SECONDS_MIN = BuildVariantChallengeLimits.pauseWaitSecondsMin
 const val PAUSE_WAIT_SECONDS_MAX = 300
 const val PAUSE_WAIT_SECONDS_STEP = 5
 
-// Fixed disable ladders (PRD §7): the disable step offers exactly these
-// choices — no custom stepper, no second method selector. The middle entry
-// is the recommended preselection on both ladders.
-val DISABLE_CHARS_CHOICES = listOf(220, 350, 700)
-val DISABLE_WAIT_SECONDS_CHOICES = listOf(180, 360, 720)
+// Fixed per-variant disable ladders: no custom stepper or second method
+// selector. The middle entry remains the recommended preselection.
+val DISABLE_CHARS_CHOICES = BuildVariantChallengeLimits.disableCharsChoices
+val DISABLE_WAIT_SECONDS_CHOICES = BuildVariantChallengeLimits.disableWaitSecondsChoices
 
 // Fresh-draft defaults (PRD §7): typing 150 chars, waiting 60 s, pause 15
 // min, and the middle rung of each disable ladder.
@@ -71,11 +70,9 @@ open class BlockRepository(
     private val dao: BlockDao = db.blockDao()
     private val metaDao = db.appMetaDao()
 
-    // Approved redesign values (PRD §7 / §17, 19 September 2026): pause 5..100
-    // min step 5, typing passage 100..200 chars step 10, pause wait 60..300 s
-    // step 5, and the fixed disable ladders. Both per-method columns must hold
-    // ladder/range values even when inactive, so no write path can persist a
-    // half-configured row.
+    // PRD §7 / §17 values for this build variant. Both per-method columns must
+    // hold ladder/range values even when inactive, so no write path can persist
+    // a half-configured row.
     private fun requireValidConfiguration(draft: BlockDraft) {
         require(draft.pauseMinutes in PAUSE_MINUTES_MIN..PAUSE_MINUTES_MAX && draft.pauseMinutes % PAUSE_MINUTES_STEP == 0) {
             "Pause must be between $PAUSE_MINUTES_MIN and $PAUSE_MINUTES_MAX minutes in steps of $PAUSE_MINUTES_STEP"

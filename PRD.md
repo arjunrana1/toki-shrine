@@ -129,13 +129,13 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **14 Block detail & edit.** Shows on/off state, contents, and friction summary. Editing is only reachable while OFF, and the screen says so.
 
-**15 Block screen.** Appears over the offending app. Block name, "Open <target>?", then *Not now* as the prominent filled action and *I'll do the challenge. Let me in* as the quieter outlined one. Carries the humour line and background image per §11. Must be comprehensible in under two seconds — no scrolling.
+**15 Block screen.** Appears over the offending app. Block name, one randomly selected target-aware headline from §11, then *Not now* as the prominent filled action and *I'll do the challenge. Let me in 🚩🤨* as the quieter outlined one. Both actions have equal dimensions. Installed apps use their user-visible label, never a raw package identifier; sites use their domain. Carries the independently selected humour line and two-layer background treatment from §11. Must be comprehensible in under two seconds — no scrolling.
 
-**16 Walk-away moment.** Confirmation, the running count ("That's the 4th time today"), then **auto-dismiss after 2 seconds** returning the user where they came from. Tappable to continue immediately.
+**16 Walk-away moment.** Confirmation, the running count ("That's the 4th time today 🎉"), then **auto-dismiss after 10 seconds** to the Android home screen. Tapping anywhere continues to the Android home screen immediately.
 
-**17–18 Typing challenge.** Passage displayed above, input below, live character count. Screen 18 shows the mistyped state with typo positions marked and the typed text kept. Escape action: *I'll walk away*.
+**17–18 Typing challenge.** Passage displayed above, input below, live character count and an explicit *Submit* CTA. Submit is disabled until the configured character count is reached and is the only submit path; keyboard Enter/Done does not submit. Typo positions appear only after a failed Submit, with the typed text kept for correction. Escape action: *Never mind*.
 
-**19 Delay countdown.** Timer, escape action *Never mind*. **No message is shown** — the calming line in the mock is removed.
+**19 Delay countdown.** Timer, *Stay on this screen*, the direct reset explanation from the owner reference, and a full-width outlined *Never mind*. The old Counting pill is absent.
 
 **20 Floating bubble.** Draggable, shows remaining time and what is open. Tap returns to the app. Requires overlay permission; absent it, the bubble is simply not shown and everything else still works.
 
@@ -163,13 +163,13 @@ A fresh passage of random words is displayed; the user types it correctly. Lengt
 | Passage length to pause | 150 chars | 100–200 chars | 10 chars |
 | Passage length to disable | 350 chars (recommended) | 220 / 350 / 700 chars | Fixed choices |
 
-Typos are always highlighted; there is no setting. Where other surfaces display typing estimates, use 0.4 seconds per character. The method cards state actual characters and pause duration in plain words, replacing the old configuration estimate paragraph.
+Typo positions are highlighted only after a failed explicit Submit; there is no setting. Where other surfaces display typing estimates, use 0.4 seconds per character. The method cards state actual characters and pause duration in plain words, replacing the old configuration estimate paragraph.
 
 Hard requirements:
 
 - **Paste is blocked** on the input field.
 - **Autocorrect and predictive text are disabled.** Mobile keyboards would otherwise complete the random words and defeat the mechanism entirely.
-- The passage is regenerated fresh on every attempt.
+- The passage is generated fresh for each new challenge session. Ordinary app-switch/lock retains that session, passage and entered text.
 - Attempts are unlimited. The user corrects and resubmits; there is no lockout or penalty.
 
 ### 7.2 Delay
@@ -182,7 +182,7 @@ A countdown runs; the user waits.
 | Wait to pause | 60 sec | 60–300 sec | 5 sec |
 | Wait to disable | 6 min (recommended) | 3 / 6 / 12 min | Fixed choices |
 
-A waiting challenge counts down only while the Toki Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app, locking the device, or choosing the escape action cancels the challenge and resets progress. These rules apply to both pause and disable waits; execution remains Phase 5.
+A waiting challenge counts down only while the Toki Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app or locking the device retains the in-process challenge but resets progress to zero; returning restarts the full configured countdown. Choosing the explicit escape action terminates the challenge. These rules apply to both pause and disable waits; process-death/reboot restoration is not required.
 
 ### 7.3 Interruption
 
@@ -191,9 +191,10 @@ Both mechanisms require the app foreground with the screen on.
 | What the user does | What happens |
 |---|---|
 | Sets the phone down mid-countdown | Countdown continues while the waiting screen is visible and device unlocked |
-| Switches to another app | Challenge ends, **all progress resets to zero** |
-| Taps the escape action | Challenge ends and progress resets. Pause-challenge escape is a walk-away; disable-challenge escape records turnoff_abandoned and leaves the block ON |
-| Screen turns off | Treated as leaving; progress resets |
+| Switches to another app | Challenge remains active in process. Waiting resets to zero; typing retains its passage and text. No terminal event is written. |
+| Taps the escape action | Challenge ends. Pause-challenge escape is a walk-away; disable-challenge escape records turnoff_abandoned and leaves the block ON. |
+| Screen turns off | Same suspension behavior as app-switch: waiting resets, typing is retained, and no terminal event is written. |
+| Uses Android Back during a live challenge | The challenge is backgrounded and preserved using the same method-specific behavior; Back is not an intentional escape. |
 
 The screen is kept awake for the duration of a challenge, so a routine display timeout never destroys progress the user was legitimately earning. Leaving the challenge or locking the device still cancels it, regardless of how the device was locked.
 
@@ -204,10 +205,10 @@ Elapsed time is measured **monotonically**, not against the wall clock, so chang
 A **walk-away** is recorded when the user declines to proceed by an explicit action:
 
 - *Not now* on the block screen
-- *I'll walk away* on the typing challenge
+- *Never mind* on the typing challenge
 - *Never mind* on the delay countdown
 
-**Abandonment is not a walk-away.** Switching apps, letting the screen sleep, or otherwise leaving without an explicit action records `challenge_abandoned` and nothing else.
+**Suspension is not a walk-away or abandonment.** Switching apps, locking the screen, or using Android Back during a live challenge preserves the in-process challenge and records no terminal event. Only the explicit escape actions above intentionally end a live challenge. The existing `challenge_abandoned` event remains in the schema for historical data; ordinary Phase 5 app-switch/lock no longer emits it.
 
 The counter shown to the user is **global** across all blocks. Individual events are still stored **per app and per block**, because the in-the-moment context line ("you've opened this 11 times since 9am") and the Stats leaderboard both need that granularity.
 
@@ -315,7 +316,7 @@ Carried over from the earlier CaffyBlock prototype to keep the experience light.
 
 ### Strings
 
-Shown at random as the line on the block screen (§6, screen 15). Ten lines:
+Shown at random as the line on the block screen (§6, screen 15). Eleven lines:
 
 ```
 Touch grass.
@@ -324,13 +325,26 @@ Nice try.
 Not today.
 Bro. No.
 Look who it is.
-Right on schedule.
+Naah bruh
 Bold of you.
 The algorithm can wait.
 We meet again.
+Let's give it a rest
 ```
 
-The first five are retained from CaffyBlock's `Store.TEXT_PRESETS`; the last five are new, written in the same dry register.
+The target-aware headline is selected independently from these seven templates:
+
+```
+Trying to waste time on {target}?
+Back for {target} already?
+Someone tryna open {target}?
+Taking a detour to {target}?
+Is {target} calling again?
+{target}? Really?
+Is someone missing {target}?
+```
+
+The first six remain from the earlier pool; the owner replaced *Right on schedule.* with *Naah bruh* and added *Let's give it a rest* during Phase 5 validation.
 
 **Thirteen of the original eighteen were deliberately dropped** for violating P3 — they shame the user. Recorded here so they are not reintroduced: *How could you? · We talked about this. · Future you is watching. · You promised. · No. · That's a no from you. · Go do the thing. · This isn't the plan. · You're better than this. · Back to what matters. · Lmao, no. · Your goals called. They're disappointed. · This you?*
 
@@ -338,7 +352,7 @@ The first five are retained from CaffyBlock's `Store.TEXT_PRESETS`; the last fiv
 
 In `design/humor-assets/`:
 
-- `sys_block_1.jpg` … `sys_block_6.jpg` — six images, sampled at random per block screen
+- `sys_block_1.jpg` … `sys_block_11.jpg` — eleven images, sampled at random per block screen
 - `anton.ttf` — condensed display face
 
 Original source: `app/src/main/res/drawable/` and `res/font/` of the CaffyBlock project. In CaffyBlock these carried a full-bleed photo with "BLOCKED" in large red Anton over the top.
@@ -348,9 +362,9 @@ Original source: `app/src/main/res/drawable/` and `res/font/` of the CaffyBlock 
 These two visual languages are opposed, so the merge is specified rather than left to judgement:
 
 - **Nocturne owns structure, typography and controls.** Layout, buttons and hierarchy follow screen 15 exactly.
-- The humour image is a **full-bleed background**, dimmed so the foreground text stays legible and the photo recedes into the dark ground — the effect Nocturne's `.lighten` treatment is built for.
+- The selected humour image is drawn twice: a full-screen cropped ground, then a centered aspect-preserving copy so the complete subject remains visible. On tall screens the cropped layer remains visible above and below the centered copy. The combined image is dimmed so foreground text stays legible.
 - The humour string sits as the **line beneath the block name**.
-- Anton is available for the block screen only. It is **not** used elsewhere in the app.
+- The headline follows the centered regular-weight Inter reference. The carried Anton asset is no longer used by the interruption headline.
 
 ## 12. Permissions and onboarding
 
@@ -430,7 +444,7 @@ Tested 6 September 2026 on a Samsung Galaxy S23 Ultra (SM-S918B) running **Andro
 | Design language rules | `toki-shrine-ui-mockups/project/_ds/nocturne-*/readme.md` | Rules to follow — outlined buttons never filled, no pure black or white, Phosphor icons, 0.7× density |
 | Screen renders | `design/screens/` | Layout and arrangement reference, 27 PNGs |
 | Source markup | `toki-shrine-ui-mockups/project/TimeShrine Mocks.dc.html` | Exact values, structure and copy |
-| Humour assets | `design/humor-assets/` | Six images plus Anton |
+| Humour assets | `design/humor-assets/` | Eleven images plus the retained Anton source asset |
 | Screen regeneration | `design/regenerate-screens.py` | Rebuilds the PNGs if the design export changes |
 
 Nocturne is a **web** design system. Its tokens translate to a Compose theme; its CSS component layer (`.btn`, `.card`, `mix-blend-mode`) does not and should be ignored. Icons are Phosphor.
@@ -553,3 +567,9 @@ Persist disable waiting duration separately from pause countdown (proposed field
 Owner permits deletion of **all existing app data** because there are no users; no legacy value mapping or data-preserving migration is required for this redesign. Use a deliberate development schema reset/version change as needed, report its consequences, and rebuild test fixtures. This is not a general production destructive-migration policy. No device data was deleted during requirements work; device operations still follow AGENTS and the explicit setup scope.
 
 The redesign delivery covers wizard/editor, persistence, summaries, events and tests. Actual typing/waiting challenge execution and cancel/reset behavior remain Phase 5, with no hold detection. At approval time this amendment did not itself clear Phase 3 or authorize Phase 4; the later evidence-backed clearance is recorded in CURRENT.
+
+### Phase 5 owner-validation addendum — 23 September 2026
+
+Arjun's installed-build testing supersedes the older interruption copy, two-second walk-away dismissal, live typo highlighting, and terminal app-switch/lock rules in §§6–8/11. The corrected behavior is incorporated directly into those sections.
+
+For ongoing owner testing only, **debug builds** expose pause typing down to 20 characters and pause waiting down to 20 seconds while retaining defaults 150/60 and maxima 200/300. Debug disable ladders temporarily replace their first rungs with 20: typing 20/350/700 characters and waiting 20/360/720 seconds. Release builds retain the production §7 values: 100–200, 60–300, 220/350/700, and 180/360/720. Pause duration remains 5–100 minutes. Phase 7 final approval must remove the temporary debug overrides and retain the production values.

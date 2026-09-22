@@ -6,6 +6,8 @@ import kotlin.random.Random
 class ChallengeContentSelector(private val random: Random = Random.Default) {
     fun humour(): String = HUMOUR_LINES.random(random)
 
+    fun headline(target: String): String = HEADLINE_TEMPLATES.random(random).replace("{target}", target)
+
     fun backgroundRes(): Int = BACKGROUNDS.random(random)
 
     fun passage(length: Int): String {
@@ -40,10 +42,21 @@ class ChallengeContentSelector(private val random: Random = Random.Default) {
             "Not today.",
             "Bro. No.",
             "Look who it is.",
-            "Right on schedule.",
+            "Naah bruh",
             "Bold of you.",
             "The algorithm can wait.",
             "We meet again.",
+            "Let's give it a rest",
+        )
+
+        val HEADLINE_TEMPLATES = listOf(
+            "Trying to waste time on {target}?",
+            "Back for {target} already?",
+            "Someone tryna open {target}?",
+            "Taking a detour to {target}?",
+            "Is {target} calling again?",
+            "{target}? Really?",
+            "Is someone missing {target}?",
         )
 
         val BACKGROUNDS = listOf(
@@ -53,6 +66,11 @@ class ChallengeContentSelector(private val random: Random = Random.Default) {
             R.drawable.sys_block_4,
             R.drawable.sys_block_5,
             R.drawable.sys_block_6,
+            R.drawable.sys_block_7,
+            R.drawable.sys_block_8,
+            R.drawable.sys_block_9,
+            R.drawable.sys_block_10,
+            R.drawable.sys_block_11,
         )
 
         internal val WORDS = listOf(

@@ -21,7 +21,7 @@ Tests: matching `app/src/androidTest/.../data/{BlockRepositoryTest,EventReposito
 ## Open obligations and limits
 
 - `fallbackToDestructiveMigration()` is dev-only. Deliberately resolve migrations and schema export before distribution; do not wipe owner fixtures mid-test. `exportSchema = false` is historical setup, not release guidance.
-- Typos are always highlighted. The wizard redesign permits a development data reset and should remove the obsolete show_typos column in its deliberate schema revision. Phase 5 must not expose or consult a typo preference.
+- Typo positions have no user preference and appear only after an explicit failed Submit. The obsolete `show_typos` column remains non-authoritative and should be removed in the next deliberate schema revision.
 - Phase 3 transactional pairings have executed Room evidence in [OWNER-CHECKS](../../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md): transition/event and onboarding marker/event commit together, forced event failures roll back the paired mutation, and repetitions remain at most once.
 - Edit/delete OFF gating is part of UI behavior; do not overstate it as universally enforced by every repository API. Inspect the relevant path if changing this boundary.
 

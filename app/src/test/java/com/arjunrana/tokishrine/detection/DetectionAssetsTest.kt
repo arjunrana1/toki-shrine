@@ -2,6 +2,7 @@ package com.arjunrana.tokishrine.detection
 
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -74,14 +75,16 @@ class DetectionAssetsTest {
     }
 
     @Test
-    fun placeholderBlockActivityIsDeclaredUnexportedAndRecentsFree() {
+    fun blockActivityIsUnexportedAndRetainedForInProcessResume() {
         val manifest = File("src/main/AndroidManifest.xml").readText()
         assertTrue(manifest.contains("android:name=\".BlockActivity\""))
-        assertTrue(manifest.contains("android:excludeFromRecents=\"true\""))
         val blockActivityBlock = manifest.substringAfter(".BlockActivity").substringBefore("</activity>")
         assertTrue(
             "BlockActivity must not be exported",
             blockActivityBlock.contains("android:exported=\"false\""),
         )
+        assertFalse(blockActivityBlock.contains("android:excludeFromRecents=\"true\""))
+        assertFalse(blockActivityBlock.contains("android:noHistory=\"true\""))
+        assertTrue(blockActivityBlock.contains("android:launchMode=\"singleTop\""))
     }
 }

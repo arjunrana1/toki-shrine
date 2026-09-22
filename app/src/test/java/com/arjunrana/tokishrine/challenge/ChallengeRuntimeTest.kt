@@ -20,10 +20,12 @@ class ChallengeRuntimeTest {
         val runtime = typingRuntime()
         runtime.enterChallenge(0)
         repeat(20) { attempt ->
-            runtime.updateTypedText("wrong $attempt")
+            val wrong = "wrong ${attempt.toString().padStart(4, '0')}"
+            runtime.updateTypedText(wrong)
             val effect = runtime.submitTyping(attempt.toLong())
             assertTrue(effect is ChallengeEffect.TypingMismatch)
-            assertEquals("wrong $attempt", runtime.view(attempt.toLong()).typedText)
+            assertEquals(wrong, runtime.view(attempt.toLong()).typedText)
+            assertTrue(runtime.view(attempt.toLong()).showTypingMismatches)
             assertEquals("alpha beta", runtime.config.passage)
         }
 
@@ -37,7 +39,9 @@ class ChallengeRuntimeTest {
         val runtime = typingRuntime()
         runtime.enterChallenge(10)
         runtime.updateTypedText("alpha bet")
-        assertTrue(runtime.submitTyping(20) is ChallengeEffect.TypingMismatch)
+        assertNull(runtime.submitTyping(20))
+        runtime.updateTypedText("alpha betx")
+        assertTrue(runtime.submitTyping(25) is ChallengeEffect.TypingMismatch)
         runtime.updateTypedText("alpha beta")
         val effect = runtime.submitTyping(30)
         assertTrue(effect is ChallengeEffect.PersistCompletion)
@@ -61,16 +65,32 @@ class ChallengeRuntimeTest {
     }
 
     @Test
-    fun appSwitchAndScreenOffAreAbandonmentsNotWalkAways() {
-        listOf(AbandonReason.APP_SWITCH, AbandonReason.SCREEN_OFF).forEach { reason ->
-            val runtime = waitingRuntime(seconds = 10)
-            runtime.beginTurnOff(0)
-            runtime.onVisible(0)
-            val effect = runtime.abandon(reason, 4_000) as ChallengeEffect.Abandoned
-            assertEquals(reason, effect.reason)
-            assertEquals(40, effect.progressPct)
-            assertEquals(ChallengePhase.TERMINAL, runtime.view(4_000).phase)
-        }
+    fun backgroundingResetsWaitingWithoutTerminalOutcomeAndInvalidatesOldTick() {
+        val runtime = waitingRuntime(seconds = 10)
+        runtime.beginTurnOff(0)
+        runtime.onVisible(0)
+        val oldGeneration = runtime.currentGeneration()
+
+        runtime.onBackgrounded()
+
+        assertEquals(ChallengePhase.ACTIVE, runtime.view(4_000).phase)
+        assertEquals(10, runtime.view(4_000).remainingSeconds)
+        assertNull(runtime.tick(20_000, oldGeneration))
+        runtime.onVisible(20_000)
+        assertTrue(runtime.tick(30_000) is ChallengeEffect.PersistCompletion)
+    }
+
+    @Test
+    fun backgroundingPreservesTypingPassageAndEnteredText() {
+        val runtime = typingRuntime()
+        runtime.enterChallenge(0)
+        runtime.updateTypedText("alpha")
+
+        runtime.onBackgrounded()
+
+        assertEquals(ChallengePhase.ACTIVE, runtime.view(1_000).phase)
+        assertEquals("alpha beta", runtime.config.passage)
+        assertEquals("alpha", runtime.view(1_000).typedText)
     }
 
     @Test
@@ -87,23 +107,24 @@ class ChallengeRuntimeTest {
     }
 
     @Test
-    fun cancellationFirstInvalidatesLateCompletionAndStaleTick() {
+    fun explicitEscapeFirstInvalidatesLateCompletionAndStaleTick() {
         val runtime = waitingRuntime(seconds = 1)
         runtime.beginTurnOff(0)
         runtime.onVisible(0)
         val generation = runtime.currentGeneration()
-        assertNotNull(runtime.abandon(AbandonReason.APP_SWITCH, 500))
+        assertNotNull(runtime.escape(500))
         assertNull(runtime.tick(2_000, generation))
         assertNull(runtime.commitSucceeded(generation))
     }
 
     @Test
-    fun completionFirstOwnsRaceAndIgnoresCancellation() {
+    fun completionFirstOwnsRaceAndIgnoresBackgrounding() {
         val runtime = typingRuntime()
         runtime.enterChallenge(0)
         runtime.updateTypedText("alpha beta")
         val completion = runtime.submitTyping(10) as ChallengeEffect.PersistCompletion
-        assertNull(runtime.abandon(AbandonReason.APP_SWITCH, 11))
+        runtime.onBackgrounded()
+        assertEquals(ChallengePhase.COMMITTING, runtime.view(11).phase)
         assertTrue(runtime.commitSucceeded(completion.request.token) is ChallengeTerminalResult.PauseRequested)
     }
 
@@ -134,6 +155,20 @@ class ChallengeRuntimeTest {
     }
 
     @Test
+    fun mismatchMarksAppearOnlyAfterSubmitAndHideOnNextEdit() {
+        val runtime = typingRuntime()
+        runtime.enterChallenge(0)
+        runtime.updateTypedText("alpha betx")
+        assertEquals(false, runtime.view(1).showTypingMismatches)
+
+        assertTrue(runtime.submitTyping(2) is ChallengeEffect.TypingMismatch)
+        assertTrue(runtime.view(2).showTypingMismatches)
+
+        runtime.updateTypedText("alpha beta")
+        assertEquals(false, runtime.view(3).showTypingMismatches)
+    }
+
+    @Test
     fun duplicateCompletionCallbackIsAtMostOnce() {
         val runtime = typingRuntime()
         runtime.enterChallenge(0)
@@ -160,12 +195,23 @@ class ChallengeRuntimeTest {
 
     @Test
     fun contentSelectorProducesExactRequestedLengthAndIndependentSelections() {
-        val first = ChallengeContentSelector(kotlin.random.Random(1)).passage(220)
-        val second = ChallengeContentSelector(kotlin.random.Random(2)).passage(220)
-        assertEquals(220, first.length)
-        assertEquals(220, second.length)
+        val first = ChallengeContentSelector(kotlin.random.Random(1)).passage(20)
+        val second = ChallengeContentSelector(kotlin.random.Random(2)).passage(20)
+        assertEquals(20, first.length)
+        assertEquals(20, second.length)
         assertNotEquals(first, second)
         assertTrue(first.split(' ').all { it in ChallengeContentSelector.WORDS })
+    }
+
+    @Test
+    fun ownerApprovedCopyAndAssetPoolsAreComplete() {
+        assertEquals(11, ChallengeContentSelector.HUMOUR_LINES.size)
+        assertEquals("Naah bruh", ChallengeContentSelector.HUMOUR_LINES[6])
+        assertEquals("Let's give it a rest", ChallengeContentSelector.HUMOUR_LINES.last())
+        assertEquals(7, ChallengeContentSelector.HEADLINE_TEMPLATES.size)
+        assertTrue(ChallengeContentSelector.HEADLINE_TEMPLATES.all { "{target}" in it })
+        assertEquals(11, ChallengeContentSelector.BACKGROUNDS.size)
+        assertTrue(ChallengeContentSelector(kotlin.random.Random(1)).headline("Ajio").contains("Ajio"))
     }
 
     @Test

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
-import android.os.PowerManager
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -22,7 +21,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.arjunrana.tokishrine.challenge.AbandonReason
 import com.arjunrana.tokishrine.challenge.ChallengeConfig
 import com.arjunrana.tokishrine.challenge.ChallengeContentSelector
 import com.arjunrana.tokishrine.challenge.ChallengeEffect
@@ -32,6 +30,7 @@ import com.arjunrana.tokishrine.challenge.ChallengeSnapshot
 import com.arjunrana.tokishrine.challenge.ChallengeTerminalResult
 import com.arjunrana.tokishrine.challenge.isValidDetectionLaunch
 import com.arjunrana.tokishrine.data.db.BlockWithContents
+import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.detection.BlockShownEvent
@@ -74,7 +73,7 @@ class BlockActivity : ComponentActivity() {
 
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_SCREEN_OFF) abandon(AbandonReason.SCREEN_OFF)
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) backgroundChallenge()
         }
     }
 
@@ -96,7 +95,7 @@ class BlockActivity : ComponentActivity() {
                 BackHandler {
                     val phase = runtime?.view(now())?.phase
                     when (phase) {
-                        ChallengePhase.ACTIVE -> abandon(AbandonReason.APP_SWITCH)
+                        ChallengePhase.ACTIVE -> moveTaskToBack(true)
                         ChallengePhase.COMMITTING -> Unit
                         else -> finish()
                     }
@@ -105,13 +104,13 @@ class BlockActivity : ComponentActivity() {
                 val engine = runtime
                 val count = dailyWalkAwayCount
                 when {
-                    count != null -> WalkAwayMomentScreen(count, onDismiss = ::finish)
+                    count != null -> WalkAwayMomentScreen(count, onDismiss = ::returnToHome)
                     session == null || engine == null -> Box(
                         Modifier.fillMaxSize().background(NocturneTheme.colors.bg),
                     )
                     engine.view(now()).phase == ChallengePhase.GATE -> BlockGateScreen(
                         blockName = session.block.block.name,
-                        targetName = session.target.orEmpty(),
+                        headline = session.headline,
                         humourLine = session.humour,
                         backgroundRes = session.backgroundRes,
                         onWalkAway = { handle(engine.gateWalkAway()) },
@@ -126,6 +125,7 @@ class BlockActivity : ComponentActivity() {
                         blockName = session.block.block.name,
                         passage = engine.config.passage,
                         typedText = engine.view(now()).typedText,
+                        showTypingMismatches = engine.view(now()).showTypingMismatches,
                         onTypedTextChanged = {
                             if (inputReady) {
                                 engine.updateTypedText(it)
@@ -183,6 +183,13 @@ class BlockActivity : ComponentActivity() {
             if (block.block.frictionType == FrictionType.TYPING && passage.length != configuredAmount) {
                 return@launch finish()
             }
+            val displayTarget = if (triggerType == "app" && target != null) {
+                withContext(Dispatchers.IO) {
+                    InstalledAppsRepository(this@BlockActivity).labelFor(target)
+                }
+            } else {
+                target.orEmpty()
+            }
             runtime = ChallengeRuntime(
                 ChallengeConfig(
                     sessionId = sessionId,
@@ -203,6 +210,7 @@ class BlockActivity : ComponentActivity() {
                 target = target,
                 triggerType = triggerType,
                 humour = saved?.getString(STATE_HUMOUR) ?: selector.humour(),
+                headline = saved?.getString(STATE_HEADLINE) ?: selector.headline(displayTarget),
                 backgroundRes = saved?.getInt(STATE_BACKGROUND)?.takeIf { it != 0 }
                     ?: selector.backgroundRes(),
             )
@@ -249,6 +257,27 @@ class BlockActivity : ComponentActivity() {
         refreshRuntimeUi()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val phase = runtime?.view(now())?.phase
+        if (phase == ChallengePhase.ACTIVE || phase == ChallengePhase.COMMITTING ||
+            phase == ChallengePhase.WALK_AWAY || dailyWalkAwayCount != null ||
+            pendingWalkAwaySource != null
+        ) {
+            // One unfinished challenge owns this task. A detection relaunch
+            // brings it forward instead of silently replacing its retained
+            // typing text or reset waiting attempt.
+            return
+        }
+        setIntent(intent)
+        loaded = null
+        runtime = null
+        inputReady = false
+        pendingWalkAwaySource = null
+        shownEventScheduled = false
+        resolveSession(saved = null)
+    }
+
     override fun onStop() {
         ticker?.cancel()
         ticker = null
@@ -257,8 +286,7 @@ class BlockActivity : ComponentActivity() {
             if (isChangingConfigurations) {
                 engine.onConfigurationHidden(now())
             } else {
-                val interactive = (getSystemService(POWER_SERVICE) as PowerManager).isInteractive
-                abandon(if (interactive) AbandonReason.APP_SWITCH else AbandonReason.SCREEN_OFF)
+                engine.onBackgrounded()
             }
         }
         resumed = false
@@ -425,8 +453,11 @@ class BlockActivity : ComponentActivity() {
         }
     }
 
-    private fun abandon(reason: AbandonReason) {
-        handle(runtime?.abandon(reason, now()))
+    private fun backgroundChallenge() {
+        ticker?.cancel()
+        ticker = null
+        runtime?.onBackgrounded()
+        refreshRuntimeUi()
     }
 
     private fun maybeRecordShown() {
@@ -467,8 +498,16 @@ class BlockActivity : ComponentActivity() {
         autoDismiss?.cancel()
         autoDismiss = activityScope.launch {
             delay(WALK_AWAY_MS)
-            finish()
+            returnToHome()
         }
+    }
+
+    private fun returnToHome() {
+        val home = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(home) }
+        finish()
     }
 
     private fun refreshRuntimeUi() {
@@ -491,6 +530,7 @@ class BlockActivity : ComponentActivity() {
             outState.putString(STATE_SESSION_ID, engine.config.sessionId)
             outState.putString(STATE_PASSAGE, engine.config.passage)
             outState.putString(STATE_HUMOUR, session.humour)
+            outState.putString(STATE_HEADLINE, session.headline)
             outState.putInt(STATE_BACKGROUND, session.backgroundRes)
             val snapshot = engine.snapshot()
             val saveNow = now()
@@ -516,6 +556,7 @@ class BlockActivity : ComponentActivity() {
         out.putBoolean(STATE_STARTED, snapshot.started)
         out.putLong(STATE_STARTED_AT, snapshot.startedAtMs ?: -1L)
         out.putString(STATE_TYPED, snapshot.typedText)
+        out.putBoolean(STATE_SHOW_TYPING_MISMATCHES, snapshot.showTypingMismatches)
         out.putInt(STATE_ATTEMPTS, snapshot.attempts)
         out.putLong(STATE_ACCRUED, snapshot.accruedVisibleMs)
         out.putLong(STATE_VISIBLE_SINCE, snapshot.visibleSinceMs ?: -1L)
@@ -531,6 +572,7 @@ class BlockActivity : ComponentActivity() {
             started = saved.getBoolean(STATE_STARTED),
             startedAtMs = saved.getLong(STATE_STARTED_AT, -1L).takeIf { it >= 0 },
             typedText = saved.getString(STATE_TYPED).orEmpty(),
+            showTypingMismatches = saved.getBoolean(STATE_SHOW_TYPING_MISMATCHES),
             attempts = saved.getInt(STATE_ATTEMPTS),
             accruedVisibleMs = saved.getLong(STATE_ACCRUED),
             visibleSinceMs = null,
@@ -545,6 +587,7 @@ class BlockActivity : ComponentActivity() {
         val target: String?,
         val triggerType: String?,
         val humour: String,
+        val headline: String,
         val backgroundRes: Int,
     )
 
@@ -565,19 +608,21 @@ class BlockActivity : ComponentActivity() {
         private const val STATE_SESSION_ID = "challenge_session_id"
         private const val STATE_PASSAGE = "challenge_passage"
         private const val STATE_HUMOUR = "challenge_humour"
+        private const val STATE_HEADLINE = "challenge_headline"
         private const val STATE_BACKGROUND = "challenge_background"
         private const val STATE_PHASE = "challenge_phase"
         private const val STATE_GENERATION = "challenge_generation"
         private const val STATE_STARTED = "challenge_started"
         private const val STATE_STARTED_AT = "challenge_started_at"
         private const val STATE_TYPED = "challenge_typed"
+        private const val STATE_SHOW_TYPING_MISMATCHES = "challenge_show_typing_mismatches"
         private const val STATE_ATTEMPTS = "challenge_attempts"
         private const val STATE_ACCRUED = "challenge_accrued"
         private const val STATE_VISIBLE_SINCE = "challenge_visible_since"
         private const val STATE_DAILY_COUNT = "daily_walk_away_count"
         private const val STATE_WALK_AWAY_SOURCE = "walk_away_source"
         private const val TICK_MS = 200L
-        private const val WALK_AWAY_MS = 2_000L
+        private const val WALK_AWAY_MS = 10_000L
 
         fun turnOffIntent(context: Context, blockId: Long): Intent =
             Intent(context, BlockActivity::class.java)

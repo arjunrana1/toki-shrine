@@ -51,10 +51,10 @@ class CreateFlowStateTest {
     // — bounds and steps —
 
     @Test
-    fun typingPauseHundredToTwoHundredStepTen() {
+    fun debugTypingPauseTwentyToTwoHundredStepTen() {
         val state = CreateFlowState(null)
         state.adjustTypingPause(-PAUSE_CHARS_STEP) // 140
-        state.adjustTypingPause(-PAUSE_CHARS_STEP * 100) // floor at 100
+        state.adjustTypingPause(-PAUSE_CHARS_STEP * 100) // debug floor at 20
         assertEquals(PAUSE_CHARS_MIN, state.typingPauseChars)
         state.adjustTypingPause(PAUSE_CHARS_STEP * 100) // ceiling at 200
         assertEquals(PAUSE_CHARS_MAX, state.typingPauseChars)
@@ -63,9 +63,9 @@ class CreateFlowStateTest {
     }
 
     @Test
-    fun waitPauseSixtyToThreeHundredStepFive() {
+    fun debugWaitPauseTwentyToThreeHundredStepFive() {
         val state = CreateFlowState(null)
-        state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP)
+        state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP * 100)
         assertEquals(PAUSE_WAIT_SECONDS_MIN, state.waitPauseSeconds)
         state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP * 100)
         assertEquals(PAUSE_WAIT_SECONDS_MAX, state.waitPauseSeconds)
@@ -140,9 +140,9 @@ class CreateFlowStateTest {
     @Test
     fun disableChoicesFollowTheInheritedMethod() {
         val state = CreateFlowState(null)
-        assertEquals(listOf(220, 350, 700), state.disableChoices)
+        assertEquals(listOf(20, 350, 700), state.disableChoices)
         state.frictionType = FrictionType.DELAY
-        assertEquals(listOf(180, 360, 720), state.disableChoices)
+        assertEquals(listOf(20, 360, 720), state.disableChoices)
     }
 
     @Test
@@ -160,18 +160,18 @@ class CreateFlowStateTest {
         state.adjustPauseMinutes(PAUSE_MINUTES_STEP * 10) // pause 65: unrelated
         state.frictionType = FrictionType.DELAY
         assertEquals(1, state.disableChoiceIndex) // waiting keeps its own rung
-        state.disableChoiceIndex = 0 // waiting: 180
+        state.disableChoiceIndex = 0 // waiting: 20
         state.frictionType = FrictionType.TYPING
         assertEquals(2, state.disableChoiceIndex)
         assertEquals(700, state.typingTurnoffChars)
-        assertEquals(180, state.waitTurnoffSeconds)
+        assertEquals(20, state.waitTurnoffSeconds)
         assertEquals(65, state.pauseMinutes)
     }
 
     @Test
     fun disableLaddersMatchTheApprovedValues() {
-        assertEquals(listOf(220, 350, 700), DISABLE_CHARS_CHOICES)
-        assertEquals(listOf(180, 360, 720), DISABLE_WAIT_SECONDS_CHOICES)
+        assertEquals(listOf(20, 350, 700), DISABLE_CHARS_CHOICES)
+        assertEquals(listOf(20, 360, 720), DISABLE_WAIT_SECONDS_CHOICES)
     }
 
     // — draft mapping —

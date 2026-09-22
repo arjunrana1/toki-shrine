@@ -30,6 +30,7 @@ data class ChallengeSnapshot(
     val started: Boolean,
     val startedAtMs: Long?,
     val typedText: String,
+    val showTypingMismatches: Boolean,
     val attempts: Int,
     val accruedVisibleMs: Long,
     val visibleSinceMs: Long?,
@@ -38,6 +39,7 @@ data class ChallengeSnapshot(
 data class ChallengeView(
     val phase: ChallengePhase,
     val typedText: String,
+    val showTypingMismatches: Boolean,
     val attempts: Int,
     val remainingSeconds: Int,
 )
@@ -116,6 +118,7 @@ class ChallengeRuntime(
     private var started = restored?.started ?: false
     private var startedAtMs = restored?.startedAtMs
     private var typedText = restored?.typedText.orEmpty()
+    private var showTypingMismatches = restored?.showTypingMismatches ?: false
     private var attempts = restored?.attempts ?: 0
     private var accruedVisibleMs = restored?.accruedVisibleMs ?: 0L
     private var visibleSinceMs = restored?.visibleSinceMs
@@ -126,6 +129,7 @@ class ChallengeRuntime(
         started = started,
         startedAtMs = startedAtMs,
         typedText = typedText,
+        showTypingMismatches = showTypingMismatches,
         attempts = attempts,
         accruedVisibleMs = accruedVisibleMs,
         visibleSinceMs = visibleSinceMs,
@@ -134,6 +138,7 @@ class ChallengeRuntime(
     fun view(nowMs: Long): ChallengeView = ChallengeView(
         phase = phase,
         typedText = typedText,
+        showTypingMismatches = showTypingMismatches,
         attempts = attempts,
         remainingSeconds = remainingSeconds(nowMs),
     )
@@ -164,15 +169,20 @@ class ChallengeRuntime(
     }
 
     fun updateTypedText(value: String) {
-        if (phase == ChallengePhase.ACTIVE && config.method == FrictionType.TYPING) typedText = value
+        if (phase == ChallengePhase.ACTIVE && config.method == FrictionType.TYPING) {
+            typedText = value
+            showTypingMismatches = false
+        }
     }
 
     fun submitTyping(nowMs: Long): ChallengeEffect? {
         if (phase != ChallengePhase.ACTIVE || config.method != FrictionType.TYPING) return null
+        if (typedText.length < config.passage.length) return null
         attempts++
         return if (typedText == config.passage) {
             beginCompletion(nowMs)
         } else {
+            showTypingMismatches = true
             ChallengeEffect.TypingMismatch(config.blockId, typedText.length)
         }
     }
@@ -186,6 +196,21 @@ class ChallengeRuntime(
     /** Pauses elapsed accounting for a configuration recreation without cancelling the session. */
     fun onConfigurationHidden(nowMs: Long) {
         accrueVisible(nowMs)
+    }
+
+    /**
+     * Ordinary app-switch/lock is nonterminal. Typing text stays in memory;
+     * waiting progress resets and its generation changes so a late tick from
+     * the previous visible segment cannot complete the challenge.
+     */
+    fun onBackgrounded() {
+        if (phase != ChallengePhase.ACTIVE) return
+        if (config.method == FrictionType.DELAY) {
+            val hadProgress = accruedVisibleMs != 0L || visibleSinceMs != null
+            accruedVisibleMs = 0L
+            visibleSinceMs = null
+            if (hadProgress) generation++
+        }
     }
 
     fun tick(nowMs: Long, callbackGeneration: Int = generation): ChallengeEffect? {

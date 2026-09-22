@@ -6,7 +6,7 @@ Source: `app/src/main/java/com/arjunrana/tokishrine/ui/theme/`, `ui/components/N
 
 ## Active design decisions
 
-- Nocturne dark theme; use existing tokens/theme, no invented hardcoded token values. Outlined secondary buttons remain outlined; no pure black/white except explicit design exceptions. Phosphor glyph font, Inter regular/medium; Anton is for interruption assets. CSS px maps 1:1 to dp/sp in the established implementation; do not apply a second density scale to translated tokens.
+- Nocturne dark theme; use existing tokens/theme, no invented hardcoded token values. Outlined secondary buttons remain outlined; no pure black/white except explicit design exceptions. Phosphor glyph font and Inter regular/medium. The carried Anton asset is not used by the owner-corrected interruption headline, which is centered regular Inter. CSS px maps 1:1 to dp/sp in the established implementation; do not apply a second density scale to translated tokens.
 - Preserve all Material typography and palette slots, including inverse/error/scrim. Owner-approved error family: #d4716b / #612421 / #ffebe8, onError = theme background. These approved values are the documented exception where original tokens lacked an error family.
 - Shadows approximate CSS edge/ambient/elevation; do not claim exact CSS offsets. First relevant consuming surfaces still need owner visual comparison.
 - Window/icon resource colors mirror canonical tokens because Kotlin theme is unavailable at startup. A hex grep alone cannot prove all visual conformance.

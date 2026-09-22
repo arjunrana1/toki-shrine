@@ -1,16 +1,20 @@
 package com.arjunrana.tokishrine.ui.interruption
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
@@ -32,8 +38,8 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
  * [purpose]). Render-only: total and remaining seconds are supplied and the
  * ring drains with the remaining fraction — no timer, no lifecycle or lock
  * observation, no keep-awake; all of that is TS-P5B. Per PRD §6 no status
- * message is shown (the mock's "keep holding" line is removed with hold
- * detection); the escape action is the only control.
+ * status pill is shown. Owner testing added a direct explanation of the reset
+ * rule beneath the timer; the escape action is the only control.
  */
 @Composable
 fun DelayCountdownScreen(
@@ -83,17 +89,9 @@ fun DelayCountdownScreen(
                         color = colors.neutral.step600,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = delayEscapeLabel(purpose),
-                        fontSize = 13.sp,
-                        color = colors.neutral.step300,
-                        modifier = Modifier
-                            .clickable { onEscape() }
-                            .padding(vertical = 2.dp),
-                    )
                 }
             }
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.weight(0.75f))
             Box(
                 Modifier
                     .size(200.dp)
@@ -136,16 +134,39 @@ fun DelayCountdownScreen(
                     color = colors.text,
                 )
             }
+            Spacer(Modifier.height(36.dp))
+            Text(
+                text = "Stay on this screen",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.text,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "The timer only runs while you're here. It resets if you lock your phone or open another app.",
+                fontSize = 15.sp,
+                lineHeight = 21.sp,
+                color = colors.neutral.step400,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
             Spacer(Modifier.weight(1f))
-            if (purpose == ChallengePurpose.PAUSE) {
+            val escapeShape = RoundedCornerShape(10.dp)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .border(1.dp, colors.neutral.step600, escapeShape)
+                    .clickable { onEscape() },
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
                     text = delayEscapeLabel(purpose),
-                    fontSize = 13.5.sp,
-                    color = colors.neutral.step400,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .clickable { onEscape() }
-                        .padding(vertical = 2.dp),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.text,
                 )
             }
         }
