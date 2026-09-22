@@ -1,6 +1,6 @@
 # TS-P6-pause-lifecycle — Phase 6 pause lifecycle
 
-- **State:** `implementing` — assigned 23 September 2026 after Phase 5 closure.
+- **State:** `ready_for_review` — GLM submission `1056fca` on base `4f18bda`, 23 September 2026; see [HANDBACK](HANDBACK.md). Awaiting fresh independent review, then owner device acceptance.
 - **Goal:** consume the Phase 5 `PauseRequested` seam and implement the full pause lifecycle (PRD §§4/5/6/7.3/10/12/13, [phase 6](../../../docs/phases/phase-06.md)): per-block temporary access, monotonic pause timing, automatic immediate re-arm, simultaneous independent pauses, the overlay bubble (screen 20) and the ongoing notification (screen 21).
 - **Implementation owner:** GLM, by Arjun's direct 23 September 2026 assignment. The phase doc's senior default for monotonic timing/concurrent pauses/re-arm stands superseded for this task only by that instruction; the compensating controls are (a) the pause state machine is a small pure component with focused JVM coverage for expiry/re-arm, simultaneous pauses, exact target isolation and clock-change resistance, and (b) if cancellation, concurrency, persistence ordering or re-arm correctness becomes unclear, the implementer stops and documents the exact issue for Codex review instead of guessing.
 - **Base:** `6533dbd` (records-only HEAD at assignment; app source identical to reviewed Phase 5 `68fdcb3`).
