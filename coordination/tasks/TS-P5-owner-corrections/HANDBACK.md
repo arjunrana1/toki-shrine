@@ -23,6 +23,10 @@
 - `git diff --check` — **PASS**.
 - Owner assets `sys_block_7–11.jpg` match their copied drawable resources by SHA-256.
 
+## Direct correction addendum — 23 September 2026
+
+Arjun's direct follow-up after install: move the gate headline and humour line into the top segment of the screen — generous 20–25px padding above the heading, centered, same type treatment; everything else unchanged. Implemented under the direct owner-correction path as commit `9d411d4` (`Move gate headline cluster to top segment`): one file, `BlockGateScreen.kt`, reanchors the headline cluster directly under the block name with a 22.dp top pad; the CTAs, background layers, scrim, and all runtime behavior are untouched. Verification was proportionate to the layout-only change: `./build.sh assembleDebug` — **PASS**. No JVM or Android test exercises this composable, so no test run was performed for it. The rebuilt APK was installed on SM-S918B the same day; attribution is in [OWNER-CHECKS](OWNER-CHECKS.md).
+
 ## Limits and review focus
 
 - No device, emulator, adb, install, screenshot, database extraction, or instrumented execution occurred. UI appearance, app-label behavior, Android-home routing, recents/relaunch behavior, screen-lock handling, and IME behavior remain owner-device evidence after independent review.

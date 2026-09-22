@@ -1,6 +1,6 @@
 # TS-P5-owner-corrections — Owner-tested interruption corrections
 
-- **State:** `awaiting_owner` — review of `7fbb692` on base `59596a8` returned **PASS WITH NOTES** (see [REVIEW](REVIEW.md)). The review-approved debug build (APK SHA-256 `1077fb1b…`, code `7fbb692` exactly) was installed on SM-S918B on 23 September 2026; see [OWNER-CHECKS](OWNER-CHECKS.md). Owner retesting of P5C-O1–O11 is the next step; Phase 6 remains unstarted.
+- **State:** `awaiting_owner` — review of `7fbb692` returned **PASS WITH NOTES** (see [REVIEW](REVIEW.md)); a direct owner correction then moved the gate headline cluster to the top segment (`9d411d4`, bounded layout-only change, assembleDebug verified) and the rebuilt build was installed on SM-S918B; attribution in [OWNER-CHECKS](OWNER-CHECKS.md). Owner retesting of P5C-O1–O11 is the next step; the headline-placement change awaits owner visual confirmation alongside it. Phase 6 remains unstarted.
 - **Goal:** apply Arjun's Phase 5 device-testing feedback to the interruption gate, walk-away moment, typing challenge, waiting challenge, and temporary debug-only configuration bounds without beginning Phase 6.
 - **Implementation owner:** senior Codex. The visual/copy changes are routine, but preserving typing state and resetting waiting state across app-switch/lock without creating a terminal outcome changes the lifecycle state machine and is senior-owned under WORKFLOW.
 - **Base:** `59596a8`. The owner-supplied untracked `design/humor-assets/sys_block_7–11.jpg` files are explicitly part of this task; preserve unrelated work.

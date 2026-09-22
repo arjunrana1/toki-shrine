@@ -2,7 +2,9 @@
 
 Owner observations are from Arjun's 23 September 2026 testing of the Phase 5B APK installed from code commit `c5a8e9e` (with later records-only HEAD `59596a8`). Unmentioned behavior was reported working well; this record does not turn source/build checks into device evidence. Retest results for the correction submission remain open.
 
-**Installed retest build:** on 23 September 2026 the review-approved correction build was installed on SM-S918B (`R5CW30ZBM2R`) via `adb install -r` (Success): `app-debug.apk` SHA-256 `1077fb1b32d660d7bd05038c10648371dbebeba460b43d97670ef1445040376b`, containing code `7fbb692` exactly (built from that tree, Gradle up-to-date against records-only `5eb27ed`). `com.arjunrana.tokishrine` 0.1.0 / versionCode 1, debug. App not launched by the installer; accessibility re-grant is owner setup. All P5C retest results below refer to this build once Arjun reports them.
+**Installed retest build:** on 23 September 2026 the review-approved correction build was installed on SM-S918B (`R5CW30ZBM2R`) via `adb install -r` (Success): `app-debug.apk` SHA-256 `1077fb1b32d660d7bd05038c10648371dbebeba460b43d97670ef1445040376b`, containing code `7fbb692` exactly (built from that tree, Gradle up-to-date against records-only `5eb27ed`). `com.arjunrana.tokishrine` 0.1.0 / versionCode 1, debug. App not launched by the installer; accessibility re-grant is owner setup.
+
+**Superseding install, same day:** after Arjun's direct headline-placement correction, the rebuilt build from commit `9d411d4` (`Move gate headline cluster to top segment`, on top of the reviewed `7fbb692` code) was installed via `adb install -r` (Success, data preserved): APK SHA-256 `4e05967e5bbe23386d93e88418ec32d22b3208fe6477c60a34f4718e01e68d4b`, `pm path` verified, app not launched, accessibility re-grant still owner setup. All P5C retest results below refer to this newest build once Arjun reports them; the `1077fb1b` install remains historical.
 
 | ID | Owner observation on installed build | Required correction / retest |
 |---|---|---|
