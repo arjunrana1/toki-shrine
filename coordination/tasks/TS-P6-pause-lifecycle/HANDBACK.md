@@ -1,44 +1,32 @@
-# Handback — TS-P6-pause-lifecycle P6-R1 repair
+# Handback — TS-P6-pause-lifecycle owner corrections P6C-O1–O3
 
-- **Repair submission:** `062c71e` (`Expire paused access on wake enforcement`), 23 September 2026.
-- **Repair base:** `d93162d` (records-only review verdict over GLM submission `1056fca`; original Phase 6 base `4f18bda`).
-- **Implementer:** senior Codex. **State:** `ready_for_review`.
-- **Finding addressed:** P6-R1 from [REVIEW](REVIEW.md). No other Phase 6 behavior was intentionally changed.
+- **Submission:** `ac78985` (`Apply Phase 6 owner corrections P6C-O1 to O3`), 23 September 2026.
+- **Base:** `da7f8d5` (records-only; app source identical to reviewed `062c71e`). Direct owner → GLM correction path (WORKFLOW). The re-review PASS WITH NOTES applies to `d93162d..062c71e` only; this new diff is pending review, and Codex reviews the accumulated corrections at the next checkpoint.
+- **Implementer:** GLM. **State:** `awaiting_owner` — owner retest of the corrections pending; the corrected APK is staged but not yet installed (phone absent at handoff).
+- Prior repair handback preserved at [submissions/062c71e/HANDBACK.md](submissions/062c71e/HANDBACK.md). Owner results and finding rationale: [OWNER-CHECKS](OWNER-CHECKS.md).
 
-## Repair
+## Changes
 
-- `PauseRegistry.evaluateForAccess(blockId, now)` now atomically advances every overdue monotonic deadline before answering whether the requested block is paused. Registry removal remains the single exactly-once gate; repeated timer, screen-on and enforcement evaluations return no second expiration.
-- `PauseCoordinator.isPaused` uses that deadline-aware decision and publishes/logs any expirations on the main thread. A stale registry entry can no longer grant access after its deadline even if the scheduled Handler callback was delayed.
-- `TokiAccessibilityService` evaluates pauses on service connection and before every accessibility enforcement event. An overdue expiry publishes the non-paused set; the existing combined index then restores the block's targets and re-feeds the foreground window. Re-feed was moved explicitly onto the main thread.
-- `PauseService` registers a process-lifetime `ACTION_SCREEN_ON` receiver while pauses are hosted and evaluates on screen-on and service restart. This removes overdue bubble/notification state on the first wake boundary rather than waiting out Handler's slept uptime. Accessibility-event evaluation remains the independent access-enforcement backstop.
-- Process-local state is unchanged: process death/reboot reconstructs an empty registry and therefore re-arms. `elapsedRealtime` remains the only deadline authority; wall clock and uptime are not used to decide access.
+- **P6C-O1 — notification progress cadence.** `PauseService`: the 60 s notification re-post tick and the 1 s bubble tick merge into one per-second `secondTick` that evaluates, re-renders notifications and refreshes bubble text. Within a render the soonest pause is promoted via `startForeground` and the remaining pauses are `notify()`-ed — the soonest no longer gets a duplicate immediate post. Chronometer anchoring, IDs, channel, ongoing semantics and all pause/enforcement logic are unchanged.
+- **P6C-O2 — gate photo dim.** `BlockGateScreen`: `GATE_SCRIM_ALPHA` 0.78 → 0.65, comment updated with the owner-correction date. Only the gate scrim; assets, layout and type untouched.
+- **P6C-O3 — app bar trailing gap.** `NocturneAppbar`: title gains `padding(end = 12.dp)` so long titles wrap before the trailing action (block detail's delete icon). Shared component; screens without trailing content are visually unchanged for short titles.
 
-## Focused coverage
+## Deliberately not changed
 
-`PauseRegistryTest` adds two delayed-callback cases:
+- **P6C-O4 / P6-O13** — explicit owner do-not-fix instructions, recorded in OWNER-CHECKS with root-cause explanations (unfinished-challenge task ownership in `BlockActivity.onNewIntent`; per-tick notification re-post).
+- **P6-O9 bubble-dismissal improvement** — changes PRD §6 screen 20 behavior; awaiting an owner product decision before any implementation.
 
-- elapsed time crosses the deadline without any scheduled `advance`; the first enforcement evaluation removes the pause and denies continued access;
-- a later duplicate wake/enforcement evaluation emits no second expiration or re-arm.
+## Checks run on `ac78985`
 
-The existing independent-pause, index restoration, restart-not-extend, clock-change and silent OFF/delete tests remain unchanged. Total JVM suite is now 170 tests.
-
-## Checks run by the repair implementer on `062c71e`
-
-- `./build.sh assembleDebug` — **PASS** (`BUILD SUCCESSFUL`).
-- `./build.sh testDebugUnitTest` — **PASS, 170/170**; fresh XML count: 0 failures, 0 errors, 0 skipped.
-- `./build.sh assembleDebugAndroidTest` — **PASS** (compile-only; no instrumented execution).
+- `./build.sh assembleDebug` — **PASS**.
+- `./build.sh testDebugUnitTest` — **PASS, 170/170**; fresh XML count: 170 tests, 0 failures, 0 errors, 0 skipped.
 - `git diff --check` — clean.
+- `assembleDebugAndroidTest` was not rerun: no test infrastructure or instrumented sources were touched (proportionate direct-correction checks per WORKFLOW; same precedent as the Phase 5 owner corrections).
 
-An initial sandboxed targeted-test attempt could not create Gradle's external cache lock; the same targeted `PauseRegistryTest` command was rerun with approved Gradle-cache access and passed. This was infrastructure permission handling, not a product/test failure.
+## Install status
 
-## Preserved interpretations and limits
-
-- Bubble content/tap and notification navigation are unchanged.
-- P6-N1 remains an owner-observed platform limit: source requests an ongoing notification, but Android 13+ controls foreground-notification dismissal behavior.
-- P6-N2 remains unchanged: `bubble_shown` is keyed to the displayed block ID; duplicate same-block pause starts are not expected through detection.
-- The screen-on receiver, accessibility adapter, service rendering and foreground-window re-feed are Android wiring. They compile but are not executed by JVM tests; owner device evidence remains separate after code PASS.
-- No device/emulator/adb/install/screenshot/instrumented operation, Phase 7 work, dependency/toolchain change, schema change or unrelated cleanup was performed.
+Corrected APK staged: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `9083e321e63399140fb7c7e5c8a8de4decb82b410ba55c5be91b72e9b9e5f29d`, built from `ac78985`. `adb devices` shows no device at handoff (reported once, no polling per build/validation). Install remains the agreed setup only: `adb -s R5CW30ZBM2R install -r`, no launch, no uninstall/clear, accessibility re-binding and seeding stay owner setup.
 
 ## Stop
 
-Ready for a fresh independent re-review of only `d93162d..062c71e` plus the affected expiry/enforcement dependencies. Owner device acceptance remains after code PASS.
+Owner retests P6C-O1–O3 on the corrected build (progress cadence, photo brightness, title/delete spacing) and continues any outstanding acceptance observation; unaffected checklist results stand with their original build attribution. No Phase 7 work. Bubble-dismissal decision requested from the owner.
