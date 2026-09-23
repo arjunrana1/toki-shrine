@@ -36,6 +36,9 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
     interface Host {
         fun onBubbleTap(blockId: Long)
         fun onBubbleDragged()
+
+        /** Owner-approved dismissal (Phase 6 addendum): released over the bottom discard zone. */
+        fun onBubbleDismissed(blockId: Long)
     }
 
     private val windowManager: WindowManager? = context.getSystemService(WindowManager::class.java)
@@ -78,6 +81,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
     private var downX = 0
     private var downY = 0
     private var dragging = false
+    private var overDiscardZone = false
 
     init {
         orientation = HORIZONTAL
@@ -170,20 +174,56 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
                     params.x = (downX + dx.toInt()).coerceIn(0, (screenWidth() - width).coerceAtLeast(0))
                     params.y = (downY + dy.toInt()).coerceIn(0, (screenHeight() - height).coerceAtLeast(0))
                     runCatching { windowManager?.updateViewLayout(this, params) }
+                    setDiscardAffordance(inDiscardZone())
                 }
             }
             MotionEvent.ACTION_UP -> {
-                if (dragging) {
+                if (dragging && inDiscardZone()) {
+                    animateOutThen { host?.onBubbleDismissed(shownBlockId) }
+                } else if (dragging) {
+                    setDiscardAffordance(false)
                     host?.onBubbleDragged()
                 } else {
                     performClick()
                 }
+                dragging = false
             }
-            MotionEvent.ACTION_CANCEL -> dragging = false
+            MotionEvent.ACTION_CANCEL -> {
+                setDiscardAffordance(false)
+                dragging = false
+            }
         }
         // The pill is the interaction surface; claiming the stream keeps the
         // gesture whole from DOWN to UP.
         return true
+    }
+
+    /**
+     * The discard zone is the bottom strip of the screen (Phase 6 owner
+     * addendum): releasing the drag there reads as throwing the pill away,
+     * matching common floating-button behavior.
+     */
+    private fun inDiscardZone(): Boolean =
+        height > 0 && params.y + height >= screenHeight() - dp(DISCARD_ZONE_DP)
+
+    private fun setDiscardAffordance(over: Boolean) {
+        if (over == overDiscardZone) return
+        overDiscardZone = over
+        pivotX = width / 2f
+        pivotY = height / 2f
+        val targetScale = if (over) 0.9f else 1f
+        val targetAlpha = if (over) 0.55f else 1f
+        animate().scaleX(targetScale).scaleY(targetScale).alpha(targetAlpha)
+            .setDuration(AFFORDANCE_MS).start()
+    }
+
+    private fun animateOutThen(end: () -> Unit) {
+        pivotX = width / 2f
+        pivotY = height / 2f
+        animate().scaleX(0.85f).scaleY(0.85f).alpha(0f)
+            .setDuration(DISMISS_ANIMATION_MS)
+            .withEndAction(end)
+            .start()
     }
 
     private fun screenWidth() = resources.displayMetrics.widthPixels
@@ -199,5 +239,8 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
 
     private companion object {
         const val INITIAL_TOP_DP = 32
+        const val DISCARD_ZONE_DP = 72
+        const val AFFORDANCE_MS = 80L
+        const val DISMISS_ANIMATION_MS = 140L
     }
 }

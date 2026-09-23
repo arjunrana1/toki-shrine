@@ -55,7 +55,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 - A block **must be OFF before it can be edited or deleted**. Otherwise removing an app from a block would be a free bypass.
 - A new block is saved **OFF** and does nothing until explicitly turned on.
 - Turning a block OFF leaves it off until the user turns it back on. It never re-arms itself.
-- Pauses cannot be extended. When the timer expires the block re-arms immediately, with no prior warning — the bubble and notification have been visible throughout.
+- Pauses cannot be extended. When the timer expires the block re-arms immediately, with no prior warning — the notification stays visible throughout, and so does the bubble unless the user dismissed it (§6 screen 20, Phase 6 owner addendum).
 
 ## 5. Core flows
 
@@ -137,7 +137,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **19 Delay countdown.** Timer, *Stay on this screen*, the direct reset explanation from the owner reference, and a full-width outlined *Never mind*. The old Counting pill is absent.
 
-**20 Floating bubble.** Draggable, shows remaining time and what is open. Tap returns to the app. Requires overlay permission; absent it, the bubble is simply not shown and everything else still works.
+**20 Floating bubble.** Draggable, shows remaining time and what is open. Tap returns to the app. The user may also dismiss it: dragging it to the bottom screen edge and releasing discards it; the bubble stays hidden while the pauses visible at dismissal remain, and any new pause shows it again. Requires overlay permission; absent it, the bubble is simply not shown and everything else still works.
 
 **21 Ongoing notification.** Non-dismissable for the duration of the pause, with a system countdown. Tapping opens the block's detail screen.
 
@@ -282,6 +282,7 @@ Schema: `event(id, name, timestamp_utc, block_id?, target?, params_json?)`
 | `bubble_shown` | `block_id` |
 | `bubble_dragged` | — |
 | `bubble_tapped` | `block_id` |
+| `bubble_dismissed` | `block_id` |
 
 **Turn off**
 
@@ -573,3 +574,11 @@ The redesign delivery covers wizard/editor, persistence, summaries, events and t
 Arjun's installed-build testing supersedes the older interruption copy, two-second walk-away dismissal, live typo highlighting, and terminal app-switch/lock rules in §§6–8/11. The corrected behavior is incorporated directly into those sections.
 
 For ongoing owner testing only, **debug builds** expose pause typing down to 20 characters and pause waiting down to 20 seconds while retaining defaults 150/60 and maxima 200/300. Debug disable ladders temporarily replace their first rungs with 20: typing 20/350/700 characters and waiting 20/360/720 seconds. Release builds retain the production §7 values: 100–200, 60–300, 220/350/700, and 180/360/720. Pause duration remains 5–100 minutes. Phase 7 final approval must remove the temporary debug overrides and retain the production values.
+
+### Phase 6 owner-validation addendum — 23 September 2026
+
+Arjun's installed-build testing of the reviewed `062c71e` tree recorded no failing checks (owner verdicts live in the Phase 6 task's OWNER-CHECKS; O15 is a conditional pass without the manual clock-change steps, O17 is not applicable as written). The screen-20 and §7 text above already incorporates the decisions below.
+
+- **Bubble dismissal (screen 20, owner-approved: "we need to give the ability to dismiss the bubble if the user wants it").** Dragging the bubble to the bottom screen edge and releasing discards it. Dismissal hides only the bubble surface for the pause instances visible at dismissal; any new pause start shows the bubble again with a fresh `bubble_shown`. Timing, enforcement, the ongoing notification and automatic re-arm are unaffected. §10 gains `bubble_dismissed | block_id`.
+- **Cross-block unfinished-challenge precedence — accepted, do not fix.** While a challenge is unfinished, a detection launch for a different block brings the existing session forward instead of starting that block's challenge; completing or explicitly dismissing it is the only way to clear it. Owner verdict: acceptable narrow edge case; do not "improve" this or the notification behavior below without real user feedback.
+- **Dismissed pause notification may return — accepted, do not fix.** Android may permit swiping the ongoing countdown notification away; the service's periodic render re-post then recreates it. Owner verdict: recorded platform observation, nothing to fix.

@@ -176,5 +176,6 @@ open class EventRepository(
         const val EVENT_BUBBLE_SHOWN = "bubble_shown"
         const val EVENT_BUBBLE_DRAGGED = "bubble_dragged"
         const val EVENT_BUBBLE_TAPPED = "bubble_tapped"
+        const val EVENT_BUBBLE_DISMISSED = "bubble_dismissed"
     }
 }

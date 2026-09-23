@@ -56,6 +56,7 @@ class PauseService : Service(), PauseBubbleView.Host {
     private var bubbleShownLoggedBlockId: Long = -1
     private var activeNotifIds = mutableSetOf<Int>()
     private var foregroundMet = false
+    private val bubbleDismissal = BubbleDismissalPolicy()
 
     // Last rendered inputs, so the tickers can re-derive fresh output.
     private var latestPauses: Map<Long, PauseState> = emptyMap()
@@ -259,10 +260,21 @@ class PauseService : Service(), PauseBubbleView.Host {
 
     private fun renderBubble() {
         val now = clock()
+        val activeKeys = activePauseKeys()
+        bubbleDismissal.resetIfIdle(activeKeys)
         val soonest = latestPauses.values.minByOrNull { it.deadlineMs }
         if (soonest == null || soonest.remainingMs(now) <= 0 || !Settings.canDrawOverlays(this)) {
             // Overlay permission denied (PRD §12): the pause and the
             // notification still work; only the bubble disappears.
+            bubble?.detach()
+            bubble = null
+            bubbleShownLoggedBlockId = -1
+            return
+        }
+        if (!bubbleDismissal.shouldShow(activeKeys)) {
+            // Owner-dismissed bubble (Phase 6 addendum): stays hidden while
+            // only pause instances visible at dismissal remain live; a new
+            // pause instance re-shows it. Notification/enforcement untouched.
             bubble?.detach()
             bubble = null
             bubbleShownLoggedBlockId = -1
@@ -296,6 +308,10 @@ class PauseService : Service(), PauseBubbleView.Host {
     private fun viewDisplayName(blockId: Long): String =
         latestNames[blockId] ?: getString(R.string.pause_notification_generic_title)
 
+    /** Pause instance identity for dismissal memory: block id + monotonic deadline. */
+    private fun activePauseKeys(): List<Pair<Long, Long>> =
+        latestPauses.values.map { it.blockId to it.deadlineMs }
+
     // — bubble host callbacks (§10) —
 
     override fun onBubbleTap(blockId: Long) {
@@ -311,6 +327,14 @@ class PauseService : Service(), PauseBubbleView.Host {
 
     override fun onBubbleDragged() {
         logEvent { log(EventRepository.EVENT_BUBBLE_DRAGGED) }
+    }
+
+    override fun onBubbleDismissed(blockId: Long) {
+        bubbleDismissal.recordDismissal(activePauseKeys())
+        bubble?.detach()
+        bubble = null
+        bubbleShownLoggedBlockId = -1
+        logEvent { log(EventRepository.EVENT_BUBBLE_DISMISSED, blockId = blockId) }
     }
 
     // — plumbing —
