@@ -38,8 +38,16 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
         fun onBubbleTap(blockId: Long)
         fun onBubbleDragged()
 
-        /** Owner-approved dismissal (Phase 6 addendum): released over the bottom discard zone. */
-        fun onBubbleDismissed(blockId: Long)
+        /**
+         * Owner-approved dismissal (Phase 6 addendum): released over the
+         * bottom discard zone. Called synchronously at release so the host
+         * captures the displayed block and live pause instances before the
+         * cosmetic exit animation can change them (P6C-R1).
+         */
+        fun onBubbleDismissalDecided(displayedBlockId: Long): BubbleDismissalSnapshot
+
+        /** Applies the release-time snapshot once the exit animation completes. */
+        fun onBubbleDismissed(snapshot: BubbleDismissalSnapshot)
     }
 
     private val windowManager: WindowManager? = context.getSystemService(WindowManager::class.java)
@@ -77,19 +85,26 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
 
     // Bottom-edge discard hint (owner refinement, 23 September): a centred,
     // non-touchable overlay label shown while the pill is dragged; it tints
-    // accent when the pill is over the discard zone.
+    // accent when the pill is over the discard zone. It sits on a faded,
+    // semi-opaque Nocturne chip (owner correction P6C-O7, same day) so the
+    // label stays readable over light content behind the overlay.
     private val hintView = TextView(context).apply {
         text = context.getString(R.string.pause_bubble_dismiss)
         typeface = ResourcesCompat.getFont(context, R.font.inter_medium)
-        setTextColor(tokenColor(NocturneNeutral300))
+        setTextColor(tokenColor(NocturneNeutral100))
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
         gravity = Gravity.CENTER
+        setPadding(dp(14), dp(6), dp(14), dp(6))
+        background = GradientDrawable().apply {
+            setColor(tokenColor(NocturneBg, alpha255 = 200))
+            cornerRadius = dp(18).toFloat()
+        }
         setShadowLayer(6f, 0f, 0f, Color.BLACK)
         alpha = 0f
     }
 
     private val hintParams = WindowManager.LayoutParams(
-        WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.WRAP_CONTENT,
         WindowManager.LayoutParams.WRAP_CONTENT,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -216,7 +231,12 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
             }
             MotionEvent.ACTION_UP -> {
                 if (dragging && inDiscardZone()) {
-                    animateOutThen { host?.onBubbleDismissed(shownBlockId) }
+                    // P6C-R1: the decision — displayed block plus the host's
+                    // live pause instances — is captured now, before the
+                    // animation; renders during those 140 ms cannot fold a
+                    // new pause into the dismissal or shift its attribution.
+                    val snapshot = host?.onBubbleDismissalDecided(shownBlockId)
+                    animateOutThen { if (snapshot != null) host?.onBubbleDismissed(snapshot) }
                 } else if (dragging) {
                     setDiscardAffordance(false)
                     hideHint()
@@ -256,7 +276,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
         val targetAlpha = if (over) 0.2f else 1f
         animate().scaleX(targetScale).scaleY(targetScale).alpha(targetAlpha)
             .setDuration(AFFORDANCE_MS).start()
-        hintView.setTextColor(tokenColor(if (over) NocturneAccent else NocturneNeutral300))
+        hintView.setTextColor(tokenColor(if (over) NocturneAccent else NocturneNeutral100))
     }
 
     private fun showHint() {

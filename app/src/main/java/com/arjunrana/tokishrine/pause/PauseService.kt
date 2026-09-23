@@ -329,12 +329,18 @@ class PauseService : Service(), PauseBubbleView.Host {
         logEvent { log(EventRepository.EVENT_BUBBLE_DRAGGED) }
     }
 
-    override fun onBubbleDismissed(blockId: Long) {
-        bubbleDismissal.recordDismissal(activePauseKeys())
+    override fun onBubbleDismissalDecided(displayedBlockId: Long): BubbleDismissalSnapshot =
+        // P6C-R1: read at release time on the main thread, before the exit
+        // animation; a pause starting during those 140 ms is not in this set
+        // and therefore re-shows the bubble.
+        BubbleDismissalSnapshot(displayedBlockId, activePauseKeys())
+
+    override fun onBubbleDismissed(snapshot: BubbleDismissalSnapshot) {
+        bubbleDismissal.recordDismissal(snapshot)
         bubble?.detach()
         bubble = null
         bubbleShownLoggedBlockId = -1
-        logEvent { log(EventRepository.EVENT_BUBBLE_DISMISSED, blockId = blockId) }
+        logEvent { log(EventRepository.EVENT_BUBBLE_DISMISSED, blockId = snapshot.blockId) }
     }
 
     // — plumbing —
