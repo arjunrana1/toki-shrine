@@ -27,9 +27,10 @@ import kotlin.math.abs
  * a service-owned overlay window has no composition lifecycle — with values
  * from the shared Nocturne tokens and the mock's pill shape.
  *
- * The view owns its overlay window (add/update/remove) and its drag/tap
- * gesture; the host service supplies content and interaction callbacks.
- * Children are non-interactive, so the whole gesture is handled here.
+ * The view owns its overlay windows (the pill plus the non-touchable bottom
+ * dismissal hint) and its drag/tap gesture; the host service supplies
+ * content and interaction callbacks. Children are non-interactive, so the
+ * whole gesture is handled here.
  */
 class PauseBubbleView(context: Context) : LinearLayout(context) {
 
@@ -74,6 +75,31 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
     }
 
+    // Bottom-edge discard hint (owner refinement, 23 September): a centred,
+    // non-touchable overlay label shown while the pill is dragged; it tints
+    // accent when the pill is over the discard zone.
+    private val hintView = TextView(context).apply {
+        text = context.getString(R.string.pause_bubble_dismiss)
+        typeface = ResourcesCompat.getFont(context, R.font.inter_medium)
+        setTextColor(tokenColor(NocturneNeutral300))
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        gravity = Gravity.CENTER
+        setShadowLayer(6f, 0f, 0f, Color.BLACK)
+        alpha = 0f
+    }
+
+    private val hintParams = WindowManager.LayoutParams(
+        WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.WRAP_CONTENT,
+        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+        PixelFormat.TRANSLUCENT,
+    ).apply {
+        gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        y = dp(HINT_BOTTOM_DP)
+    }
+
     private var host: Host? = null
     private var shownBlockId: Long = -1
     private var downRawX = 0f
@@ -82,6 +108,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
     private var downY = 0
     private var dragging = false
     private var overDiscardZone = false
+    private var hintAttached = false
 
     init {
         orientation = HORIZONTAL
@@ -127,6 +154,9 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
             this.host = null
             return false
         }
+        // The hint is cosmetic: a failed add only loses the label, never the
+        // pill or the dismissal itself.
+        hintAttached = runCatching { manager.addView(hintView, hintParams) }.isSuccess
         // The pill starts at the mock's top-right position; width is
         // measurable only after the first layout pass.
         post {
@@ -139,6 +169,10 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
     fun detach() {
         host = null
         runCatching { windowManager?.removeView(this) }
+        if (hintAttached) {
+            runCatching { windowManager?.removeView(hintView) }
+            hintAttached = false
+        }
     }
 
     fun isAttached(): Boolean = parent != null
@@ -169,7 +203,10 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.rawX - downRawX
                 val dy = event.rawY - downRawY
-                if (!dragging && (abs(dx) > touchSlop || abs(dy) > touchSlop)) dragging = true
+                if (!dragging && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                    dragging = true
+                    showHint()
+                }
                 if (dragging) {
                     params.x = (downX + dx.toInt()).coerceIn(0, (screenWidth() - width).coerceAtLeast(0))
                     params.y = (downY + dy.toInt()).coerceIn(0, (screenHeight() - height).coerceAtLeast(0))
@@ -182,6 +219,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
                     animateOutThen { host?.onBubbleDismissed(shownBlockId) }
                 } else if (dragging) {
                     setDiscardAffordance(false)
+                    hideHint()
                     host?.onBubbleDragged()
                 } else {
                     performClick()
@@ -190,6 +228,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
             }
             MotionEvent.ACTION_CANCEL -> {
                 setDiscardAffordance(false)
+                hideHint()
                 dragging = false
             }
         }
@@ -211,10 +250,23 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
         overDiscardZone = over
         pivotX = width / 2f
         pivotY = height / 2f
+        // Over the zone the pill goes very transparent (owner refinement,
+        // 23 September) so the centred Dismiss label reads as the target.
         val targetScale = if (over) 0.9f else 1f
-        val targetAlpha = if (over) 0.55f else 1f
+        val targetAlpha = if (over) 0.2f else 1f
         animate().scaleX(targetScale).scaleY(targetScale).alpha(targetAlpha)
             .setDuration(AFFORDANCE_MS).start()
+        hintView.setTextColor(tokenColor(if (over) NocturneAccent else NocturneNeutral300))
+    }
+
+    private fun showHint() {
+        if (!hintAttached) return
+        hintView.animate().alpha(0.95f).setDuration(AFFORDANCE_MS).start()
+    }
+
+    private fun hideHint() {
+        if (!hintAttached) return
+        hintView.animate().alpha(0f).setDuration(AFFORDANCE_MS).start()
     }
 
     private fun animateOutThen(end: () -> Unit) {
@@ -240,6 +292,7 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
     private companion object {
         const val INITIAL_TOP_DP = 32
         const val DISCARD_ZONE_DP = 72
+        const val HINT_BOTTOM_DP = 28
         const val AFFORDANCE_MS = 80L
         const val DISMISS_ANIMATION_MS = 140L
     }

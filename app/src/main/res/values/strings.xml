@@ -15,4 +15,8 @@
     <string name="pause_notification_title">%1$s is paused</string>
     <string name="pause_notification_generic_title">Block paused</string>
     <string name="pause_notification_body">%1$s left · re-arms on its own</string>
+
+    <!-- Phase 6 bubble dismissal hint (PRD §6 screen 20, owner refinement):
+             shown centred at the bottom edge while the pill is dragged. -->
+    <string name="pause_bubble_dismiss">Dismiss</string>
 </resources>
