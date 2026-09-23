@@ -1,5 +1,47 @@
 # Independent review — TS-P6-pause-lifecycle
 
+## P6-R1 repair re-review
+
+- **Reviewed repair:** `062c71e` (`Expire paused access on wake enforcement`).
+- **Repair base:** `d93162d` (records-only commit containing the original review below; app source at the base is the failed submission `1056fca`).
+- **Verdict:** **PASS WITH NOTES.** P6-R1 is resolved for code review. The repair prevents stale registry membership from granting access after an elapsed-realtime deadline, preserves exactly-once expiry, and adds wake/reconnect/enforcement evaluation that republishes the active index and re-feeds the foreground window. Phase 6 can proceed to Arjun's device acceptance; this is not device/runtime proof.
+- **Reviewer:** fresh independent Codex, 23 September 2026. No device, emulator, adb, installation, screenshot or instrumented execution was performed.
+
+### Review scope and result
+
+Reviewed only `d93162d..062c71e` plus the affected pause registry/coordinator, accessibility detection/index and foreground-service dependencies. Confirmed the range contains five app/test files and no unrelated behavior.
+
+P6-R1 is resolved because:
+
+- `PauseRegistry.evaluateForAccess` removes all overdue pauses and answers the requested block's access state under one lock. A delayed uptime callback therefore cannot make the launch-time guard return paused after the monotonic deadline.
+- Registry removal remains the exactly-once gate. Timer, screen-on, accessibility and launch-guard evaluations can race or repeat, but only the first receives a `PauseExpiration`; later evaluations cannot log another expiry or initiate another pause-set transition.
+- Expirations are published on the main thread. The accessibility collector rebuilds the enabled-block index from the resulting pause set and re-feeds the current foreground window on the main thread when the paused IDs change. This restores app/site enforcement without requiring a new window transition.
+- `ACTION_SCREEN_ON`, accessibility service connection/reconnection and each accessibility event evaluate elapsed-realtime expiry. The synchronous launch guard remains the final enforcement backstop. Deadline authority is still `SystemClock.elapsedRealtime`; Handler uptime and wall time do not decide expiry.
+- Process death/reboot still reconstructs an empty registry, and Phase 5 behavior is unchanged.
+
+No blocking or actionable code finding remains in the reviewed repair.
+
+### Evidence
+
+- Reviewer-run `./build.sh testDebugUnitTest --tests com.arjunrana.tokishrine.pause.PauseRegistryTest --tests com.arjunrana.tokishrine.detection.ActiveBlockIndexTest` — **PASS** (`BUILD SUCCESSFUL`). The first sandboxed attempt was blocked only by Gradle cache permissions; the approved rerun passed.
+- Reviewer-run `git diff --check d93162d..062c71e` — clean.
+- Implementer-attributed `./build.sh assembleDebug` — PASS.
+- Implementer-attributed full `./build.sh testDebugUnitTest` — PASS, 170/170.
+- Implementer-attributed `./build.sh assembleDebugAndroidTest` — PASS, compile-only; no instrumented execution.
+
+### Notes and remaining acceptance boundary
+
+- The screen-on receiver, accessibility callback/index refresh, active-window re-feed, overlay and notification service remain Android wiring established by source review and compilation, not executed device evidence. Arjun still owns expiry-after-sleep, already-foreground app/site re-arm, simultaneous pauses, clock changes, bubble and notification acceptance.
+- P6-N1 and P6-N2 below remain non-blocking and unchanged. In particular, Android 13+ notification dismissal behavior is a platform observation, not something `setOngoing(true)` can prove from source.
+
+### Next actor
+
+Arjun performs Phase 6 owner/device acceptance against the reviewed `062c71e` app tree, with the installed APK/build identity recorded separately. Do not begin Phase 7 until Phase 6 owner acceptance is complete.
+
+---
+
+## Original submission review (preserved)
+
 - **Reviewed submission:** `1056fca` (`Implement Phase 6 pause lifecycle, bubble and countdown notification`).
 - **Base:** `4f18bda`
 - **Verdict:** **FAIL — CHANGES REQUESTED.** The process-local pause model is acceptable, but the submitted expiry scheduler can leave a block paused after its monotonic deadline, including after the device has already woken. P6-R1 must be repaired and independently re-reviewed before owner/device acceptance.
