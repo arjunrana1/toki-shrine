@@ -22,6 +22,16 @@ data class PauseState(
 data class PauseExpiration(val state: PauseState)
 
 /**
+ * Atomic answer for an enforcement decision. Any overdue pauses are removed
+ * before [isPaused] is computed, so a delayed scheduler callback can never
+ * make stale registry membership grant access past the monotonic deadline.
+ */
+data class PauseAccessEvaluation(
+    val isPaused: Boolean,
+    val expirations: List<PauseExpiration>,
+)
+
+/**
  * Pure owner of which blocks are paused and when each pause ends (PRD §4:
  * a pause temporarily opens one block and re-arms automatically; pauses
  * cannot be extended). Every input is an injectable monotonic timestamp, so
@@ -53,7 +63,23 @@ class PauseRegistry {
     }
 
     @Synchronized
-    fun advance(nowMs: Long): List<PauseExpiration> {
+    fun advance(nowMs: Long): List<PauseExpiration> = advanceLocked(nowMs)
+
+    /**
+     * Resolves deadline expiry and one block's access decision under the same
+     * lock. This is the enforcement backstop when an uptime-based Android
+     * callback was delayed by deep sleep.
+     */
+    @Synchronized
+    fun evaluateForAccess(blockId: Long, nowMs: Long): PauseAccessEvaluation {
+        val expirations = advanceLocked(nowMs)
+        return PauseAccessEvaluation(
+            isPaused = pauses.containsKey(blockId),
+            expirations = expirations,
+        )
+    }
+
+    private fun advanceLocked(nowMs: Long): List<PauseExpiration> {
         val expired = ArrayList<PauseExpiration>()
         val iterator = pauses.entries.iterator()
         while (iterator.hasNext()) {

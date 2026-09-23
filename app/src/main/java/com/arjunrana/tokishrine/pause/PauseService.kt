@@ -5,7 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Handler
 import android.os.IBinder
@@ -13,6 +16,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import com.arjunrana.tokishrine.MainActivity
 import com.arjunrana.tokishrine.R
 import com.arjunrana.tokishrine.TokiApplication
@@ -57,6 +61,18 @@ class PauseService : Service(), PauseBubbleView.Host {
     private var latestPauses: Map<Long, PauseState> = emptyMap()
     private var latestNames: Map<Long, String> = emptyMap()
 
+    // Handler delays use uptimeMillis and retain sleep as extra delay. The
+    // foreground host therefore treats screen-on as an elapsed-realtime
+    // evaluation boundary; accessibility events provide the independent
+    // enforcement backstop.
+    private val screenOnReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                app.pauseCoordinator.evaluate()
+            }
+        }
+    }
+
     private val minuteTick = object : Runnable {
         override fun run() {
             app.pauseCoordinator.evaluate()
@@ -78,6 +94,12 @@ class PauseService : Service(), PauseBubbleView.Host {
         app = application as TokiApplication
         notifications = getSystemService(NotificationManager::class.java)
         createChannel()
+        ContextCompat.registerReceiver(
+            this,
+            screenOnReceiver,
+            IntentFilter(Intent.ACTION_SCREEN_ON),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         serviceScope.launch {
             combine(
                 app.pauseCoordinator.pauses,
@@ -92,6 +114,9 @@ class PauseService : Service(), PauseBubbleView.Host {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // A restarted service is also a wake/lifecycle boundary: remove any
+        // overdue pause before choosing a foreground notification.
+        app.pauseCoordinator.evaluate()
         // The foreground obligation is met immediately, before the first
         // flow emission has names loaded; the next render replaces this.
         val soonest = app.pauseCoordinator.pauses.value.values.minByOrNull { it.deadlineMs }
@@ -112,6 +137,7 @@ class PauseService : Service(), PauseBubbleView.Host {
         mainHandler.removeCallbacks(bubbleTick)
         bubble?.detach()
         bubble = null
+        runCatching { unregisterReceiver(screenOnReceiver) }
         serviceScope.cancel()
         super.onDestroy()
     }

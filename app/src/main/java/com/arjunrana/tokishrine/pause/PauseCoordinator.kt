@@ -65,8 +65,16 @@ class PauseCoordinator(
         }
     }
 
-    /** Synchronous access for the detection launch path. */
-    fun isPaused(blockId: Long): Boolean = registry.isPaused(blockId)
+    /**
+     * Synchronous access decision for the detection launch path. Deadline
+     * expiry is resolved before answering, so stale membership cannot keep a
+     * block open when an uptime-based Handler callback was delayed by sleep.
+     */
+    fun isPaused(blockId: Long): Boolean {
+        val evaluation = registry.evaluateForAccess(blockId, clock())
+        dispatchEvaluation(evaluation.expirations)
+        return evaluation.isPaused
+    }
 
     /**
      * Consumes the Phase 5 `PauseRequested` seam: the block's targets are
@@ -112,6 +120,23 @@ class PauseCoordinator(
 
     private fun evaluateOnMain() {
         val expired = registry.advance(clock())
+        applyExpirationsOnMain(expired)
+    }
+
+    /**
+     * Publishes/logs expirations on the main thread. Registry removal is the
+     * exactly-once gate: duplicate timer, wake and enforcement evaluations
+     * arrive here with an empty list and cannot emit a second re-arm/event.
+     */
+    private fun dispatchEvaluation(expired: List<PauseExpiration>) {
+        if (Looper.myLooper() == mainHandler.looper) {
+            applyExpirationsOnMain(expired)
+        } else {
+            mainHandler.post { applyExpirationsOnMain(expired) }
+        }
+    }
+
+    private fun applyExpirationsOnMain(expired: List<PauseExpiration>) {
         if (expired.isEmpty()) {
             scheduleNextExpiry()
             return

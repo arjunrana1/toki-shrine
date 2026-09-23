@@ -151,6 +151,35 @@ class PauseRegistryTest {
         assertEquals(listOf(1L), r.advance(now + minute(5)).map { it.state.blockId })
     }
 
+    @Test
+    fun enforcementCheckExpiresOverduePauseWhenScheduledCallbackWasDelayed() {
+        val r = registry()
+        r.start(1, minutes = 5, nowMs = now)
+
+        // Simulate a Handler callback that never ran while the device slept:
+        // elapsedRealtime has crossed the deadline before the first access
+        // decision after wake.
+        val afterWake = r.evaluateForAccess(blockId = 1, nowMs = now + minute(9))
+
+        assertFalse("access must be closed before the enforcement decision returns", afterWake.isPaused)
+        assertEquals(listOf(1L), afterWake.expirations.map { it.state.blockId })
+        assertFalse(r.isPaused(1))
+    }
+
+    @Test
+    fun repeatedEnforcementAfterDelayedExpiryCannotExpireOrRearmTwice() {
+        val r = registry()
+        r.start(1, minutes = 5, nowMs = now)
+
+        val first = r.evaluateForAccess(blockId = 1, nowMs = now + minute(9))
+        val duplicateWakeEvent = r.evaluateForAccess(blockId = 1, nowMs = now + minute(10))
+
+        assertEquals(listOf(1L), first.expirations.map { it.state.blockId })
+        assertFalse(first.isPaused)
+        assertTrue(duplicateWakeEvent.expirations.isEmpty())
+        assertFalse(duplicateWakeEvent.isPaused)
+    }
+
     // — turn-off / deletion mid-pause —
 
     @Test

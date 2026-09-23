@@ -58,6 +58,10 @@ class TokiAccessibilityService : AccessibilityService() {
         val app = application as? TokiApplication ?: return
         engine?.let(app.detectionCoordinator::detach)
         engine = DetectionEngine(clock = SystemClock::elapsedRealtime).also(app.detectionCoordinator::attach)
+        // A service reconnect is an enforcement boundary. Resolve any
+        // elapsed-realtime deadline that crossed while uptime callbacks were
+        // delayed before constructing the detection index.
+        app.pauseCoordinator.evaluate()
         logServiceEvent { log(EventRepository.EVENT_ACCESSIBILITY_CONNECTED) }
 
         // Bundled JSON (PRD §13): supported browsers plus the OEM battery
@@ -98,7 +102,7 @@ class TokiAccessibilityService : AccessibilityService() {
                     // without waiting for a fresh window event. This is
                     // what makes re-arm immediate even while a blocked app
                     // is already on screen (PRD §4: re-arms immediately).
-                    reevaluateActiveWindow()
+                    withContext(Dispatchers.Main) { reevaluateActiveWindow() }
                 }
             }
         }
@@ -120,6 +124,11 @@ class TokiAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
+        // Handler delays use uptime and can be postponed by deep sleep. Every
+        // real enforcement event first advances the elapsed-realtime pause
+        // registry; an expiry emission then rebuilds the index and re-feeds
+        // the active window exactly once.
+        (application as? TokiApplication)?.pauseCoordinator?.evaluate()
         val activeEngine = engine ?: return
         val packageName = event.packageName?.toString() ?: return
         if (packageName == this.packageName) return
