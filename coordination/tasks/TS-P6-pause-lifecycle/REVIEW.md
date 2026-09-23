@@ -1,5 +1,37 @@
 # Independent review — TS-P6-pause-lifecycle
 
+## Owner-corrections verification
+
+- **Reviewed corrections:** `da7f8d5..7fb322e` (P6C-O1–O3, P6C-O5 plus Dismiss-label refinement, and P6C-O6).
+- **Verdict:** **FAIL — CHANGES REQUESTED.** The notification cadence, gate scrim, app-bar spacing and turn-off challenge corrections are coherent, and the pure dismissal policy has focused passing coverage. The Android dismissal adapter defers taking the dismissal snapshot until after its exit animation, however, so a newly started pause can be suppressed as though it were present when the owner dismissed the bubble.
+- **Reviewer:** Codex, 23 September 2026. Review was limited to the corrections delta and affected pause-service, overlay, interruption-copy and callback dependencies. No device, emulator, adb, installation, screenshot or instrumented execution was performed. The prior **PASS WITH NOTES** for `d93162d..062c71e` remains unchanged and applies only to that submission.
+
+### Blocking finding
+
+#### P6C-R1 — exit animation can fold a newly started pause into the dismissal snapshot
+
+- **Locations:** `PauseBubbleView.kt:217-220,272-278`; `PauseService.kt:332-337`.
+- **Required behavior:** dismissal hides the bubble only for pause instances visible at dismissal; any new pause instance shows it again.
+- **Failing scenario:** the user releases the pill in the discard zone, then another block starts or restarts a pause during the 140 ms exit animation. `PauseBubbleView` invokes `onBubbleDismissed` only from the animation end callback, and both `shownBlockId` and `PauseService.activePauseKeys()` are read at that later time. A flow/tick render can update the displayed block during the interval, and the service records the newly added pause in `BubbleDismissalPolicy` even though it did not exist at release.
+- **Consequence:** the new pause does not bring the bubble back, contrary to the Phase 6 owner addendum; the `bubble_dismissed` block attribution can also identify the post-release displayed block rather than the pill the user discarded.
+- **Required correction:** capture the displayed block ID and the active pause-instance set at release/dismissal decision time, before starting the animation, and use that immutable snapshot for policy state and event attribution. Keep the animation cosmetic and do not broaden into pause timing, enforcement, notification behavior or the owner-accepted P6C-O4/P6-O13 cases. Add focused coverage for a pause arriving between dismissal decision and animation completion.
+
+No other actionable finding was identified in the corrections delta.
+
+### Evidence
+
+- Reviewer-run `./build.sh testDebugUnitTest --tests com.arjunrana.tokishrine.pause.BubbleDismissalPolicyTest --tests com.arjunrana.tokishrine.ui.interruption.InterruptionModelsTest` — **PASS** (`BUILD SUCCESSFUL`). The first sandboxed attempt was blocked only by Gradle cache permissions; the approved rerun passed.
+- Reviewer-run `git diff --check da7f8d5..7fb322e` — clean.
+- Implementer-attributed `./build.sh assembleDebug` — PASS.
+- Implementer-attributed full `./build.sh testDebugUnitTest` — PASS, 175/175.
+- The bubble gesture/animation and Android overlay callback ordering remain source-reviewed and compile-tested, not device-executed evidence.
+
+### Next actor
+
+Implementer repairs only P6C-R1, updates the handback and routes the repair delta for fresh review. The installed `7fb322e` build may still be used to observe the already-recorded visual corrections, but Phase 6 acceptance cannot close on it. No Phase 7 work.
+
+---
+
 ## P6-R1 repair re-review
 
 - **Reviewed repair:** `062c71e` (`Expire paused access on wake enforcement`).
