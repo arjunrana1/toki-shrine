@@ -1,47 +1,44 @@
-# Handback — TS-P6-pause-lifecycle
+# Handback — TS-P6-pause-lifecycle P6-R1 repair
 
-- **Submission:** `1056fca` (`Implement Phase 6 pause lifecycle, bubble and countdown notification`), 23 September 2026.
-- **Base:** `4f18bda` (records-only Phase 5 closure + Phase 6 scoping on `6533dbd`; app source identical to reviewed Phase 5 `68fdcb3`).
-- **Implementer:** GLM. **State:** `ready_for_review`.
+- **Repair submission:** `062c71e` (`Expire paused access on wake enforcement`), 23 September 2026.
+- **Repair base:** `d93162d` (records-only review verdict over GLM submission `1056fca`; original Phase 6 base `4f18bda`).
+- **Implementer:** senior Codex. **State:** `ready_for_review`.
+- **Finding addressed:** P6-R1 from [REVIEW](REVIEW.md). No other Phase 6 behavior was intentionally changed.
 
-## What changed
+## Repair
 
-**New `pause/` package — the lifecycle core:**
+- `PauseRegistry.evaluateForAccess(blockId, now)` now atomically advances every overdue monotonic deadline before answering whether the requested block is paused. Registry removal remains the single exactly-once gate; repeated timer, screen-on and enforcement evaluations return no second expiration.
+- `PauseCoordinator.isPaused` uses that deadline-aware decision and publishes/logs any expirations on the main thread. A stale registry entry can no longer grant access after its deadline even if the scheduled Handler callback was delayed.
+- `TokiAccessibilityService` evaluates pauses on service connection and before every accessibility enforcement event. An overdue expiry publishes the non-paused set; the existing combined index then restores the block's targets and re-feeds the foreground window. Re-feed was moved explicitly onto the main thread.
+- `PauseService` registers a process-lifetime `ACTION_SCREEN_ON` receiver while pauses are hosted and evaluates on screen-on and service restart. This removes overdue bubble/notification state on the first wake boundary rather than waiting out Handler's slept uptime. Accessibility-event evaluation remains the independent access-enforcement backstop.
+- Process-local state is unchanged: process death/reboot reconstructs an empty registry and therefore re-arms. `elapsedRealtime` remains the only deadline authority; wall clock and uptime are not used to decide access.
 
-- `PauseRegistry.kt` — pure per-block pause state machine (JVM). Monotonic deadlines only (`elapsedRealtime` semantics, injected clock); expiry emitted exactly once via idempotent `advance(now)`; restart-not-extend on a duplicate start; `retainBlocks(liveBlockIds)` silently drops pauses of blocks turned off/deleted (no `pause_expired`); `soonest()` for the bubble. `PauseFormat` holds the pure presentation math: m:ss clock text, the notification chronometer anchor (`wall now + monotonic remaining`) and the elapsed per-mille progress.
-- `PauseCoordinator.kt` — application-scoped process owner. `startPause` publishes the pause synchronously on the main thread (so detection access begins before the user is returned to the triggering app), logs `pause_started(block_id, minutes)` best-effort, schedules expiry at the soonest monotonic deadline on the main handler, and starts the service. Expiry logs `pause_expired(block_id)` once per pause and re-publishes. An enabled-blocks Room flow drops pauses when their block goes OFF/deleted.
-- `PauseService.kt` — specialUse foreground service (manifest-declared, unexported, FGS subtype property) started with the first pause, stopping itself when the last ends. One ongoing (non-swipeable) notification per pause: system countdown chronometer (`setUsesChronometer` + `setChronometerCountDown`, anchored from the monotonic remaining time at every post), per-mille progress bar, tap → that block's detail screen; the soonest pause's notification doubles as the foreground notification. Per-minute re-post and per-second bubble tickers re-derive everything from monotonic deadlines. Always satisfies the `startForegroundService` obligation before stopping.
-- `PauseBubbleView.kt` — the overlay pill (screen 20): Phosphor hourglass glyph, block name ("what is open"), remaining time, Nocturne tokens (92%-opaque bg, accent border, pill radius), draggable with clamping (slop-separated tap vs drag), `TYPE_APPLICATION_OVERLAY` gated on `Settings.canDrawOverlays`; a failed/absent overlay degrades to no bubble with everything else intact.
+## Focused coverage
 
-**Wiring:**
+`PauseRegistryTest` adds two delayed-callback cases:
 
-- `BlockActivity` — after a committed pause completion, `PauseRequested` now calls `pauseCoordinator.startPause` before the unchanged `setResult` seam and return-to-triggering-app. All Phase 5 events/behavior untouched.
-- `TokiAccessibilityService` — the block index is now `combine(blocks, pauses)`: a paused block's apps **and** sites leave detection (exact per-block isolation via `ActiveBlockIndex.from(..., pausedBlockIds)`); when the pause set changes, the current foreground window is re-fed through the engine once, so re-arm is immediate even while a blocked app is already on screen; `launchBlockScreen` adds a synchronous `isPaused` guard closing the index-re-emission race at pause start (and correctly allowing gates at re-arm).
-- `MainActivity` — consumes a new `EXTRA_OPEN_DETAIL_BLOCK_ID` on create/new-intent (notification tap → block detail route, pushed once after launch resolution; no CLEAR_TOP, so a live challenge is never destroyed).
-- `EventRepository` — §10 pause/bubble event constants (`pause_started`, `pause_expired`, `bubble_shown`, `bubble_dragged`, `bubble_tapped`).
-- Manifest — `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE` permissions, PauseService declaration; strings for channel/notification; `ic_stat_pause` status icon. No new dependencies; toolchain unchanged.
+- elapsed time crosses the deadline without any scheduled `advance`; the first enforcement evaluation removes the pause and denies continued access;
+- a later duplicate wake/enforcement evaluation emits no second expiration or re-arm.
 
-**Coverage (JVM, focused):** `PauseRegistryTest` (10) — exactly-once expiry/re-arm with idempotent re-evaluation, simultaneous independent pauses, soonest handover, exact per-block isolation, restart-not-extend, monotonic-only timing (wall-clock jumps have no input surface; backward jumps cannot extend), silent drop of OFF/deleted blocks; `PauseFormatTest` (4) — clock format, chronometer anchoring including the forward-wall-jump repost scenario, clamped progress; `ActiveBlockIndexTest` (+2) — paused block's apps/sites excluded while a neighbour stays enforced, empty pause set restores targets; `AndroidManifestTest` (+2) — FGS permissions and unexported specialUse PauseService declaration. 168/168 total; the 150 Phase 5 tests are unchanged and still pass.
+The existing independent-pause, index restoration, restart-not-extend, clock-change and silent OFF/delete tests remain unchanged. Total JVM suite is now 170 tests.
 
-## Checks (all run by the implementer on `1056fca`)
+## Checks run by the repair implementer on `062c71e`
 
-- `./build.sh assembleDebug` — **PASS** (BUILD SUCCESSFUL).
-- `./build.sh testDebugUnitTest` — **PASS, 168/168** (0 failures/errors/skipped, counted from fresh XML in `app/build/test-results/testDebugUnitTest/`).
-- `./build.sh assembleDebugAndroidTest` — **PASS** (compile-only; instrumented sources unchanged and up to date).
-- `git diff --check` — clean. Legacy hex-color check: no new hex literals outside `ui/theme` (bubble/notification colors derive from Nocturne tokens).
+- `./build.sh assembleDebug` — **PASS** (`BUILD SUCCESSFUL`).
+- `./build.sh testDebugUnitTest` — **PASS, 170/170**; fresh XML count: 0 failures, 0 errors, 0 skipped.
+- `./build.sh assembleDebugAndroidTest` — **PASS** (compile-only; no instrumented execution).
+- `git diff --check` — clean.
 
-## Interpretations the reviewer/owner should confirm
+An initial sandboxed targeted-test attempt could not create Gradle's external cache lock; the same targeted `PauseRegistryTest` command was rerun with approved Gradle-cache access and passed. This was infrastructure permission handling, not a product/test failure.
 
-1. **Bubble shows block name + remaining time** (PRD §6 screen 20 "shows remaining time and what is open"); the mock pill shows time only. Soonest expiry is shown with two pauses, per the acceptance list. Bubble **tap returns to Toki Shrine** (home), matching the mock's "tap to go back" and §6 "returns to the app"; the notification tap goes to the block detail, per §6 screen 21.
-2. **Process-local pause state** (no Room persistence): process death/reboot drops pauses and re-arms — the safe direction; matches the phase's no-restoration requirement. Deep sleep can delay the expiry callback (handler uptime), but deadlines are monotonic, so pauses can only end at/after their true duration; wake-time re-evaluation is immediate (tickers, service render, detection re-feed).
-3. **Notification tap uses NEW_TASK|SINGLE_TOP without CLEAR_TOP**: if a challenge activity of another block sits above MainActivity, the tap just brings the task forward (no detail push, no destroyed challenge).
-4. `bubble_shown` is logged once per pause while it is the bubble's displayed (soonest) block.
+## Preserved interpretations and limits
 
-## Known gaps (for review, not waived)
-
-- PauseService/PauseBubbleView/coordinator Android wiring has compile + pure-logic coverage only; no JVM or instrumented test executes the service, notification or overlay paths (adapter code, same honest gap class as RV2-N2). Device acceptance (bubble appearance/drag, notification countdown/swipe resistance, re-arm timing, `adb shell date` clock test) belongs to Arjun.
-- Pause events (`pause_started`/`pause_expired`/bubble) are best-effort telemetry writes (`runCatching`), consistent with the existing service-event pattern; a failed write never cancels a pause.
+- Bubble content/tap and notification navigation are unchanged.
+- P6-N1 remains an owner-observed platform limit: source requests an ongoing notification, but Android 13+ controls foreground-notification dismissal behavior.
+- P6-N2 remains unchanged: `bubble_shown` is keyed to the displayed block ID; duplicate same-block pause starts are not expected through detection.
+- The screen-on receiver, accessibility adapter, service rendering and foreground-window re-feed are Android wiring. They compile but are not executed by JVM tests; owner device evidence remains separate after code PASS.
+- No device/emulator/adb/install/screenshot/instrumented operation, Phase 7 work, dependency/toolchain change, schema change or unrelated cleanup was performed.
 
 ## Stop
 
-Handed off for fresh independent review. No device work, no Phase 7, no dependencies/toolchain changes, no unrelated cleanup performed.
+Ready for a fresh independent re-review of only `d93162d..062c71e` plus the affected expiry/enforcement dependencies. Owner device acceptance remains after code PASS.
