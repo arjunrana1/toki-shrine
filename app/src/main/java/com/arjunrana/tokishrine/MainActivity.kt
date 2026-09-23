@@ -45,12 +45,17 @@ import com.arjunrana.tokishrine.ui.screens.BatteryInstructionsScreen
 import com.arjunrana.tokishrine.ui.screens.BlockDetailScreen
 import com.arjunrana.tokishrine.ui.screens.BlockListScreen
 import com.arjunrana.tokishrine.ui.screens.CreateFlowScreen
+import com.arjunrana.tokishrine.ui.screens.FeedbackScreen
 import com.arjunrana.tokishrine.ui.screens.PermissionChecklistScreen
 import com.arjunrana.tokishrine.ui.screens.SettingsScreen
+import com.arjunrana.tokishrine.ui.screens.StatsScreen
 import com.arjunrana.tokishrine.ui.screens.TurnOnScreen
 import com.arjunrana.tokishrine.ui.screens.WelcomeScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.FeedbackEmail
+import com.arjunrana.tokishrine.ui.util.feedbackMailIntent
 import kotlinx.coroutines.launch
+import android.content.pm.PackageManager
 
 // Hand-rolled navigation over a saveable route stack (review blocker 1):
 // routes encode to strings (RouteCodec), so a recreated activity restores
@@ -238,7 +243,9 @@ class MainActivity : ComponentActivity() {
                             onOpenDetail = { stack.add(Route.Detail(it)) },
                             onTurnOn = openTurnOnOrGate,
                             onTurnOff = { startActivity(BlockActivity.turnOffIntent(context, it)) },
+                            onOpenStats = { stack.add(Route.Stats) },
                             onOpenSettings = { stack.add(Route.Settings) },
+                            onOpenFeedback = { stack.add(Route.Feedback) },
                         )
 
                         is Route.Create -> CreateFlowScreen(
@@ -364,6 +371,47 @@ class MainActivity : ComponentActivity() {
                             onOpenPermissionHealth = {
                                 stack.add(Route.Checklist(ChecklistMode.SETTINGS))
                             },
+                            onOpenFeedback = { stack.add(Route.Feedback) },
+                        )
+
+                        // Screen 23: the §9 figures over the event store.
+                        Route.Stats -> StatsScreen(
+                            eventRepo = app.eventRepository,
+                            appsRepo = app.installedAppsRepository,
+                            onBack = { stack.removeAt(stack.lastIndex) },
+                        )
+
+                        // Screen 25: the §13 email-intent handoff. The
+                        // populated intent goes to an external mail app only
+                        // when one is visible (the mailto <queries> block);
+                        // feedback_sent is logged solely for a successful
+                        // handoff, never for confirmed delivery, and a failed
+                        // handoff leaves the screen and the draft in place.
+                        Route.Feedback -> FeedbackScreen(
+                            eventRepo = app.eventRepository,
+                            onSend = { body ->
+                                val intent = feedbackMailIntent(body)
+                                val hasHandler = runCatching {
+                                    packageManager.resolveActivity(
+                                        intent,
+                                        PackageManager.ResolveInfoFlags.of(0),
+                                    ) != null
+                                }.getOrDefault(false)
+                                val launchSucceeded = hasHandler &&
+                                    runCatching { startActivity(intent) }.isSuccess
+                                if (FeedbackEmail.handedOff(hasHandler, launchSucceeded)) {
+                                    scope.launch {
+                                        runCatching {
+                                            app.eventRepository.log(EventRepository.EVENT_FEEDBACK_SENT)
+                                        }
+                                    }
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
+                            onSent = { stack.removeAt(stack.lastIndex) },
+                            onBack = { stack.removeAt(stack.lastIndex) },
                         )
                     }
                 }

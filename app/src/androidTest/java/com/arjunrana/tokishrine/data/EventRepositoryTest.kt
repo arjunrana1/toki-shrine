@@ -127,10 +127,11 @@ class EventRepositoryTest {
             )
         }
 
-        // 6 completed challenges count in the rate denominator; abandoned
-        // challenges and turn-offs must not.
+        // 6 completed challenges count in the rate denominator; historical
+        // challenge_abandoned rows (the event is retired, Phase 7) and
+        // turn-offs must not.
         repeat(6) { insert(EventRepository.EVENT_CHALLENGE_COMPLETED, localNoonDaysAgo(2)) }
-        repeat(2) { insert(EventRepository.EVENT_CHALLENGE_ABANDONED, localNoonDaysAgo(2)) }
+        repeat(2) { insert("challenge_abandoned", localNoonDaysAgo(2)) }
         insert(EventRepository.EVENT_TURNOFF_COMPLETED, localNoonDaysAgo(4))
 
         val stats = repo.getStats(now, zone)
@@ -181,6 +182,102 @@ class EventRepositoryTest {
         assertEquals(1, stats.mostWalkedAwayFrom.size)
         assertEquals("com.instagram.android", stats.mostWalkedAwayFrom[0].target)
         assertEquals(1, stats.mostWalkedAwayFrom[0].count)
+    }
+
+    // Phase 7 retirement: rows for retired event names are historical data —
+    // they stay readable in the event table (never deleted by the app) and
+    // stay excluded from every §9 figure. Seeded literal names mirror what a
+    // pre-retirement install actually wrote.
+    @Test
+    fun retiredEventRowsArePreservedAndExcludedFromStats() = runBlocking {
+        listOf(
+            "challenge_abandoned",
+            "bubble_dragged",
+            "block_conflict_shown",
+            "countdown_stalled",
+        ).forEach { name ->
+            insert(name, now - 1, target = "com.instagram.android", targetType = EventRepository.TARGET_TYPE_APP)
+        }
+
+        val stats = repo.getStats(now, ZoneId.systemDefault())
+
+        assertEquals(4, repo.countAllEvents())
+        assertEquals(0, stats.totalWalkAways)
+        assertEquals(0, stats.thisWeek)
+        assertEquals(0, stats.bestDay)
+        assertEquals(0.0, stats.walkAwayRate, 0.0)
+        assertTrue(stats.mostWalkedAwayFrom.isEmpty())
+    }
+
+    // Phase 7 acceptance: empty data renders zeros, not NaN or crashes — the
+    // walk-away rate is defined as 0 with no denominator.
+    @Test
+    fun statsWithNoEventsAreAllZero() = runBlocking {
+        val stats = repo.getStats(now, ZoneId.systemDefault())
+
+        assertEquals(0, stats.totalWalkAways)
+        // The repository records first launch on read, so today is day 0.
+        assertEquals(0, stats.daysActive)
+        assertEquals(0, stats.thisWeek)
+        assertEquals(0, stats.bestDay)
+        assertEquals(0.0, stats.walkAwayRate, 0.0)
+        assertTrue(stats.mostWalkedAwayFrom.isEmpty())
+    }
+
+    // Phase 7 feature-engagement events are ordinary rows: each Phase 7
+    // screen/entry logs exactly its §10 event through the shared write path.
+    @Test
+    fun phaseSevenEngagementEventsWriteThroughLog() = runBlocking {
+        repo.log(EventRepository.EVENT_STATS_VIEWED)
+        repo.log(EventRepository.EVENT_SETTINGS_VIEWED)
+        repo.log(EventRepository.EVENT_FEEDBACK_OPENED)
+        repo.log(EventRepository.EVENT_FEEDBACK_SENT)
+
+        listOf(
+            EventRepository.EVENT_STATS_VIEWED,
+            EventRepository.EVENT_SETTINGS_VIEWED,
+            EventRepository.EVENT_FEEDBACK_OPENED,
+            EventRepository.EVENT_FEEDBACK_SENT,
+        ).forEach { name ->
+            assertEquals(1, db.eventDao().countByName(name))
+        }
+    }
+
+    // Phase 7 migration posture: with fallbackToDestructiveMigration removed,
+    // reopening an existing database file must carry every prior row —
+    // active and retired — into the new process untouched. This is the
+    // non-destructive open the shipped TokiApplication now performs.
+    @Test
+    fun existingRowsSurviveReopenWithoutDestructiveFallback() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val dbName = "p7-reopen-preservation.db"
+        context.getDatabasePath(dbName).parentFile?.mkdirs()
+        context.getDatabasePath(dbName).delete()
+
+        val first = Room.databaseBuilder(context, TokiDatabase::class.java, dbName).build()
+        first.eventDao().insert(
+            Event(
+                name = EventRepository.EVENT_WALK_AWAY,
+                timestampUtc = now,
+                target = "com.instagram.android",
+                targetType = EventRepository.TARGET_TYPE_APP,
+            ),
+        )
+        first.eventDao().insert(Event(name = "challenge_abandoned", timestampUtc = now))
+        first.appMetaDao().putIfAbsent(AppMeta(AppMeta.KEY_FIRST_LAUNCH_AT, (now - 86_400_000L).toString()))
+        first.close()
+
+        val second = Room.databaseBuilder(context, TokiDatabase::class.java, dbName).build()
+        val reopened = EventRepository(second, clock = { now })
+        val stats = reopened.getStats(now, ZoneId.systemDefault())
+
+        // The active walk-away and the retired row both survive the reopen.
+        assertEquals(2, reopened.countAllEvents())
+        assertEquals(1, stats.totalWalkAways)
+        assertEquals(1, stats.daysActive)
+
+        second.close()
+        context.getDatabasePath(dbName).delete()
     }
 
     @Test

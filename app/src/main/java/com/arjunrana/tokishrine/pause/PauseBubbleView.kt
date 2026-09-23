@@ -36,7 +36,6 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
 
     interface Host {
         fun onBubbleTap(blockId: Long)
-        fun onBubbleDragged()
 
         /**
          * Owner-approved dismissal (Phase 6 addendum): released over the
@@ -238,9 +237,11 @@ class PauseBubbleView(context: Context) : LinearLayout(context) {
                     val snapshot = host?.onBubbleDismissalDecided(shownBlockId)
                     animateOutThen { if (snapshot != null) host?.onBubbleDismissed(snapshot) }
                 } else if (dragging) {
+                    // Plain drag released outside the discard zone: the pill
+                    // simply stays where it was dropped. bubble_dragged is a
+                    // retired event (Phase 7), so nothing is logged.
                     setDiscardAffordance(false)
                     hideHint()
-                    host?.onBubbleDragged()
                 } else {
                     performClick()
                 }

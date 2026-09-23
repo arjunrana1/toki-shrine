@@ -127,7 +127,6 @@ open class EventRepository(
         // later phases can't drift apart.
         const val EVENT_WALK_AWAY = "walk_away"
         const val EVENT_CHALLENGE_COMPLETED = "challenge_completed"
-        const val EVENT_CHALLENGE_ABANDONED = "challenge_abandoned"
         const val EVENT_CHALLENGE_STARTED = "challenge_started"
         const val EVENT_TYPING_MISMATCH = "typing_mismatch"
         const val EVENT_COUNTDOWN_STARTED = "countdown_started"
@@ -161,6 +160,12 @@ open class EventRepository(
         const val EVENT_ONBOARDING_COMPLETED = "onboarding_completed"
         const val EVENT_SETTINGS_VIEWED = "settings_viewed"
 
+        // Feature-engagement events (§10) fired by the Phase 7 screens.
+        // feedback_sent means the populated mail intent was successfully
+        // handed to an external mail app — never confirmed delivery.
+        const val EVENT_FEEDBACK_OPENED = "feedback_opened"
+        const val EVENT_FEEDBACK_SENT = "feedback_sent"
+
         // Service-health events (§10) fired by the Phase 4 detection
         // service. url_read_failed is the silent-failure canary: a browser
         // that changes its address-bar view ID stops detection with no
@@ -174,7 +179,6 @@ open class EventRepository(
         const val EVENT_PAUSE_STARTED = "pause_started"
         const val EVENT_PAUSE_EXPIRED = "pause_expired"
         const val EVENT_BUBBLE_SHOWN = "bubble_shown"
-        const val EVENT_BUBBLE_DRAGGED = "bubble_dragged"
         const val EVENT_BUBBLE_TAPPED = "bubble_tapped"
         const val EVENT_BUBBLE_DISMISSED = "bubble_dismissed"
     }

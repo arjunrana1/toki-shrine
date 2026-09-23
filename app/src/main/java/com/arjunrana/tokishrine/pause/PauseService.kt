@@ -313,6 +313,8 @@ class PauseService : Service(), PauseBubbleView.Host {
         latestPauses.values.map { it.blockId to it.deadlineMs }
 
     // — bubble host callbacks (§10) —
+    // bubble_dragged is retired (Phase 7): dragging remains a live gesture —
+    // including drag-to-dismiss below — it simply no longer logs an event.
 
     override fun onBubbleTap(blockId: Long) {
         logEvent { log(EventRepository.EVENT_BUBBLE_TAPPED, blockId = blockId) }
@@ -323,10 +325,6 @@ class PauseService : Service(), PauseBubbleView.Host {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }
-    }
-
-    override fun onBubbleDragged() {
-        logEvent { log(EventRepository.EVENT_BUBBLE_DRAGGED) }
     }
 
     override fun onBubbleDismissalDecided(displayedBlockId: Long): BubbleDismissalSnapshot =

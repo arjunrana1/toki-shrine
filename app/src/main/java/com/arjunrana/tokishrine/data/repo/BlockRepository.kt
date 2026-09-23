@@ -21,24 +21,24 @@ class ConflictingOwnershipException(
     val isApp: Boolean,
 ) : IllegalStateException("Target '$target' is already owned by another block")
 
-// Production values follow the wizard redesign. The 23 September owner-test
-// addendum replaces only the debug variant's minima/first ladder rungs; the
-// release source set retains the production values. This persistence boundary
-// enforces the active build variant on every write path.
+// Production values follow PRD §7 / §17. The 23 September owner-test debug
+// overrides (20-char/20-second minima and 20-first-rung disable ladders) were
+// removed for Phase 7 final approval: every build variant — debug included —
+// now enforces these production values at the persistence boundary.
 const val PAUSE_MINUTES_MIN = 5
 const val PAUSE_MINUTES_MAX = 100
 const val PAUSE_MINUTES_STEP = 5
-val PAUSE_CHARS_MIN = BuildVariantChallengeLimits.pauseCharsMin
+const val PAUSE_CHARS_MIN = 100
 const val PAUSE_CHARS_MAX = 200
 const val PAUSE_CHARS_STEP = 10
-val PAUSE_WAIT_SECONDS_MIN = BuildVariantChallengeLimits.pauseWaitSecondsMin
+const val PAUSE_WAIT_SECONDS_MIN = 60
 const val PAUSE_WAIT_SECONDS_MAX = 300
 const val PAUSE_WAIT_SECONDS_STEP = 5
 
-// Fixed per-variant disable ladders: no custom stepper or second method
-// selector. The middle entry remains the recommended preselection.
-val DISABLE_CHARS_CHOICES = BuildVariantChallengeLimits.disableCharsChoices
-val DISABLE_WAIT_SECONDS_CHOICES = BuildVariantChallengeLimits.disableWaitSecondsChoices
+// Fixed disable ladders: no custom stepper or second method selector. The
+// middle entry remains the recommended preselection.
+val DISABLE_CHARS_CHOICES = listOf(220, 350, 700)
+val DISABLE_WAIT_SECONDS_CHOICES = listOf(180, 360, 720)
 
 // Fresh-draft defaults (PRD §7): typing 150 chars, waiting 60 s, pause 15
 // min, and the middle rung of each disable ladder.

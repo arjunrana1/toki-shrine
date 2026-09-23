@@ -15,6 +15,8 @@ class RouteCodecTest {
         Route.BlockList,
         Route.Welcome,
         Route.Settings,
+        Route.Stats,
+        Route.Feedback,
         Route.AccessibilityExplainer,
         Route.BatteryInstructions,
         Route.Checklist(ChecklistMode.ONBOARDING),

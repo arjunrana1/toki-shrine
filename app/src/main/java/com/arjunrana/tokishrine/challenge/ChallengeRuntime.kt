@@ -19,11 +19,6 @@ data class ChallengeConfig(
 
 enum class ChallengePhase { GATE, ACTIVE, COMMITTING, WALK_AWAY, TERMINAL }
 
-enum class AbandonReason(val eventValue: String) {
-    APP_SWITCH("app_switch"),
-    SCREEN_OFF("screen_off"),
-}
-
 data class ChallengeSnapshot(
     val phase: ChallengePhase,
     val generation: Int,
@@ -74,13 +69,6 @@ sealed interface ChallengeEffect {
         val target: String,
         val targetType: String,
         val source: String,
-    ) : ChallengeEffect
-
-    data class Abandoned(
-        val blockId: Long,
-        val method: FrictionType,
-        val progressPct: Int,
-        val reason: AbandonReason,
     ) : ChallengeEffect
 
     data class TurnOffAbandoned(val blockId: Long, val progressPct: Int) : ChallengeEffect
@@ -236,13 +224,9 @@ class ChallengeRuntime(
         }
     }
 
-    fun abandon(reason: AbandonReason, nowMs: Long): ChallengeEffect? {
-        if (phase != ChallengePhase.ACTIVE) return null
-        accrueVisible(nowMs)
-        val progress = progressPct(nowMs)
-        terminalize()
-        return ChallengeEffect.Abandoned(config.blockId, config.method, progress, reason)
-    }
+    // challenge_abandoned is retired (Phase 7): ordinary app-switch/lock/Back
+    // stay nonterminal via onBackgrounded above, and the only intentional
+    // escapes are escape()/gateWalkAway(). No abandon() surface remains.
 
     fun gateWalkAway(): ChallengeEffect? {
         if (phase != ChallengePhase.GATE) return null

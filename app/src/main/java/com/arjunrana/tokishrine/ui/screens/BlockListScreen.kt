@@ -24,6 +24,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,7 +52,9 @@ fun BlockListScreen(
     onOpenDetail: (Long) -> Unit,
     onTurnOn: (Long) -> Unit,
     onTurnOff: (Long) -> Unit,
+    onOpenStats: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenFeedback: () -> Unit,
 ) {
     val blocks by blockRepo.observeBlocksWithContents().collectAsState(initial = null as List<BlockWithContents>?)
 
@@ -81,16 +87,12 @@ fun BlockListScreen(
                     color = NocturneTheme.colors.text,
                     modifier = Modifier.weight(1f),
                 )
-                // Stats belongs to Phase 7 and stays inert; Settings opens
-                // screen 24 (Phase 3).
-                PhosphorIcon(Ph.ChartBar, tint = NocturneTheme.colors.neutral.step300, size = 21)
-                Spacer(Modifier.width(16.dp))
-                PhosphorIcon(
-                    Ph.GearSix,
-                    tint = NocturneTheme.colors.neutral.step300,
-                    size = 21,
-                    modifier = Modifier.clickable { onOpenSettings() },
-                )
+                // Header icon buttons (PRD §6 screens 5–6): Stats (Phase 7)
+                // and Settings. Both carry a semantic label and a touch
+                // target larger than their glyph.
+                HeaderIconButton(glyph = Ph.ChartBar, label = "Stats", onClick = onOpenStats)
+                Spacer(Modifier.width(8.dp))
+                HeaderIconButton(glyph = Ph.GearSix, label = "Settings", onClick = onOpenSettings)
             }
 
             val list = blocks
@@ -136,7 +138,7 @@ fun BlockListScreen(
                         modifier = Modifier.weight(1f),
                         height = 44.dp,
                         fontSize = 13,
-                        onClick = { /* Feedback screen lands in Phase 7 */ },
+                        onClick = onOpenFeedback,
                     )
                     NocturneButton(
                         "New Block",
@@ -149,6 +151,22 @@ fun BlockListScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HeaderIconButton(glyph: Int, label: String, onClick: () -> Unit) {
+    val colors = NocturneTheme.colors
+    Box(
+        Modifier
+            .size(44.dp)
+            // clearAndSetSemantics keeps the decorative glyph unannounced and
+            // gives the button its accessible name and role (Phase 7 pass).
+            .clearAndSetSemantics { contentDescription = label; role = Role.Button }
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        PhosphorIcon(glyph, tint = colors.neutral.step300, size = 21)
     }
 }
 

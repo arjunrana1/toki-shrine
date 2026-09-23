@@ -38,6 +38,14 @@ android {
     }
 }
 
+// Room schema export (Phase 7 migration obligation): the compiler writes the
+// exact schema JSON for each database version under app/schemas, becoming the
+// reviewed baseline future migrations are written and tested against. This is
+// configuration of the existing KSP toolchain, not a new dependency.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)

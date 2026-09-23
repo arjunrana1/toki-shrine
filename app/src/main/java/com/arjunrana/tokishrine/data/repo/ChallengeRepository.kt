@@ -1,7 +1,6 @@
 package com.arjunrana.tokishrine.data.repo
 
 import androidx.room.withTransaction
-import com.arjunrana.tokishrine.challenge.AbandonReason
 import com.arjunrana.tokishrine.challenge.CompletionRequest
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.entity.AppMeta
@@ -103,24 +102,6 @@ class ChallengeRepository(
             .toInstant()
             .toEpochMilli()
         events.countByNameSince(EventRepository.EVENT_WALK_AWAY, dayStart)
-    }
-
-    suspend fun recordAbandoned(
-        blockId: Long,
-        method: FrictionType,
-        progressPct: Int,
-        reason: AbandonReason,
-    ) = db.withTransaction {
-        ensureFirstLaunch()
-        insert(
-            EventRepository.EVENT_CHALLENGE_ABANDONED,
-            blockId,
-            params = mapOf(
-                "type" to method.eventValue,
-                "progress_pct" to progressPct,
-                "reason" to reason.eventValue,
-            ),
-        )
     }
 
     suspend fun recordTurnOffAbandoned(blockId: Long, progressPct: Int) = db.withTransaction {

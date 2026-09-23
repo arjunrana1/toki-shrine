@@ -29,6 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
@@ -247,11 +251,19 @@ fun NocturneAppbar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
-            PhosphorIcon(
-                Ph.ArrowLeft,
-                tint = colors.neutral.step300,
-                modifier = Modifier.clickable { onBack() },
-            )
+            Box(
+                Modifier
+                    .size(44.dp)
+                    // Phase 7 accessibility pass: the glyph-only back control
+                    // needs a name and role; clearAndSetSemantics keeps the
+                    // decorative glyph unannounced and the target larger than
+                    // the glyph itself.
+                    .clearAndSetSemantics { contentDescription = "Back"; role = Role.Button }
+                    .clickable { onBack() },
+                contentAlignment = Alignment.Center,
+            ) {
+                PhosphorIcon(Ph.ArrowLeft, tint = colors.neutral.step300)
+            }
             Spacer(Modifier.width(12.dp))
         }
         Text(
@@ -305,6 +317,7 @@ fun NocturneTextField(
     fontSize: Int = 14,
     minHeight: Dp = 36.dp,
     singleLine: Boolean = false,
+    multiline: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     readOnly: Boolean = false,
@@ -329,7 +342,10 @@ fun NocturneTextField(
                     .background(colors.surface, RoundedCornerShape(10.dp))
                     .border(1.dp, colors.divider, RoundedCornerShape(10.dp))
                     .padding(horizontal = 11.dp, vertical = 9.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                // A tall multiline field (screen 25) anchors its text at the
+                // top like the mock's textarea; single-line inputs keep the
+                // established vertically centered look.
+                verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (leading != null) leading()

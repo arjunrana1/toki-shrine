@@ -34,15 +34,15 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 
 // Screen 24: permission health · supported browsers · theme · send
 // feedback · about and version. The mock's "Countdown messages — updated
-// remotely" row is removed (PRD §6). Supported browsers and send feedback
-// stay inert until their owning phases (browser map UI Phase 4, feedback
-// Phase 7).
+// remotely" row is removed (PRD §6). Send feedback opens screen 25 (Phase 7);
+// the supported browsers row remains informational (PRD §13 list).
 @Composable
 fun SettingsScreen(
     states: Map<AppPermission, Boolean>,
     eventRepo: EventRepository,
     onBack: () -> Unit,
     onOpenPermissionHealth: () -> Unit,
+    onOpenFeedback: () -> Unit,
 ) {
     val colors = NocturneTheme.colors
 
@@ -112,6 +112,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = { PhosphorIcon(Ph.PaperPlaneTilt, tint = colors.neutral.step400, size = 19) },
                     title = "Send feedback",
+                    onClick = onOpenFeedback,
                     trailing = { PhosphorIcon(Ph.CaretRight, tint = colors.neutral.step500, size = 17) },
                 )
                 RowDivider()

@@ -23,6 +23,10 @@ sealed interface Route {
     data object AccessibilityExplainer : Route
     data object BatteryInstructions : Route
     data object Settings : Route
+    // Phase 7 screens: Stats (§6 screen 23) from the home header, Feedback
+    // (§6 screen 25) from the home bottom action and Settings.
+    data object Stats : Route
+    data object Feedback : Route
     data object Welcome : Route
 }
 
@@ -37,6 +41,8 @@ object RouteCodec {
         Route.BlockList -> "blockList"
         Route.Welcome -> "welcome"
         Route.Settings -> "settings"
+        Route.Stats -> "stats"
+        Route.Feedback -> "feedback"
         Route.AccessibilityExplainer -> "explainer"
         Route.BatteryInstructions -> "battery"
         is Route.Checklist -> "checklist:${route.mode.name}"
@@ -51,6 +57,8 @@ object RouteCodec {
             "blockList" -> Route.BlockList
             "welcome" -> Route.Welcome
             "settings" -> Route.Settings
+            "stats" -> Route.Stats
+            "feedback" -> Route.Feedback
             "explainer" -> Route.AccessibilityExplainer
             "battery" -> Route.BatteryInstructions
             "checklist" -> parts.getOrNull(1)?.let { mode ->

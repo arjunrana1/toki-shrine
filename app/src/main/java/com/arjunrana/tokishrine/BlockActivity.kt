@@ -350,18 +350,6 @@ class BlockActivity : ComponentActivity() {
                     }
                 }
             }
-            is ChallengeEffect.Abandoned -> {
-                clearLiveChallenge()
-                app.applicationScope.launch {
-                    app.challengeRepository.recordAbandoned(
-                        effect.blockId,
-                        effect.method,
-                        effect.progressPct,
-                        effect.reason,
-                    )
-                }
-                finish()
-            }
             is ChallengeEffect.TurnOffAbandoned -> {
                 clearLiveChallenge()
                 app.applicationScope.launch {

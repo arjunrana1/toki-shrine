@@ -15,13 +15,14 @@ Tests: matching `app/src/androidTest/.../data/{BlockRepositoryTest,EventReposito
 - State transition plus block_turned_on/off event commit in `setEnabledRecordingTransition`; unchanged stored value emits no transition. Internal bare setEnabled is not a replacement public activation path. UI activation gating belongs to [navigation/permissions](navigation-permissions.md).
 - `completeOnboarding` transaction pairs completion event and one-way app_meta marker at most once. Preserve first_launch_at independently through insert-if-absent semantics.
 - Events survive block deletion: no cascading event FK. Child target rows cascade with their block. Historical retired conflict events remain; do not emit new conflict shown/resolved events for the removed UI.
+- The active event taxonomy has three uses: product-critical outcomes, feature engagement and diagnostics. `bubble_dragged` and `challenge_abandoned` are retired alongside the existing conflict/stall events: preserve historical rows, but do not emit them or include them in the Phase 7 active-event audit. Bubble dragging and nonterminal challenge suspension remain product behavior; `countdown_started`/`countdown_completed` remain active.
 - Event target_type distinguishes app/site; do not infer it from dotted strings. Per-app leaderboard excludes sites; global walk-away totals include both.
 - Walk-away rate = walk_away / (walk_away + challenge_completed); zero denominator yields 0. Abandonment and turnoff_completed are excluded. Local calendar week begins at start of day six days ago; days-active starts at zero on launch day; best-day buckets are local. Preserve injectable clock/test fixtures.
 
 ## Open obligations and limits
 
-- `fallbackToDestructiveMigration()` is dev-only. Deliberately resolve migrations and schema export before distribution; do not wipe owner fixtures mid-test. `exportSchema = false` is historical setup, not release guidance.
-- Typo positions have no user preference and appear only after an explicit failed Submit. The obsolete `show_typos` column remains non-authoritative and should be removed in the next deliberate schema revision.
+- Migration posture resolved in Phase 7: `fallbackToDestructiveMigration()` is removed and schema export is enabled (`app/schemas`, v3 baseline checked in with the Phase 7 submission). Schema v3 stands — the wizard redesign's approved reset already dropped `show_typos` — so existing v3 blocks/events are preserved and no Phase 7 migration runs; any future version bump must ship an explicit migration against the exported schema. A pre-v3 install (none exists in the field) now fails loudly instead of wiping.
+- Typo positions have no user preference and appear only after an explicit failed Submit. The `show_typos` column is gone as of schema v3; nothing writes or reads it.
 - Phase 3 transactional pairings have executed Room evidence in [OWNER-CHECKS](../../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md): transition/event and onboarding marker/event commit together, forced event failures roll back the paired mutation, and repetitions remain at most once.
 - Edit/delete OFF gating is part of UI behavior; do not overstate it as universally enforced by every repository API. Inspect the relevant path if changing this boundary.
 

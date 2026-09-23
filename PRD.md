@@ -208,7 +208,7 @@ A **walk-away** is recorded when the user declines to proceed by an explicit act
 - *Never mind* on the typing challenge
 - *Never mind* on the delay countdown
 
-**Suspension is not a walk-away or abandonment.** Switching apps, locking the screen, or using Android Back during a live challenge preserves the in-process challenge and records no terminal event. Only the explicit escape actions above intentionally end a live challenge. The existing `challenge_abandoned` event remains in the schema for historical data; ordinary Phase 5 app-switch/lock no longer emits it.
+**Suspension is not a walk-away or abandonment.** Switching apps, locking the screen, or using Android Back during a live challenge preserves the in-process challenge and records no terminal event. Only the explicit escape actions above intentionally end a live challenge. `challenge_abandoned` is retired: historical rows may remain, but the app no longer emits it and Phase 7 removes its unused instrumentation surface.
 
 The counter shown to the user is **global** across all blocks. Individual events are still stored **per app and per block**, because the in-the-moment context line ("you've opened this 11 times since 9am") and the Stats leaderboard both need that granularity.
 
@@ -232,6 +232,14 @@ The event store *is* the Stats data source — Stats is a query over it, not a p
 Schema: `event(id, name, timestamp_utc, block_id?, target?, params_json?)`
 
 ### Event list
+
+Active events are intentionally limited to three product uses:
+
+1. **Product-critical:** onboarding, block-creation funnel, gate/challenge outcomes, pause outcomes and turn-off outcomes.
+2. **Feature engagement:** bubble, Stats, Settings and Feedback interactions.
+3. **Diagnostic:** accessibility-service lifecycle and URL-read failures.
+
+Rows explicitly marked **retired** are historical compatibility only: they are not emitted, are excluded from the Phase 7 active-event audit and need not retain unused application constants. Existing stored rows are not deleted merely because an event is retired. Remote analytics and any SDK integration are outside Phase 7.
 
 **Onboarding**
 
@@ -266,7 +274,7 @@ Schema: `event(id, name, timestamp_utc, block_id?, target?, params_json?)`
 | `walk_away` | `block_id`, `target`, `source` (`block_screen` \| `typing` \| `countdown`) |
 | `challenge_started` | `block_id`, `type` (`typing` \| `delay`) |
 | `challenge_completed` | `block_id`, `type`, `duration_ms`, `attempts` |
-| `challenge_abandoned` | `block_id`, `type`, `progress_pct`, `reason` (`app_switch` \| `screen_off`) |
+| `challenge_abandoned` (retired; no longer emitted) | Historical: `block_id`, `type`, `progress_pct`, `reason` (`app_switch` \| `screen_off`) |
 | `typing_mismatch` | `block_id`, `chars_typed` |
 | `countdown_started` | `block_id`, `seconds` |
 | `countdown_stalled` (retired; hold detection removed) | Historical only |
@@ -280,7 +288,7 @@ Schema: `event(id, name, timestamp_utc, block_id?, target?, params_json?)`
 | `pause_started` | `block_id`, `minutes` |
 | `pause_expired` | `block_id` |
 | `bubble_shown` | `block_id` |
-| `bubble_dragged` | — |
+| `bubble_dragged` (retired; no longer emitted) | Historical only |
 | `bubble_tapped` | `block_id` |
 | `bubble_dismissed` | `block_id` |
 

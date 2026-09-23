@@ -10,8 +10,9 @@ import java.time.temporal.ChronoUnit
 object StatsCalculator {
 
     // walk_aways ÷ (walk_aways + completed_challenges); 0.0 with no data yet
-    // rather than NaN. challenge_abandoned and turnoff_completed deliberately
-    // stay out of the denominator (PRD §8: abandonment is not a walk-away).
+    // rather than NaN. The retired challenge_abandoned rows (historical only)
+    // and turnoff_completed deliberately stay out of the denominator (PRD §8:
+    // abandonment is not a walk-away).
     fun walkAwayRate(walkAways: Int, completedChallenges: Int): Double {
         val denominator = walkAways + completedChallenges
         if (denominator == 0) return 0.0

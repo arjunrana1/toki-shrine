@@ -21,11 +21,13 @@ class TokiApplication : Application() {
 
     val database: TokiDatabase by lazy {
         Room.databaseBuilder(this, TokiDatabase::class.java, TokiDatabase.NAME)
-            // Dev-phase decision (DECISIONS.md, Phase 2): no builds are
-            // distributed yet, so a schema bump during development rebuilds
-            // instead of crashing on a stale install. Revisit before any
-            // build leaves this device.
-            .fallbackToDestructiveMigration()
+            // Phase 7 migration posture: the dev-only destructive fallback is
+            // retired. Schema v3 stands (exported under app/schemas), so an
+            // existing v3 install — the only version in the field — opens
+            // with its blocks and events preserved, and any future version
+            // bump must ship an explicit migration. A pre-v3 install, of
+            // which none exists, now fails loudly instead of silently
+            // wiping data.
             .build()
     }
 
