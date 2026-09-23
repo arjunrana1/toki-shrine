@@ -73,17 +73,17 @@ class PauseService : Service(), PauseBubbleView.Host {
         }
     }
 
-    private val minuteTick = object : Runnable {
+    // Single per-second tick for both §6 surfaces: notification progress
+    // re-derives from the monotonic deadlines so the bar advances in step
+    // with the system chronometer (screen 21; owner correction, 23 September
+    // — the former 60 s re-post read as a frozen bar), and the bubble text
+    // refreshes (screen 20). Each re-post also restores a user-dismissed
+    // ongoing notification; that is the recorded platform behavior of
+    // P6-O13, not an enforcement surface.
+    private val secondTick = object : Runnable {
         override fun run() {
             app.pauseCoordinator.evaluate()
             renderNotificationsFromCache()
-            mainHandler.postDelayed(this, MINUTE_MS)
-        }
-    }
-
-    private val bubbleTick = object : Runnable {
-        override fun run() {
-            app.pauseCoordinator.evaluate()
             updateBubbleText()
             mainHandler.postDelayed(this, SECOND_MS)
         }
@@ -133,8 +133,7 @@ class PauseService : Service(), PauseBubbleView.Host {
     }
 
     override fun onDestroy() {
-        mainHandler.removeCallbacks(minuteTick)
-        mainHandler.removeCallbacks(bubbleTick)
+        mainHandler.removeCallbacks(secondTick)
         bubble?.detach()
         bubble = null
         runCatching { unregisterReceiver(screenOnReceiver) }
@@ -177,11 +176,14 @@ class PauseService : Service(), PauseBubbleView.Host {
         }
 
         val ids = active.map { notificationId(it.blockId) }.toMutableSet()
-        active.forEach { state ->
+        active.drop(1).forEach { state ->
             val notification = buildNotification(state, latestNames[state.blockId], now)
             notifications.notify(notificationId(state.blockId), notification)
         }
         active.first().let { soonest ->
+            // The soonest is promoted (not also notify()d): startForeground
+            // posts its notification, and at this cadence the duplicate post
+            // would double the shade churn.
             foregroundMet = true
             ServiceCompat.startForeground(
                 this,
@@ -328,10 +330,8 @@ class PauseService : Service(), PauseBubbleView.Host {
     }
 
     private fun scheduleTicks() {
-        mainHandler.removeCallbacks(minuteTick)
-        mainHandler.removeCallbacks(bubbleTick)
-        mainHandler.postDelayed(minuteTick, MINUTE_MS)
-        mainHandler.postDelayed(bubbleTick, SECOND_MS)
+        mainHandler.removeCallbacks(secondTick)
+        mainHandler.postDelayed(secondTick, SECOND_MS)
     }
 
     private fun createChannel() {
@@ -355,7 +355,6 @@ class PauseService : Service(), PauseBubbleView.Host {
         private const val CHANNEL_ID = "pause_countdown"
         private const val NOTIFICATION_ID_BASE = 20_000
         private const val PENDING_INTENT_BASE = 30_000L
-        private const val MINUTE_MS = 60_000L
         private const val SECOND_MS = 1_000L
     }
 }

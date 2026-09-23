@@ -259,7 +259,10 @@ fun NocturneAppbar(
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             color = colors.text,
-            modifier = Modifier.weight(1f),
+            // Owner correction, 23 September: a long title (block detail)
+            // wrapped flush against the trailing delete icon; the end pad
+            // mirrors the 12 dp gap after the back control.
+            modifier = Modifier.weight(1f).padding(end = 12.dp),
         )
         if (stepLabel != null) {
             Text(

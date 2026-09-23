@@ -31,9 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 
-// Full-bleed photo dim (PRD §11): dark enough that the Nocturne foreground
-// stays legible and the photo recedes into the dark ground.
-private const val GATE_SCRIM_ALPHA = 0.78f
+// Full-bleed photo dim (PRD §11): the Nocturne foreground stays legible and
+// the humour photo still reads as an image. Owner correction, 23 September:
+// 0.78 dimmed the photos into a near-black void on device; 0.65 lets the
+// subject through while headline and actions keep their contrast.
+private const val GATE_SCRIM_ALPHA = 0.65f
 
 /*
  * The real block gate (PRD §6 screen 15, §11). Stateless: the caller supplies
