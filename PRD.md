@@ -141,7 +141,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **21 Ongoing notification.** Non-dismissable for the duration of the pause, with a system countdown. Tapping opens the block's detail screen.
 
-**22 Turn-off challenge.** Inherits the block’s typing or waiting method with its selected disable difficulty. Escape action: *Leave it on*. The typing-only mock is incomplete for the waiting variant.
+**22 Turn-off challenge.** Inherits the block’s typing or waiting method with its selected disable difficulty. Escape action: *Never Mind* — on the typing variant a full-width outlined button under Submit, on the waiting variant the existing outlined bottom button (owner correction, 23 September 2026, superseding the former header *Leave it on* and the "Turning off ·" header eyebrow). The typing-only mock is incomplete for the waiting variant.
 
 **23 Stats.** See §9.
 
@@ -582,3 +582,4 @@ Arjun's installed-build testing of the reviewed `062c71e` tree recorded no faili
 - **Bubble dismissal (screen 20, owner-approved: "we need to give the ability to dismiss the bubble if the user wants it").** Dragging the bubble to the bottom screen edge and releasing discards it. Dismissal hides only the bubble surface for the pause instances visible at dismissal; any new pause start shows the bubble again with a fresh `bubble_shown`. Timing, enforcement, the ongoing notification and automatic re-arm are unaffected. §10 gains `bubble_dismissed | block_id`.
 - **Cross-block unfinished-challenge precedence — accepted, do not fix.** While a challenge is unfinished, a detection launch for a different block brings the existing session forward instead of starting that block's challenge; completing or explicitly dismissing it is the only way to clear it. Owner verdict: acceptable narrow edge case; do not "improve" this or the notification behavior below without real user feedback.
 - **Dismissed pause notification may return — accepted, do not fix.** Android may permit swiping the ongoing countdown notification away; the service's periodic render re-post then recreates it. Owner verdict: recorded platform observation, nothing to fix.
+- **Turn-off challenge visual round (owner corrections, 23 September 2026, incorporated into §6 screen 22).** The header shows the block name only (no "Turning off ·" eyebrow); "Leave it on" is retired — the typing variant escapes via a full-width outlined *Never Mind* button under Submit and the waiting variant's outlined bottom button reads *Never Mind*; the disable info card reads "Type in X characters to disable the block" with its lock icon vertically centred. Nothing else about either challenge changed.

@@ -125,11 +125,12 @@ fun ordinal(n: Int): String {
 
 // — copy selectors: one layout, two vocabularies (PRD §6 screens 17–19 vs 22) —
 
-fun challengeTitle(purpose: ChallengePurpose, blockName: String): String =
-    if (purpose == ChallengePurpose.TURN_OFF) "Turning off · $blockName" else blockName
+// Owner correction, 23 September 2026: the turn-off header drops the
+// "Turning off ·" eyebrow — the block name alone is sufficient.
+fun challengeTitle(purpose: ChallengePurpose, blockName: String): String = blockName
 
-fun typingEscapeLabel(purpose: ChallengePurpose): String =
-    if (purpose == ChallengePurpose.TURN_OFF) "Leave it on" else "Never mind"
-
+// Owner correction, 23 September 2026: the "Leave it on" vocabulary is
+// retired; the turn-off escape reads "Never Mind" (typing shows it as a
+// full-width button under Submit, delay keeps its outlined bottom button).
 fun delayEscapeLabel(purpose: ChallengePurpose): String =
-    if (purpose == ChallengePurpose.TURN_OFF) "Leave it on" else "Never mind"
+    if (purpose == ChallengePurpose.TURN_OFF) "Never Mind" else "Never mind"

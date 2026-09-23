@@ -162,14 +162,11 @@ class InterruptionModelsTest {
 
     @Test
     fun copySelectorsDistinguishPauseFromTurnOff() {
+        // Owner correction, 23 September 2026: the turn-off header shows the
+        // block name only — no "Turning off ·" eyebrow.
         assertEquals("The scroll pit", challengeTitle(ChallengePurpose.PAUSE, "The scroll pit"))
-        assertEquals(
-            "Turning off · The scroll pit",
-            challengeTitle(ChallengePurpose.TURN_OFF, "The scroll pit"),
-        )
-        assertEquals("Never mind", typingEscapeLabel(ChallengePurpose.PAUSE))
-        assertEquals("Leave it on", typingEscapeLabel(ChallengePurpose.TURN_OFF))
+        assertEquals("The scroll pit", challengeTitle(ChallengePurpose.TURN_OFF, "The scroll pit"))
         assertEquals("Never mind", delayEscapeLabel(ChallengePurpose.PAUSE))
-        assertEquals("Leave it on", delayEscapeLabel(ChallengePurpose.TURN_OFF))
+        assertEquals("Never Mind", delayEscapeLabel(ChallengePurpose.TURN_OFF))
     }
 }

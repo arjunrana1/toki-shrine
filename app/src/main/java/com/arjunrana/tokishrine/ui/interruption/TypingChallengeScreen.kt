@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
@@ -154,14 +155,19 @@ fun TypingChallengeScreen(
                 color = colors.neutral.step600,
                 modifier = Modifier.weight(1f),
             )
-            Text(
-                text = typingEscapeLabel(purpose),
-                fontSize = 13.sp,
-                color = colors.neutral.step300,
-                modifier = Modifier
-                    .clickable { onWalkAway() }
-                    .padding(vertical = 2.dp),
-            )
+            // Owner correction, 23 September: the turn-off flow escapes via
+            // the full-width Never Mind button under Submit, not a header
+            // ghost; the pause challenge keeps its header escape.
+            if (purpose != ChallengePurpose.TURN_OFF) {
+                Text(
+                    text = "Never mind",
+                    fontSize = 13.sp,
+                    color = colors.neutral.step300,
+                    modifier = Modifier
+                        .clickable { onWalkAway() }
+                        .padding(vertical = 2.dp),
+                )
+            }
         }
         if (purpose == ChallengePurpose.TURN_OFF) {
             Row(
@@ -170,15 +176,15 @@ fun TypingChallengeScreen(
                     .background(colors.neutral.step900, RoundedCornerShape(10.dp))
                     .padding(horizontal = 13.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 PhosphorIcon(
                     PhLockKey,
                     tint = colors.accentRamp.step300,
                     size = 17,
-                    modifier = Modifier.padding(top = 1.dp),
                 )
                 Text(
-                    text = "Type in $turnOffChars characters to turn this block off.",
+                    text = "Type in $turnOffChars characters to disable the block",
                     fontSize = 12.5.sp,
                     lineHeight = 19.sp,
                     color = colors.neutral.step300,
@@ -301,6 +307,37 @@ fun TypingChallengeScreen(
             enabled = submitEnabled,
             onClick = { onSubmit(typedText) },
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+        )
+        if (purpose == ChallengePurpose.TURN_OFF) {
+            TurnOffEscapeButton(
+                onClick = onWalkAway,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
+    }
+}
+
+/** The turn-off escape (PRD §6 screen 22, owner-corrected copy): outlined, under Submit. */
+@Composable
+private fun TurnOffEscapeButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = NocturneTheme.colors
+    val shape = RoundedCornerShape(10.dp)
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .border(1.dp, colors.neutral.step600, shape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "Never Mind",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.text,
         )
     }
 }
