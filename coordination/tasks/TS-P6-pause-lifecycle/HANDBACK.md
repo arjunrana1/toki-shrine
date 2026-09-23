@@ -37,7 +37,7 @@ Total JVM suite: **177 tests**. The Android callback ordering (decision before a
 
 ## Not done (boundaries)
 
-No device/emulator/adb work; the device still runs the `7fb322e` build, so on-device behavior of this repair is owner retest material after review. No new APK staged or installed. No Phase 7 work.
+No device testing by the implementer. After the review **PASS WITH NOTES**, at Arjun's 23 September 2026 request the reviewed repair build was installed on `R5CW30ZBM2R`: fresh debug APK from records-only HEAD `138360f` (app source exactly `f7bb1f2`), SHA-256 `f39dca91…7e08`, `install -r` **Success**, data preserved, app not launched — attribution in [CURRENT](../../../coordination/CURRENT.md) device state. On-device behavior of this repair is owner retest material. No Phase 7 work.
 
 ## Stop
 

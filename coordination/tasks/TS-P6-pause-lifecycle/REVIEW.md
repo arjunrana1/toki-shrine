@@ -1,5 +1,33 @@
 # Independent review — TS-P6-pause-lifecycle
 
+## P6C-R1 repair re-review
+
+- **Reviewed repair:** `f7bb1f2` (`Snapshot bubble dismissal at release and add Dismiss label chip`).
+- **Repair base:** `7fb322e` via records-only `69cd2be`.
+- **Verdict:** **PASS WITH NOTES.** The immutable release-time snapshot resolves the original late-read and `bubble_dismissed` attribution defect. The pure policy correctly leaves a pause started after that decision outside the dismissed set. P6C-O7 is a bounded token-based visibility correction with no code-review blocker. Phase 6 returns to owner acceptance; this is not device/runtime proof.
+- **Reviewer:** independent Codex, 23 September 2026. Review was limited to `7fb322e..f7bb1f2` and affected bubble render/callback dependencies. No device, emulator, adb, installation, screenshot or instrumented execution was performed.
+
+### Result and non-blocking note
+
+The dismissal decision is now captured synchronously at `ACTION_UP`, before the 140 ms cosmetic exit animation. `BubbleDismissalSnapshot` defensively copies the release-time block ID and pause-instance keys; both policy state and event attribution consume that snapshot after animation completion. A pause added after release is therefore not classified as dismissed.
+
+- **P6C-N1 — theoretical animation/render ordering edge, owner-accepted defer:** if another pause starts and its flow renders during the 140 ms exit animation, that render can precede the completion callback that detaches the shared bubble, with no guaranteed subsequent `renderBubble()` call. Reproduction requires the new pause activation and render to land inside that narrow interval; normal sequential user interaction requires completing another challenge and does not credibly reach it. Arjun explicitly accepted deferral on 23 September 2026. Treat this as a non-blocking observation unless device testing or real usage reproduces a missing bubble; do not expand Phase 6 for speculative repair.
+
+No actionable code finding remains in `7fb322e..f7bb1f2`.
+
+### Evidence
+
+- Reviewer-run `./build.sh testDebugUnitTest --tests com.arjunrana.tokishrine.pause.BubbleDismissalPolicyTest` — **PASS**, task `UP-TO-DATE` (`BUILD SUCCESSFUL`), confirming the committed inputs match the attributed passing run.
+- Reviewer-run `git diff --check 7fb322e..f7bb1f2` — clean.
+- Implementer-attributed `./build.sh assembleDebug` — PASS; full JVM suite — PASS, 177/177; focused policy suite — PASS, 7/7.
+- Gesture/animation ordering and P6C-O7 readability remain owner/device acceptance, not JVM evidence.
+
+### Next actor
+
+Arjun performs the affected owner retest on a freshly installed build: ordinary dismissal, bubble return for a subsequent pause, `bubble_dismissed` attribution and Dismiss-label readability. Unaffected Phase 6 results retain their original build attribution. After acceptance, Phase 6 may close and Phase 7 may be scoped; no Phase 7 implementation begins before that clearance.
+
+---
+
 ## Owner-corrections verification
 
 - **Reviewed corrections:** `da7f8d5..7fb322e` (P6C-O1–O3, P6C-O5 plus Dismiss-label refinement, and P6C-O6).
