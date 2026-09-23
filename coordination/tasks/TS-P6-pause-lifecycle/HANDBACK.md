@@ -30,7 +30,7 @@
 
 ## Install status
 
-The **installed** device build is still `7abb516` (`df50470e…af590`, installed 23 September): it has the working drag-to-dismiss with the original 0.55 dim affordance, but not the hint label or the 0.2 transparency. The `b1d9ec8` APK is built and staged (`app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `ac5d34fc1818714785e088d21509aa72bf3f10189e0400f32dd30b2a3efa341e`) and deliberately **not installed** — the owner asked to route the diff to Codex for verification first. Install after verification remains the agreed setup only: `adb -s R5CW30ZBM2R install -r`, no launch, no uninstall/clear, accessibility re-binding and seeding stay owner setup.
+The device now runs `b1d9ec8` (installed 23 September on the owner's explicit request, before Codex verification completes): staged APK hash re-verified (`ac5d34fc1818714785e088d21509aa72bf3f10189e0400f32dd30b2a3efa341e`), `adb -s R5CW30ZBM2R install -r` → **Success** (streamed install, data preserved, no uninstall/clear); `pm path` confirms the package and the accessibility grant is retained (re-binding is owner observation). Nothing was launched and no device testing was performed. Installation history this day: `062c71e` build (full checklist) → `7abb516` (dismissal, original affordance) → `b1d9ec8` (Dismiss label + 0.2 zone transparency, current). Install remains agreed setup only: `install -r`, no launch, no uninstall/clear.
 
 ## Stop
 
