@@ -15,6 +15,8 @@ data class ChallengeConfig(
     val pauseMinutes: Int = 0,
     val target: String? = null,
     val targetType: String? = null,
+    /** Foreground package that fired: the app, or the hosting browser of a site. */
+    val hostPackage: String? = null,
 )
 
 enum class ChallengePhase { GATE, ACTIVE, COMMITTING, WALK_AWAY, TERMINAL }
@@ -50,6 +52,9 @@ data class CompletionRequest(
     val countdownElapsedMs: Long,
     val configuredAmount: Int,
     val pauseMinutes: Int,
+    val target: String? = null,
+    val targetType: String? = null,
+    val hostPackage: String? = null,
 )
 
 sealed interface ChallengeEffect {
@@ -69,6 +74,7 @@ sealed interface ChallengeEffect {
         val target: String,
         val targetType: String,
         val source: String,
+        val hostPackage: String? = null,
     ) : ChallengeEffect
 
     data class TurnOffAbandoned(val blockId: Long, val progressPct: Int) : ChallengeEffect
@@ -246,6 +252,7 @@ class ChallengeRuntime(
             target = config.target,
             targetType = config.targetType,
             source = source,
+            hostPackage = config.hostPackage,
         )
     }
 
@@ -275,6 +282,9 @@ class ChallengeRuntime(
             countdownElapsedMs = accruedVisibleMs,
             configuredAmount = configuredAmount(),
             pauseMinutes = config.pauseMinutes,
+            target = config.target,
+            targetType = config.targetType,
+            hostPackage = config.hostPackage,
         )
     }
 

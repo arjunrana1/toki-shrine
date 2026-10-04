@@ -164,6 +164,7 @@ class BlockActivity : ComponentActivity() {
 
             val triggerType = intent.getStringExtra(EXTRA_TRIGGER_TYPE)
             val target = intent.getStringExtra(EXTRA_TARGET)
+            val hostPackage = intent.getStringExtra(EXTRA_HOST_PACKAGE)
             if (purpose == ChallengePurpose.PAUSE && !isValidDetectionLaunch(block, triggerType, target)) {
                 return@launch finish()
             }
@@ -201,6 +202,7 @@ class BlockActivity : ComponentActivity() {
                     pauseMinutes = block.block.pauseMinutes,
                     target = target,
                     targetType = triggerType,
+                    hostPackage = hostPackage,
                 ),
                 restored = saved?.let(::readSnapshot),
             )
@@ -223,6 +225,7 @@ class BlockActivity : ComponentActivity() {
                         target = target.orEmpty(),
                         targetType = triggerType.orEmpty(),
                         source = pendingSource,
+                        hostPackage = hostPackage,
                     ),
                 )
                 return@launch
@@ -342,6 +345,7 @@ class BlockActivity : ComponentActivity() {
                         effect.target,
                         effect.targetType,
                         effect.source,
+                        effect.hostPackage,
                     )
                     withContext(Dispatchers.Main.immediate) {
                         if (destroyed) return@withContext
@@ -528,8 +532,8 @@ class BlockActivity : ComponentActivity() {
 
     /**
      * A completed detection-triggered pause lands back on the app that
-     * started the session. Site-triggered sessions carry a domain, not a
-     * browser package, so they keep the plain finish; turn-off completions
+     * started the session. Site-triggered sessions keep the plain finish
+     * (their host package is for Stats attribution only); turn-off completions
      * stay in Toki where the user initiated them.
      */
     private fun returnToTriggeringApp() {
@@ -632,6 +636,7 @@ class BlockActivity : ComponentActivity() {
     companion object {
         const val EXTRA_TRIGGER_TYPE = "trigger_type"
         const val EXTRA_TARGET = "target"
+        const val EXTRA_HOST_PACKAGE = "host_package"
         const val EXTRA_BLOCK_NAME = "block_name"
         const val EXTRA_BLOCK_ID = "block_id"
         const val EXTRA_STARTED_AT_ELAPSED_MS = "started_at_elapsed_ms"

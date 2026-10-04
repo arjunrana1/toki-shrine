@@ -75,10 +75,10 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = { PhosphorIcon(Ph.Heartbeat, tint = colors.accentRamp.step300, size = 19) },
                     title = "Permission health",
-                    subtitle = if (grantedCount == 4) "All 4 granted" else "$grantedCount of 4 granted",
+                    subtitle = if (grantedCount == 5) "All 5 granted" else "$grantedCount of 5 granted",
                     onClick = onOpenPermissionHealth,
                     trailing = {
-                        if (grantedCount == 4) {
+                        if (grantedCount == 5) {
                             Box(
                                 Modifier
                                     .border(1.dp, colors.neutral.step700, RoundedCornerShape(20.dp))

@@ -1,8 +1,8 @@
 # Toki Shrine — PRD 1.0
 
-**Current design authority:** §17 records the owner’s 12 September 2026 refinements. For those items it supersedes older screen descriptions, mockup copy/layout and historical decisions. Unchanged behavior and design tokens retain their existing authority. All §17 choices are resolved; see its latest checkpoint for validation status.
+**Current design authority:** §17 records the owner’s refinements and later addenda. For those items it supersedes older screen descriptions, mockup copy/layout and historical decisions. Unchanged behavior and design tokens retain their existing authority. Dated checkpoints preserve evidence at that time; [CURRENT](coordination/CURRENT.md) identifies live task and acceptance status.
 
-Build specification for phase 1. Supersedes `PRD-phase-0.md` and `DESIGN-BRIEF-phase-1.md`, which are retained as history.
+Product and build specification. Supersedes `PRD-phase-0.md` and `DESIGN-BRIEF-phase-1.md`, which are retained as history.
 
 Android only. Phone, portrait, dark theme only.
 
@@ -28,7 +28,7 @@ Anti-brainrot, not productivity. The subject is endless scrolling and endless wa
 
 **In**
 
-Blocks (create, edit, delete, on/off) · Android app blocking · whole-domain website blocking in nine browsers · two friction mechanisms (typing, delay) · visible-and-unlocked countdown · timed pause with automatic re-arm · turn-off via the chosen method · floating bubble · ongoing notification · walk-away counter and stats · permission onboarding · feedback by email.
+Blocks (create, edit, delete, on/off) · Android app blocking · whole-domain website blocking in nine browsers · two friction mechanisms (typing, delay) · visible-and-unlocked countdown · timed pause with automatic re-arm · turn-off via the chosen method · floating bubble · ongoing notification · walk-away counter · estimated time saved and app usage Stats · permission onboarding · feedback by email.
 
 **Out**
 
@@ -105,7 +105,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **1 Welcome.** Product name, one-line description. Single CTA *Get started*. The "How it works" secondary CTA visible in the mock is **removed**.
 
-**2 Permission checklist.** Four rows, two states each — pending and granted. Progress indicator ("1 of 4"). No other states. Persistent and resumable; the same component is reused on the Settings permission-health row.
+**2 Permission checklist.** Five rows, two states each — pending and granted. Progress indicator ("1 of 5"). No other states. Persistent and resumable; the same component is reused on the Settings permission-health row.
 
 **3 Accessibility explainer.** Shown before Android's own permission screen. States plainly what the app does and does not do. Content is load-bearing — if this screen fails, users abandon here.
 
@@ -210,24 +210,46 @@ A **walk-away** is recorded when the user declines to proceed by an explicit act
 
 **Suspension is not a walk-away or abandonment.** Switching apps, locking the screen, or using Android Back during a live challenge preserves the in-process challenge and records no terminal event. Only the explicit escape actions above intentionally end a live challenge. `challenge_abandoned` is retired: historical rows may remain, but the app no longer emits it and Phase 7 removes its unused instrumentation surface.
 
-The counter shown to the user is **global** across all blocks. Individual events are still stored **per app and per block**, because the in-the-moment context line ("you've opened this 11 times since 9am") and the Stats leaderboard both need that granularity.
+The counter shown to the user is **global** across all blocks. Individual events are still stored **per app and per block**, for event history and in-the-moment context. The Stats ledger applies the separate app-only rules in §9.
 
-## 9. Stats definitions
+## 9. Stats — Your time (approved replacement, 4 October 2026)
 
-| Figure | Definition |
+This replaces the former walk-away dashboard in open Phase 7. Continue from the current implementation; do not revert Phase 6. Design screen number is **23** (the supplied handoff calls it 21). [S1–S6 PNGs](design/screens/stats-redesign/README.md) and the [HTML/spec](toki-shrine-ui-mockups/stats-screen/INTAKE.md) define layout; this section overrides their older behavior/copy. [Data/UI contract](docs/components/stats.md) defines the implementation boundary.
+
+**Outcomes.** Explicit *Not now* / *Never mind* actions are nopes, whether the interruption targeted an app or a site. Home, Back, lock and switching apps suspend and produce no outcome. A successful pause challenge is a push-through, app- or site-triggered alike. Attempts = counted nopes + push-throughs; pending and turn-off challenges contribute neither. A site outcome attributes to the hosting browser's package: for site interruptions the browser is the Stats app, appearing on the app leaderboard with savings aggregated across its site and app triggers (4 October §17 addendum). The global in-the-moment walk-away counter retains raw app + site behavior from §8.
+
+Repeated nopes for one package within five minutes of the **last counted** nope collapse into one Stats nope and attempt. Ignored repeats do not extend the window. At five minutes a new nope counts. Site-triggered and app-triggered nopes on the same browser package share that package's single sequence. A push-through always counts separately and ends the sequence. Deduplication is across blocks, local dates and process restarts. A backwards clock starts a new sequence rather than suppressing indefinitely.
+
+**Baseline.** On first successful Usage Access read, capture recent usable history, up to seven days before that capture (not seven pre-install days). Reconstruct foreground visits; do not equate each activity resume with an app open. Per-app usual visit duration = measured duration of complete usable visits / number of those visits. Fewer than three usable visits means **10 minutes**. Store all observed packages so an app added later can use that frozen capture; unobserved packages use the fallback. Keep actual durations for arithmetic; minimum one minute applies only to the displayed visit label. Freeze the baseline until confirmed recalibration. Overall usual screen time uses fully covered local days from that history; if none exist it is unavailable.
+
+**Storage/history.** Record new outcomes starting with this feature version; do not reinterpret old events as deduped attempts or invent old savings/post-challenge measurements. Past site nopes are not backfilled — site savings count only from the build implementing the 4 October attribution change. Before initial baseline capture, new nopes use the 10-minute fallback. Save each counted nope's duration contribution and baseline identity at outcome time. Recalibration atomically replaces the baseline for future nopes only; old savings never change. Retain outcomes and baseline through access revocation. Regrant resumes reading without implicit recalibration. Never clear existing blocks, events or markers on upgrade.
+
+| Figure | Definition over seven local calendar dates, including today |
 |---|---|
-| Total walk-aways | All-time count of walk-aways as defined in §8 |
-| Days active | Days since first launch |
-| This week | Walk-aways in the last 7 calendar days |
-| Best day | Highest single-day walk-away count, all time |
-| Walk-away rate | `walk_aways ÷ (walk_aways + completed_challenges)` |
-| Most walked away from | Per-app walk-away counts, descending |
+| Time saved | Sum of immutable saved-duration contributions from counted app nopes; remains an estimate with the headline **Time saved** |
+| Time saved per day | Seven-day saved sum / 7, including pre-feature days as zero |
+| “{total} saved so far” | Seven-day total, not all-time |
+| Attempts / day | (Counted nopes + app push-throughs) / 7, rounded to a whole number for display |
+| Nope rate | Counted nopes / resolved attempts, rounded whole percent; show an em dash and empty rate bar when there are no attempts |
+| Screen time | Available all-app foreground time over the seven-date window / 7; hide unavailable average/comparison rather than inventing zeros. Delta against frozen usual screen time; no delta for unavailable/zero baseline, hide changes below 1%; neutral tone both ways |
+| App rows | Installed apps in currently enabled blocks, plus browsers hosting enabled site blocks; include zero rows, sort by saved duration descending then display name. Removed/uninstalled apps, and browsers with no enabled site block, disappear from the list while historical totals remain |
+| Time spent after the challenge | Measured first foreground visit to the triggering app after a successful pause challenge, never all usage during the block pause; for a site challenge the triggering app is the hosting browser. Attribute its duration to the completion's stored local date. Exclude later visits, other apps in the paused block and turn-off challenges |
+
+A completed visit must be observable and uniquely attributable. Interrupted/missing history, an unclosed visit, an unrelated first app or an ambiguous return means **unavailable**, not 0m. A no-push-through day is a real zero. Unknown spent values use an em dash/stub and a neutral “Some visits couldn't be measured” note; do not present a partial sum as the full total. The conservative platform matching/coverage rules are fixed in the data contract.
+
+**Dates/format.** Store outcome local dates at event time so later timezone changes do not move outcomes. Usage segments keep the zone captured on ingestion (Android does not supply historical zone changes), split at local midnight with DST-aware boundaries. Render actual rolling weekday labels, with Today last. Sum raw durations before rounding to nearest minute: under 100m as `48m`; otherwise `2h 12m`, dropping `0m` — except the two chart cards' bar labels, which always render whole minutes (`140m`; 4 October §17 addendum). Per-visit labels are `~6m`, rounded with minimum 1m.
+
+**States and interaction.** Usage Access missing/revoked takes precedence: S5 permission card only. Granted with no enabled block: S6. At least one enabled block with no outcomes: full zero dashboard. S4 uses the same layout with zero saved bars for pre-feature dates and neutral tone. Loading is a blank content area (no spinner); load failure gets a retry state, never fake zero metrics. S1 contains the hero, two tiles, nested app list (~300dp max with overflow fade), both seven-bar charts and recalibration card. “Weekly info” is a static label; rows/bars are not tappable. S2 opens from hero/list info; S3 from nope rate; each supports Got it, scrim and swipe dismissal. Recalibrate asks confirmation and reports failure without changing the baseline.
+
+**Corrected S2 copy:** “Every time you explicitly nope out, we estimate the time a usual visit would have taken.” Formula: Nopes × Usual visit length = Time saved. “We use recent available app history when you allow usage access, up to 7 days. If we have fewer than 3 usable visits, we use 10 minutes per visit. Recalibrating updates future estimates.” Dedup note: “Repeated nopes within 5 minutes count once. Completing a challenge counts as a separate try.” Do not copy the old pre-install or abandonment claims from PNGs. S3 uses resolved attempt counts; for zero attempts show “No tries yet” instead of a fabricated percentage.
 
 ## 10. Analytics
 
 **Local only. No SDK, no network, no third party.** Events are written to a Room table and never leave the device.
 
-The event store *is* the Stats data source — Stats is a query over it, not a parallel system. Event names are fixed now so a future export or upload is a loader change rather than a retrofit.
+Arjun named PostHog as the follow-up after Phase 7 on 27 September 2026. The [planning proposal](docs/plans/posthog-analytics.md) records scope and unresolved choices; this paragraph does not change the current local-only contract. An approved analytics/privacy amendment and separate implementation task are required before remote event collection.
+
+The raw event store remains the local audit history. Redesigned Stats combines a transactionally paired outcome ledger, frozen baseline and local Android usage-event cache. UI reads the Stats repository; it must not derive the new metrics from old raw event counts. No local usage or target data is an approved remote payload.
 
 Schema: `event(id, name, timestamp_utc, block_id?, target?, params_json?)`
 
@@ -300,11 +322,18 @@ Rows explicitly marked **retired** are historical compatibility only: they are n
 | `turnoff_completed` | `block_id`, `duration_ms` |
 | `turnoff_abandoned` | `block_id`, `progress_pct` |
 
+New app `walk_away` and `challenge_completed` outcomes carry `session_id`; successful completions also carry the original target/type. Their paired Stats rows are transactional, not asynchronous analytics-derived counters.
+
 **Utilities**
 
 | Event | Params |
 |---|---|
-| `stats_viewed` | — |
+| `stats_viewed` | `state`: default / partial / no_access / no_blocks; once per intentional entry after state resolves |
+| `stats_info_opened` | `which`: time_saved_hero / time_saved_list / nope_rate |
+| `stats_usage_access_cta_tapped` | — |
+| `usage_access_granted` | Granted transition observed after a user request; not every refresh |
+| `stats_recalibrate_tapped` | — |
+| `baseline_recalibrated` | `old_screen_daily_ms`, `new_screen_daily_ms` (nullable); only on successful atomic replacement |
 | `settings_viewed` | — |
 | `feedback_opened` | — |
 | `feedback_sent` | — |
@@ -383,8 +412,9 @@ These two visual languages are opposed, so the merge is specified rather than le
 | Display over other apps | Shows the timer bubble | **No** — only the bubble is lost |
 | Battery exemption | Stops the phone shutting us down in the background | Strongly recommended |
 | Notifications | Shows the pause countdown | Recommended |
+| Usage Access | Measures app foreground time for Stats; never app contents | **Stats only** — blocking still works without it |
 
-Presented as a persistent, resumable checklist with two states per row and a progress indicator. Reused later as the Settings permission-health view.
+Presented as a persistent, resumable **five-row** checklist with two states per row and a progress indicator. Usage Access belongs under Better experience, not Essential; reuse it in Settings. Open Android Usage Access settings and recheck on resume. It must not change the Accessibility-only ON-toggle gate. Reused later as the Settings permission-health view.
 
 The app is **gated at block activation, not at app entry.** Users may install, explore and build blocks with zero permissions granted; the gate falls on the ON toggle. A permission wall on first launch kills activation; at the ON toggle the user wants it to work.
 
@@ -402,7 +432,7 @@ Recorded with rationale so future changes are informed rather than re-litigated.
 | **AccessibilityService for detection** | Verified working (§14). `packageNames` filtered at runtime to blocked apps plus supported browsers, so the service is idle almost always and battery cost is negligible outside active browsing. |
 | **No overlay permission required for the block screen** | Accessibility services are exempt from background-activity-launch restrictions. Verified on Android 16 (§14). Overlay is needed only for the floating bubble. |
 | **No Firebase, no third-party SDK** | Zero external dependencies in phase 1. |
-| **Local Room event store** | Powers Stats and analytics from one table. No network, no privacy surface, no SDK — and no extra cost, because Stats needs the data anyway. |
+| **Local Room event store** | Raw audit events plus transactionally paired Stats outcomes, frozen baseline, and a bounded local usage-event cache. No network or SDK. Package/activity identifiers and usage timestamps are sensitive local data; never attach them to feedback or export them. |
 | **Browser map and OEM text as a bundled JSON asset** | Remote Config was considered and deferred. It earns its place only when there are store users who cannot be reached; with a handful of testers on App Distribution, pushing a build does the same job sooner. **The loader must be abstracted so switching to Remote Config later is a loader change and nothing else.** |
 | **Feedback by email intent** | No backend exists. Opens the device mail client to `arjranaprep@gmail.com`, subject "Feedback from user", body prefilled with the typed text. No logs, no attachments, no collection. |
 | **Dark theme only** | Nocturne ships no light tokens, and the product is used at night more than at any other time. |
@@ -446,6 +476,8 @@ Tested 6 September 2026 on a Samsung Galaxy S23 Ultra (SM-S918B) running **Andro
 - **Still unverified:** overnight survival against Samsung's battery manager. This remains the largest open platform risk and is the reason the battery-exemption onboarding step exists.
 
 ## 15. Design assets
+
+Stats screen 23 now uses [six supplied PNGs](design/screens/stats-redesign/README.md); retain old `23-stats.png` as historical only. PRD §9 overrides old copy in the raw handoff. All other visual authority remains Nocturne.
 
 | Asset | Location | Authority |
 |---|---|---|
@@ -523,9 +555,11 @@ These supersede conflicting values above the same way §17 supersedes older sect
 - **Launcher icon:** the app uses the generated torii+hourglass artwork from `design/icon-final/` as the launcher icon, integrated per that pack's README (mipmap rasters + adaptive icon with the brand background `#161826`; no monochrome layer until a vector redraw exists).
 - **Home bottom actions:** the left button reads **Feedback** (label only, no icon); the Feedback + New Block row keeps padding above and below at the bottom of the home screen.
 
-### Latest validation checkpoint
+### Historical Phase 2 validation checkpoint
 
-**Current checkpoint — 13 September 2026: code PASS, `6c3b962`.** Codex reviewed `084b5eb..6c3b962`: unchanged-edit fixture corrected, legacy typo normalization explicitly covered, enabled-state assertions corrected, helper copy updated, and interior multiline website paste rejected without merging. No blocking findings in the corrective diff. Phase 3 implementation is cleared from `6c3b962`; verify git state. GLM reports debug build and 12 JVM tests passing, instrumented sources compiled only. Codex ran no builds/tests/device operations. Latest UI regressions and paste behavior remain pending owner device confirmation; this is implementation clearance, not a new device pass. Haptic tuning remains pending; Phase 3 must emit activation success feedback after permission checks and successful persistence.
+**Checkpoint at 13 September 2026: code PASS, `6c3b962`.** Codex reviewed `084b5eb..6c3b962`: unchanged-edit fixture corrected, legacy typo normalization explicitly covered, enabled-state assertions corrected, helper copy updated, and interior multiline website paste rejected without merging. No blocking findings in the corrective diff. Phase 3 implementation is cleared from `6c3b962`; verify git state. GLM reports debug build and 12 JVM tests passing, instrumented sources compiled only. Codex ran no builds/tests/device operations. Latest UI regressions and paste behavior remain pending owner device confirmation; this is implementation clearance, not a new device pass. Haptic tuning remains pending; Phase 3 must emit activation success feedback after permission checks and successful persistence.
+
+Those pending Phase 2/3 items were subsequently accepted in the closed [Phase 3 checklist](coordination/tasks/TS-P3-validation/OWNER-CHECKS.md); the paragraph above retains its original evidence boundary.
 
 
 ### Post-validation addenda — 13 September 2026, second round (owner device feedback)
@@ -544,7 +578,7 @@ Owner haptic tuning feedback: current pulses feel weak; +30% duration was sugges
 
 ### Phase 3 direct-correction addenda — 19 September 2026 (owner device feedback)
 
-These owner decisions supersede conflicting onboarding/battery presentation text above without changing the four real permission states or activation gates:
+These owner decisions supersede conflicting onboarding/battery presentation text above without changing the then-current four permission rows or activation gates. The 4 October Stats redesign adds Usage Access as a fifth Better experience row; activation gates remain unchanged:
 
 - **Welcome:** headline `Your time, your rules`; body lines `Doomscrolling? Time-blindness? Yeah, we got you.`, `We don't block you! We just do a vibe check before you fall in.`, and `You choose what gets paused, for how long, and how you get back.`
 - **Battery guidance:** presentation is manufacturer-neutral and says Android is aggressive. Remove the owner-facing manufacturer picker and its `Not a Samsung? Pick your phone` CTA. Automatic Samsung/generic step selection and real-state refresh remain.
@@ -583,6 +617,8 @@ Arjun's installed-build testing supersedes the older interruption copy, two-seco
 
 For ongoing owner testing only, **debug builds** expose pause typing down to 20 characters and pause waiting down to 20 seconds while retaining defaults 150/60 and maxima 200/300. Debug disable ladders temporarily replace their first rungs with 20: typing 20/350/700 characters and waiting 20/360/720 seconds. Release builds retain the production §7 values: 100–200, 60–300, 220/350/700, and 180/360/720. Pause duration remains 5–100 minutes. Phase 7 final approval must remove the temporary debug overrides and retain the production values.
 
+**Current implementation:** Phase 7 commit `89ef9e3` removed these temporary debug overrides; every variant now uses production §7 values. Existing stored test blocks remain intact. The Phase 7 owner/device checks for that change are still pending.
+
 ### Phase 6 owner-validation addendum — 23 September 2026
 
 Arjun's installed-build testing of the reviewed `062c71e` tree recorded no failing checks (owner verdicts live in the Phase 6 task's OWNER-CHECKS; O15 is a conditional pass without the manual clock-change steps, O17 is not applicable as written). The screen-20 and §7 text above already incorporates the decisions below.
@@ -591,3 +627,10 @@ Arjun's installed-build testing of the reviewed `062c71e` tree recorded no faili
 - **Cross-block unfinished-challenge precedence — accepted, do not fix.** While a challenge is unfinished, a detection launch for a different block brings the existing session forward instead of starting that block's challenge; completing or explicitly dismissing it is the only way to clear it. Owner verdict: acceptable narrow edge case; do not "improve" this or the notification behavior below without real user feedback.
 - **Dismissed pause notification may return — accepted, do not fix.** Android may permit swiping the ongoing countdown notification away; the service's periodic render re-post then recreates it. Owner verdict: recorded platform observation, nothing to fix.
 - **Turn-off challenge visual round (owner corrections, 23 September 2026, incorporated into §6 screen 22).** The header shows the block name only (no "Turning off ·" eyebrow); "Leave it on" is retired — the typing variant escapes via a full-width outlined *Never Mind* button under Submit and the waiting variant's outlined bottom button reads *Never Mind*; the disable info card reads "Type in X characters to disable the block" with its lock icon vertically centred. Nothing else about either challenge changed.
+
+### Phase 7 owner-review addendum — 4 October 2026
+
+Arjun's decisions on the combined-review notes P7-N3–P7-N7 (verdicts recorded in the TS-P7 task's OWNER-CHECKS): P7-N3 (a recalibrated week reading "partial" until the window rolls past), P7-N5 (`usage_access_granted` logging any observed false→true grant) and P7-N7 (stale Codex prose hash, record-keeping only) are accepted as reviewed — no behavior change. Two decisions change §9 for the affected items and supersede conflicting text above:
+
+- **Chart bar labels are minutes-only.** The two seven-bar chart cards' per-day value labels always render whole minutes (`140m`), never §9's `2h 12m` hours+minutes form, which clips in the ~35dp bar column. Wider figures (hero, tiles, chart totals, app rows) keep the §9 duration format. Incorporated into §9's Dates/format paragraph.
+- **Site-block savings attribute to the hosting browser.** §9's former rule that "a browser is an app only when the interruption targeted its package, not a URL" is superseded: when a site block triggers in a browser and the user nopes out, the Stats outcome is recorded against that browser's package, so the browser appears on the blocked-apps leaderboard and its time-saved row aggregates site-block savings. Arjun settled the remaining semantics the same day (incorporated into §9): site pause push-throughs count as attempts attributed to the browser; post-challenge spent time for a site challenge is the first completed visit to the hosting browser under the same conservative attribution guards; site- and app-triggered nopes on one browser package share that package's single five-minute dedup sequence; browsers hosting enabled site blocks appear on the app leaderboard; and past site outcomes are never backfilled — site savings count only from the build implementing this. The addendum does not authorize recording site outcomes before that implementation lands.

@@ -107,6 +107,25 @@ class ChallengeRuntimeTest {
     }
 
     @Test
+    fun siteSessionCarriesHostingBrowserIntoWalkAwayAndCompletion() {
+        fun siteRuntime() = ChallengeRuntime(
+            typingRuntime().config.copy(target = "reddit.com", targetType = "site", hostPackage = "com.android.chrome"),
+        )
+        val gate = siteRuntime()
+        val walkAway = gate.gateWalkAway() as ChallengeEffect.WalkAway
+        assertEquals("reddit.com", walkAway.target)
+        assertEquals("com.android.chrome", walkAway.hostPackage)
+
+        val pass = siteRuntime()
+        pass.enterChallenge(0)
+        pass.updateTypedText("alpha beta")
+        val request = (pass.submitTyping(10) as ChallengeEffect.PersistCompletion).request
+        assertEquals("site", request.targetType)
+        assertEquals("com.android.chrome", request.hostPackage)
+        assertEquals(request, (pass.resumePendingCompletion(20)!!).request.copy(durationMs = request.durationMs))
+    }
+
+    @Test
     fun explicitEscapeFirstInvalidatesLateCompletionAndStaleTick() {
         val runtime = waitingRuntime(seconds = 1)
         runtime.beginTurnOff(0)

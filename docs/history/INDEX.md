@@ -47,3 +47,18 @@ The six files in `migration-2026-09-18/` preserve all original bytes, including 
 - [Original product specification](migration-2026-09-18/PRD.before.txt)
 
 Existing Verification Feedback reports remain in place. Earlier PRD-phase-0.md and DESIGN-BRIEF-phase-1.md are historical design inputs, not the current specification.
+
+## Document freshness maintenance — 27 September 2026
+
+[TS-docs-freshness](../../coordination/tasks/TS-docs-freshness/TASK.md) records the review, cleanup plan and checks at base `89ef9e3`. Its immutable snapshots preserve the former [CURRENT installation/status history](../../coordination/tasks/TS-docs-freshness/submissions/89ef9e3/CURRENT.before.txt), [Phase 7 HANDBACK](../../coordination/tasks/TS-docs-freshness/submissions/89ef9e3/P7-HANDBACK.before.txt) and [Phase 7 REVIEW](../../coordination/tasks/TS-docs-freshness/submissions/89ef9e3/P7-REVIEW.before.txt). Relative links inside those plain-text snapshots retain their original source-file meaning. They are historical evidence, not current status or a new code review.
+
+## Archived submission link bases
+
+Four existing Markdown links were copied verbatim when handbacks/reviews moved into immutable submission folders. Resolve them from their original owning-task directory using this table; the archived bytes remain unchanged.
+
+| Archived source | Original relative link | Resolved destination |
+|---|---|---|
+| `TS-P5-owner-corrections/submissions/7fbb692/REVIEW.md` | `OWNER-CHECKS.md` | [P5 owner checks](../../coordination/tasks/TS-P5-owner-corrections/OWNER-CHECKS.md) |
+| `TS-P6-pause-lifecycle/submissions/062c71e/HANDBACK.md` | `REVIEW.md` | [P6 review](../../coordination/tasks/TS-P6-pause-lifecycle/REVIEW.md) |
+| `TS-P6-pause-lifecycle/submissions/7fb322e/HANDBACK.md` | `submissions/062c71e/HANDBACK.md` | [P6 prior handback](../../coordination/tasks/TS-P6-pause-lifecycle/submissions/062c71e/HANDBACK.md) |
+| `TS-P6-pause-lifecycle/submissions/7fb322e/HANDBACK.md` | `OWNER-CHECKS.md` | [P6 owner checks](../../coordination/tasks/TS-P6-pause-lifecycle/OWNER-CHECKS.md) |

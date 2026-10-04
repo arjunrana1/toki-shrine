@@ -15,6 +15,7 @@ Start with [AGENTS.md](AGENTS.md), then [CURRENT](coordination/CURRENT.md). The 
 | [WORKFLOW](coordination/WORKFLOW.md) | Manual role routing, direct owner-to-GLM corrections, bounded review and stopping rules |
 | [CONTEXT-MAP](docs/CONTEXT-MAP.md) | Load relevant component contracts, source/tests and phase requirements |
 | [PRD](PRD.md) | Product requirements; applicable §17 addenda supersede older values/copy |
+| [PostHog plan](docs/plans/posthog-analytics.md) | Proposed follow-up after Phase 7; analytics/privacy decisions pending |
 | [RECORDS](coordination/RECORDS.md) | How tasks, evidence and decisions evolve without growing startup context |
 | [History](docs/history/INDEX.md) | Preserved prior records, consulted for specific questions only |
 

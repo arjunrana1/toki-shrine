@@ -23,7 +23,7 @@ class EventTaxonomyTest {
     @Test
     fun activeSetIsExactlyTheEmittableConstants() {
         assertEquals(emittedNames, EventTaxonomy.ACTIVE)
-        assertEquals(35, EventTaxonomy.ACTIVE.size)
+        assertEquals(40, EventTaxonomy.ACTIVE.size)
     }
 
     @Test
@@ -61,6 +61,12 @@ class EventTaxonomyTest {
     @Test
     fun phaseSevenFeatureEngagementEventsAreActive() {
         assertTrue(EventTaxonomy.isActive("stats_viewed"))
+        assertTrue(EventTaxonomy.isActive("stats_info_opened"))
+        assertTrue(EventTaxonomy.isActive("stats_usage_access_cta_tapped"))
+        assertTrue(EventTaxonomy.isActive("usage_access_granted"))
+        assertTrue(EventTaxonomy.isActive("stats_recalibrate_tapped"))
+        assertTrue(EventTaxonomy.isActive("baseline_recalibrated"))
+
         assertTrue(EventTaxonomy.isActive("settings_viewed"))
         assertTrue(EventTaxonomy.isActive("feedback_opened"))
         assertTrue(EventTaxonomy.isActive("feedback_sent"))

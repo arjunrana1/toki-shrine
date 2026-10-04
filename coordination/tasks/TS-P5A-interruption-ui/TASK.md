@@ -1,6 +1,6 @@
 # TS-P5A-interruption-ui — Interruption visual surfaces
 
-- **State:** `awaiting_owner` — independent Codex review passed submission `3ba8037` on base `8523006`; see [REVIEW](REVIEW.md). Owner visual/input acceptance remains separate. P5B is eligible to be scheduled but has not started.
+- **State:** `closed` — independent Codex review passed UI submission `3ba8037` on base `8523006`; see [REVIEW](REVIEW.md). Subsequent P5B delivery and the complete Phase 5 owner acceptance are recorded in the closed [owner-corrections task](../TS-P5-owner-corrections/TASK.md). This metadata update attributes acceptance to that later host/build, not a new standalone P5A device run.
 - **Goal:** build the reusable, stateless Compose surfaces for the real block gate, walk-away moment, typing challenge/mismatch state and delay countdown, ready for the senior-owned runtime task to integrate.
 - **Implementation owner:** GLM 5.3 Pro. This task is bounded visual/mechanical Compose work against explicit models and callbacks. Do not use Flash for the primary submission and do not absorb the senior-owned lifecycle/event state machine.
 - **Base:** the committed task-opening HEAD. Before editing, verify a clean worktree and record `git rev-parse HEAD` in `HANDBACK.md`; stop and reconcile with Arjun if the task routing or worktree differs.

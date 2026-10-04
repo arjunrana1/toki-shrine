@@ -18,6 +18,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -51,11 +54,20 @@ class TokiAccessibilityService : AccessibilityService() {
     @Volatile
     private var appBlocks: Map<String, BlockRef> = emptyMap()
 
+    private var statsJob: Job? = null
     private var settleCallback: Runnable? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         val app = application as? TokiApplication ?: return
+        statsJob?.cancel()
+        // Best-effort ingestion while the existing service lives; no new service or wake lock.
+        statsJob = serviceScope.launch {
+            while (isActive) {
+                app.statsRepository.refresh()
+                delay(60_000)
+            }
+        }
         engine?.let(app.detectionCoordinator::detach)
         engine = DetectionEngine(clock = SystemClock::elapsedRealtime).also(app.detectionCoordinator::attach)
         // A service reconnect is an enforcement boundary. Resolve any
@@ -277,6 +289,7 @@ class TokiAccessibilityService : AccessibilityService() {
             )
             .putExtra(BlockActivity.EXTRA_TRIGGER_TYPE, trigger.triggerType)
             .putExtra(BlockActivity.EXTRA_TARGET, trigger.target)
+            .putExtra(BlockActivity.EXTRA_HOST_PACKAGE, trigger.hostPackage)
             .putExtra(BlockActivity.EXTRA_BLOCK_NAME, trigger.blockName)
             .putExtra(BlockActivity.EXTRA_BLOCK_ID, trigger.blockId)
             .putExtra(BlockActivity.EXTRA_STARTED_AT_ELAPSED_MS, trigger.startedAtElapsedMs)

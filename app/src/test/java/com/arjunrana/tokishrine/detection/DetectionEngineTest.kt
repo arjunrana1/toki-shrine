@@ -32,12 +32,12 @@ class DetectionEngineTest {
 
     private fun appTrigger(target: String = "com.instagram.android", startedAt: Long = 0) =
         DetectionAction.Trigger(
-            DetectionTrigger(EventRepository.TARGET_TYPE_APP, target, 1, "Dooms", startedAt),
+            DetectionTrigger(EventRepository.TARGET_TYPE_APP, target, 1, "Dooms", startedAt, hostPackage = target),
         )
 
-    private fun siteTrigger(startedAt: Long = 0) =
+    private fun siteTrigger(startedAt: Long = 0, host: String = "com.android.chrome") =
         DetectionAction.Trigger(
-            DetectionTrigger(EventRepository.TARGET_TYPE_SITE, "reddit.com", 2, "Reddit", startedAt),
+            DetectionTrigger(EventRepository.TARGET_TYPE_SITE, "reddit.com", 2, "Reddit", startedAt, hostPackage = host),
         )
 
     private fun settle(
@@ -116,6 +116,18 @@ class DetectionEngineTest {
         readReddit()
         now = 2_000
         assertEquals(listOf(siteTrigger()), settle(1))
+    }
+
+    @Test
+    fun siteTriggerCarriesTheHostingBrowserPackage() {
+        val firefox = "org.mozilla.firefox"
+        assertEquals(emptyList<DetectionAction>(), engine.onWindowStateChanged(30, firefox))
+        engine.onBrowserAddressReading(30, firefox, "https://reddit.com/", focused = false)
+        now = 2_000
+        assertEquals(
+            listOf(siteTrigger(host = firefox)),
+            settle(1, activeWindowId = 30, activePackageName = firefox),
+        )
     }
 
     @Test

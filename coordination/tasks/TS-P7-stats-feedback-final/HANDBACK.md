@@ -1,47 +1,109 @@
-# HANDBACK — TS-P7-stats-feedback-final (GLM 5.3 implementer)
+# GLM handback — Stats UI redesign submission, 4 October 2026
 
-- **Submission:** working tree at base `12ee572` plus the owner-approved uncommitted planning edits that were present at assignment (PRD §8/§10/phase-07/persistence-events taxonomy wording, P6 task closure records, CURRENT). Those planning edits are preserved — PRD/coordination/phase-07 untouched; `persistence-events.md` keeps the owner's taxonomy line and additionally records the discharged migration obligations (noted under "What was implemented" #5). All other modified/new files are the Phase 7 implementation. Nothing is committed; the reviewer should diff the working tree against `12ee572` and treat the planning-edit files as pre-approved context, not submission content.
-- **State:** `ready_for_review`. No device operation, no installation, no PostHog/rename/dependency work.
+## Attribution / next actor
+
+- Author/role: GLM 5.3 Flash, the bounded Stats presentation/permission assignment in [TASK](TASK.md). Self-verification only; independent review remains pending. Arjun owns visual/device acceptance.
+- Exact base: HEAD `89ef9e38ec893c2ff9537dc3cb79f3bd4a4ad106` **plus two uncommitted layers in this working tree**: (1) the Codex Stats data submission identified by [DATA-SUBMISSION.sha256](DATA-SUBMISSION.sha256) — re-verified OK immediately before GLM edits, and preserved with its REVIEW and manifest in [submissions/89ef9e3-codex-stats-data](submissions/89ef9e3-codex-stats-data/HANDBACK.md); (2) the GLM UI delta below, uncommitted on top. The GLM delta touches exactly these eight files and nothing else:
+  - `app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsScreen.kt` (replaced presentation)
+  - `app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsPresentation.kt` (new pure display mapping)
+  - `app/src/main/java/com/arjunrana/tokishrine/ui/screens/PermissionChecklistScreen.kt`
+  - `app/src/main/java/com/arjunrana/tokishrine/ui/screens/SettingsScreen.kt`
+  - `app/src/main/java/com/arjunrana/tokishrine/data/permissions/AppPermission.kt`
+  - `app/src/main/java/com/arjunrana/tokishrine/MainActivity.kt`
+  - `app/src/test/java/com/arjunrana/tokishrine/AndroidManifestTest.kt`
+  - `app/src/test/java/com/arjunrana/tokishrine/ui/screens/StatsPresentationTest.kt` (new)
+- Codex-owned files (`data/stats/`, database/migration, Challenge wiring, service ingestion, `TokiDatabase`, schemas, manifest) were not modified. No `data/stats/` interface defect was hit; no escalation was needed. No dependency or toolchain change.
+- Next: Arjun starts the **scoped combined review** (prompt below). No automatic dispatch; no device work authorized.
 
 ## What was implemented
 
-1. **Stats screen 23** (`ui/screens/StatsScreen.kt`, `Route.Stats`): the six §9 figures from `EventRepository.getStats()` — hero total with "since you started, …" days line, this-week/best-day/walk-away-rate cards, per-app leaderboard (labels via `InstalledAppsRepository.labelFor`, descending, sites excluded by the existing DAO query). Logs `stats_viewed` once per entry (established `settings_viewed` pattern). New pure formatter `data/stats/StatsFormat.kt` (percent + since-started copy), JVM-tested.
-2. **Feedback screen 25** (`ui/screens/FeedbackScreen.kt`, `Route.Feedback`, both entry points wired — home bottom Feedback button and Settings › Send feedback): mock copy minus the removed diagnostic-log control; saveable draft; multiline top-anchored field (new `multiline` param on `NocturneTextField`, default behavior unchanged); IME inset + scrolling. Send builds the §13 intent (`ui/util/FeedbackMail.kt`: ACTION_SENDTO mailto, fixed recipient/subject, typed body, no attachments), checks handler visibility (manifest `<queries>` mailto block added — package visibility, **not** a permission), launches, and logs `feedback_sent` **only** on successful handoff (`ui/util/FeedbackEmail.kt`, JVM-tested). Handler absence/launch failure keeps the screen and draft with an inline message. Successful handoff pops to home (mock's `data-go="06"` reading).
-3. **Production values in every variant**: the temporary debug overrides (20-char/20-second minima, 20-first-rung disable ladders from the §17 Phase 5 addendum) are removed with their seam — both `BuildVariantChallengeLimits.kt` variant files deleted; `BlockRepository` now holds single main-source constants (100–200/10, 60–300/5, 220/350/700, 180/360/720, pause 5–100/5). `CreateFlowStateTest`'s override-value assertions updated to production values (structure unchanged); new `ProductionChallengeValuesTest` pins them.
-4. **Event retirement**: `challenge_abandoned` (runtime `abandon()`/`AbandonReason`/`ChallengeEffect.Abandoned`, `ChallengeRepository.recordAbandoned`, BlockActivity branch, repository constant) and `bubble_dragged` (Host callback, `PauseService.onBubbleDragged`, repository constant) removed with no behavioral change — dragging, drag-to-dismiss, and nonterminal suspension are untouched; historical rows are never deleted. New `EventTaxonomy` object + reflection-swept JVM test keep the 35 active names exactly equal to the emittable `EVENT_*` constants and pin the 6 retired names.
-5. **Migration/schema**: `fallbackToDestructiveMigration()` removed from `TokiApplication` (v3→v3 opens preserve data; pre-v3 would fail loudly — none exists in the field); `exportSchema = true` with KSP `room.schemaLocation`, baseline `app/schemas/com.arjunrana.tokishrine.data.db.TokiDatabase/3.json` generated and checked in (no `show_typos` — dropped at v3 by the approved reset). Contract updated (`docs/components/persistence-events.md` open obligations).
-6. **Accessibility/final UI**: shared `NocturneAppbar` back control gains "Back" label/role/44dp target (benefits every screen); home Stats/Settings glyph buttons gain labels/roles/44dp targets; Stats/Feedback respect status/nav/IME insets and scroll.
+1. **Screen 23 "Your time" replacement** (`StatsScreen.kt` + new `StatsPresentation.kt`): the approved S1–S6 design from the six owner PNGs and the HTML spec, with PRD §9 copy overriding the exports. Collects `TokiApplication.statsRepository.state`; renders Loading (blank content), Error (retry, no fake zeros), NoUsageAccess (S5 card + `ACTION_USAGE_ACCESS_SETTINGS` CTA), NoBlocks (S6) and Ready (hero with 68sp figure and `/ day`, saved-so-far, screen-time line with hidden ≤1%/unknown delta, attempts/nope-rate tiles with em-dash-and-empty-bar on zero attempts, nested ~300dp app list with overflow fade and display-label tie order, two seven-bar chart cards with stub bars for zero/unknown days, today bar + glow, recalibration card). Both info sheets (S2 with corrected §9 copy and formula chips, S3 with resolved counts and "No tries yet" on zero attempts) support Got it, scrim tap and swipe-down dismissal. Recalibration logs `stats_recalibrate_tapped`, confirms, disables repeat taps, calls repository `recalibrate()` and reports failure inline without touching the baseline; `baseline_recalibrated` is emitted by the repository only. Loading renders nothing and Error offers retry per §9; `usageAvailable == false` shows the neutral "Usage data isn't available right now" note; unknown spent values show "—" and "Some visits couldn't be measured"; screen percent 0 is hidden.
+2. **Fifth permission row**: `USAGE_ACCESS` added to `AppPermission` ("Usage access — Measures app foreground time for Stats; never app contents", Better experience group) with `Permissions.isGranted` reading `AndroidUsageSource.hasAccess()`. Checklist and Settings show real-state n-of-5 progress; the checklist request dispatch opens Usage Access settings through the established mark-pending → record → launch → settle-on-resume path. Accessibility-only ON-toggle gating is untouched. Manifest declaration already present.
+3. **Local UI events** per the Stats contract/PRD §10: `stats_viewed` (`state` = default/partial/no_access/no_blocks) logged once per entry after the state resolves, never per StateFlow emission, recreation allowed per the accepted `settings_viewed` convention; `stats_info_opened` (`which` = time_saved_hero/time_saved_list/nope_rate) from the three info targets; `stats_usage_access_cta_tapped` from S5; `stats_recalibrate_tapped` before confirmation; `usage_access_granted` logged once per false→true transition at MainActivity resume, covering both checklist and Stats-CTA grants. No retired events revived.
+4. **Presentation mapping pinned on the JVM** (`StatsPresentation.kt`): app rows (saved desc, display-label ties, `~{n}m per visit` with the 1m floor), rolling narrow weekday letters with Today last (fixed English locale to match the app's fixed-English copy), hero screen-time line hide rules, `stats_viewed` partial/default classification and bar geometry (proportional to 74dp max, 4dp floor, 3dp stubs).
 
-## Checks run (all non-device, this submission)
+## Fresh evidence
 
-- `./build.sh assembleDebug` — **BUILD SUCCESSFUL**.
-- `./build.sh testDebugUnitTest` — **194/194** (0 failures/errors/skipped; counted from result XML).
-- `./build.sh assembleDebugAndroidTest` — **BUILD SUCCESSFUL** (compile-only; execution not authorized, left for owner acceptance).
-- `./build.sh assembleRelease` — **BUILD SUCCESSFUL** (extra one-off after deleting the release source-set file, proportionate non-device compile check).
-- `git diff --check` — clean.
-- Hex-colour grep — two matches, both pre-existing comment lines (`TypingChallengeScreen.kt` `#8B0000`, `WalkAwayMomentScreen.kt` `#0b0d17`), identical at HEAD; zero new matches, all new files clean.
-- Manifest audit — no `INTERNET`/network permission; permission inventory unchanged (VIBRATE, POST_NOTIFICATIONS, SYSTEM_ALERT_WINDOW, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE). Added element is a `<queries>` intent filter (mailto SENDTO) for handler visibility.
-- Dependency audit — `dependencies {}` block unchanged; only a KSP `arg` added (existing toolchain configuration).
+| Check | Result | Limits |
+|---|---|---|
+| `./build.sh assembleDebug testDebugUnitTest assembleDebugAndroidTest` | PASS, final run 4 October after all edits; 215 JVM tests, 0 failures/errors/skips; XML under `app/build/test-results/testDebugUnitTest/` | Build + JVM execution + Android-test **compilation only**. 207 pre-existing (Codex) + 8 new (7 `StatsPresentationTest`, 1 manifest guard) |
+| `StatsPresentationTest` (7 JVM cases) | PASS | Row order/tie/labels, weekday letters, screen-time hide rules, viewed-state classification, bar geometry incl. 4dp floor/3dp stubs/em dash |
+| New `usageAccessPermissionIsDeclared` in `AndroidManifestTest` | PASS | Source-manifest guard only; runtime grant behavior is owner/device evidence |
+| Theme literal check (hex outside `ui/theme`) | PASS | Only two pre-existing comment mentions in unrelated files; no new literals, no palette/typography/dependency changes |
+| `git diff --check` | PASS | No whitespace errors |
+| `shasum -a 256 -c DATA-SUBMISSION.sha256` (before GLM edits) | PASS all 22 files | Codex attribution intact; Codex files untouched since |
 
-## New/changed tests
+No device, emulator, adb, install, screenshot, DB extraction or instrumented execution occurred.
 
-- New JVM: `StatsFormatTest`, `FeedbackEmailTest`, `ProductionChallengeValuesTest`, `EventTaxonomyTest`; `RouteCodecTest` gains Stats/Feedback round trips; `CreateFlowStateTest` re-pinned to production values.
-- androidTest (compile-verified only): `EventRepositoryTest` seeds retired-name rows as literals (preserved + excluded from stats), empty-stats zeros, Phase 7 engagement-event writes, reopen-without-destructive-fallback preservation; new `FeedbackMailTest` pins intent action/data/extras/no-stream.
+## Notes for review / known limits
 
-## Decisions and interpretations (routine, within scope — flag to reviewer if unwelcome)
+- **Manifest hash prose discrepancy (Codex record):** the preserved Codex HANDBACK prose states manifest SHA-256 `ea346489…`, but the actual `DATA-SUBMISSION.sha256` manifest entry is `8b833784…` and that checksum file verified cleanly before GLM edits (the manifest carries Codex's uncommitted `PACKAGE_USAGE_STATS` addition). GLM did not modify the manifest; the snapshot under `submissions/89ef9e3-codex-stats-data/` is byte-identical to the working tree. Treat the checksum file as authoritative; the prose value appears stale.
+- **`stats_viewed` partial/default classification** uses `baselineCapturedAt` against the seven-day window start: null or in-window → "partial", fully covered week → "default". A confirmed recalibration rewrites `capturedAt`, so a recalibrated week can read "partial" until the window rolls past it — a conservative approximation of the S4 notion, documented here rather than silently invented.
+- **`stats_viewed` is not logged** when the state resolves to `Error` (§10 defines no error state); the next resolved state (e.g., Ready after retry) logs once.
+- **Visual approximations to flag for owner acceptance:** info glyphs use the bundled `Ph.Info` (no `ph-question` glyph exists in the carried Phosphor subset) inside 44dp named button targets (accessibility convention; mock draws bare 13–15px glyphs); the hero figure renders Inter regular because the mock's 300 weight is not bundled (only regular/medium are carried); the today-bar glow uses a blurred accent underlay approximating the CSS `box-shadow`; sheet swipe dismissal is a plain drag threshold without fling velocity.
+- **Site-only blocks** produce a Ready dashboard with an empty blocked-apps section (the §9 "include zero rows" rule taken literally); no special empty-rows state is defined in the contract.
+- Legacy `EventRepository.getStats`/`StatsSnapshot`/`StatsFormat` and their tests are retained untouched as historical helpers, per TASK; they are not the new metric authority.
+- Unchanged open obligations: Android/Room upgrade execution, real usage-adapter behavior and the combined independent review remain NOT VERIFIED; previous P7 obligations in OWNER-CHECKS stand; previous PASS applies only to `12ee572..89ef9e3`.
 
-- Rate displays as a rounded whole percent (`0.63 → 63%`); "since you started" reads "today" on day 0, "1 day ago", then plural.
-- Empty leaderboard: the "MOST WALKED AWAY FROM" section is hidden when there are no app walk-aways (mock has no empty state).
-- Draft persistence uses `rememberSaveable` (rotation/process death), consistent with the app's saveable-state idiom; navigating away from the screen intentionally discards it.
-- Successful send pops back to home; a failed handoff keeps the screen.
-- The mailto `<queries>` block was required for the no-handler check to see mail apps under API 30+ package visibility; it grants no permission.
+## Paste-ready next-role prompt
 
-## Files in this submission (beyond preserved planning edits)
+> Read AGENTS.md and resume TS-P7-stats-feedback-final as the scoped reviewer. Review the combined uncommitted delta on base `89ef9e3` recorded in HANDBACK.md — Codex's Stats data submission (DATA-SUBMISSION.sha256) plus the GLM Stats UI/permission delta — against PRD §9/§10/§12, docs/components/stats.md, theme-ui and navigation-permissions, focusing on schema migration/data preservation, transactional outcome accounting, dedup, baseline immutability, conservative usage parsing/attribution and the UI's consumption of null/zero/permission states and its §10 event wiring. Preserve the recorded snapshots under submissions/. Write REVIEW, set CURRENT, and list any Android-execution evidence still needed.
 
-- Code: `MainActivity.kt`, `BlockActivity.kt`, `TokiApplication.kt`, `challenge/ChallengeRuntime.kt`, `data/db/TokiDatabase.kt`, `data/repo/{BlockRepository,ChallengeRepository,EventRepository,EventTaxonomy}.kt`, `data/stats/{StatsCalculator,StatsFormat}.kt`, `pause/{PauseBubbleView,PauseService}.kt`, `ui/components/NocturneUi.kt`, `ui/navigation/Routes.kt`, `ui/screens/{BlockListScreen,SettingsScreen,StatsScreen,FeedbackScreen}.kt`, `ui/util/{FeedbackEmail,FeedbackMail}.kt`, `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml`; deleted `app/src/{debug,release}/java/.../BuildVariantChallengeLimits.kt`; new `app/schemas/.../3.json`.
-- Tests: listed above.
-- Records: this HANDBACK, `OWNER-CHECKS.md`, `docs/components/persistence-events.md` (obligation bullets), CURRENT updated last.
+## GLM delta 2 — P7-N4 minutes-only chart bar labels, 4 October 2026 (later session)
 
-## Suggested next-role prompt (for Arjun)
+Owner decision on review note P7-N4. On top of delta 1 (same base `89ef9e3` + Codex data submission + GLM delta 1), uncommitted:
 
-> Role: reviewer (Codex). Task: TS-P7-stats-feedback-final, state ready_for_review. Review the working-tree diff against `12ee572` (owner planning edits in PRD/coordination/docs are pre-approved context). Focus: Stats screen correctness against PRD §9, feedback intent/feedback_sent semantics, event-retirement completeness (no remaining emitters), the collapsed variant seam and its test re-pinning, and the migration-posture change (destructive fallback removal + schema export). Evidence: 194/194 JVM, assembleDebug/AndroidTest/Release compile, greps in HANDBACK. Owner checks are prepared in OWNER-CHECKS.md; no device work has run.
+- `ui/screens/StatsPresentation.kt`: `statsBarSpecs` bar value labels now use a private minutes-only formatter (`140m` in every range, same nearest-minute rounding); `StatsDurationFormat.duration` remains for hero/tiles/totals/app rows. Unknown stays "—", zero stays "0m", heights unchanged.
+- `app/src/test/java/com/arjunrana/tokishrine/ui/screens/StatsPresentationTest.kt`: new `heavyDayBarLabelsStayMinutesOnly` case ("140m"/"100m"/"100m", including the 99.5m rounding boundary).
+- `PRD.md`: §9 Dates/format incorporates the exception; new §17 "Phase 7 owner-review addendum — 4 October 2026" records all five note verdicts and both decisions.
+- `docs/components/stats.md`: chart-label rule added to the GLM API bullet; pending N6 site-attribution change flagged in the Codex-owned paragraph.
+
+Checks: `./build.sh assembleDebug testDebugUnitTest assembleDebugAndroidTest` → BUILD SUCCESSFUL, **216 JVM tests, 0 failures/errors/skips** (delta 1 was 215; +1 new). No device/emulator work in this delta. Limits: pending review (the combined-review PASS predates this delta); visual confirmation of label fit on a heavy day lands in S6/O21 on the final build. The same session also executed the authorized P7-D1/P7-D2 isolated-emulator run (recorded in OWNER-CHECKS) before this change; that evidence covers the pre-N4 tree's data layer, which this delta does not touch.
+
+## Claude delta 3 — P7-N6 site-block outcomes attribute to the hosting browser, 4 October 2026
+
+- **Author/role:** Claude (Opus 5.5), senior implementer by owner's choice (TASK P7-N6). Self-verification only; independent review pending — Codex (different model/session) is the natural reviewer.
+- **Exact base:** HEAD `89ef9e3` + Codex data submission + GLM delta 1 + GLM delta 2 (N4), all uncommitted. Pre-edit state identified by [PRE-N6-APP.sha256](submissions/pre-n6-claude/PRE-N6-APP.sha256) (all 29 modified/untracked `app/` files) with byte copies of every pre-edit file touched under [submissions/pre-n6-claude/files/](submissions/pre-n6-claude/files/); `diff -u submissions/pre-n6-claude/files/<path> <path>` shows this delta exactly (BlockActivity, DetectionEngine, DetectionEngineTest and ChallengeRuntimeTest were clean at HEAD, so `git diff HEAD` also shows them). Post-delta state: [N6-SUBMISSION.sha256](N6-SUBMISSION.sha256) (15 files, verifies OK). GLM N4 files `StatsPresentation.kt`/`StatsPresentationTest.kt` untouched (SHA-256 `54a8a443…`/`034e665d…`, unchanged from session start). The only pre-existing doc line replaced outside the snapshot is `persistence-events.md` "New Stats excludes site outcomes entirely; …" (now rewritten for N6).
+- **No schema change:** `TokiDatabase.kt`, `StatsStore.kt` and `schemas/…/4.json` hashes equal PRE-N6 (`ca6791e1…`, `3626a387…`, `e8eae786…`); v4 stands, so P7-D1 migration evidence still applies. No dependency/toolchain/manifest change; no raw-event payload change.
+
+### Files (15)
+
+| File | Change |
+|---|---|
+| `detection/DetectionEngine.kt` | `DetectionTrigger.hostPackage` (required): app trigger = its package; site trigger = `PendingSettle.packageName` (the settled, still-foreground browser window). |
+| `TokiAccessibilityService.kt` | Passes `BlockActivity.EXTRA_HOST_PACKAGE`. |
+| `BlockActivity.kt` | Reads the extra (recreation/`onNewIntent` re-read the intent as before) into `ChallengeConfig`, the deferred pending-walk-away effect, and `recordWalkAwayAndCount`; new constant; comment on site plain-finish corrected. Navigation unchanged. |
+| `challenge/ChallengeRuntime.kt` | `hostPackage` on `ChallengeConfig`, `WalkAway`, `CompletionRequest` (also on `resumePendingCompletion`). |
+| `data/repo/ChallengeRepository.kt` | `recordWalkAwayAndCount(…, hostPackage = null)` and `completePause` pass the host into the ledger inside the existing transaction, before the idempotency marker — ordering unchanged. |
+| `data/stats/StatsLedger.kt` | `record(…, hostPackage, …)`; package from `statsPackage(target, type, host)`: app → target, site → host, else/blank → no outcome. Dedup/frozen saved value/baseline ID logic unchanged, so site and app outcomes on one browser share `lastCounted(pkg)`, i.e. one sequence; passes break it. |
+| `data/stats/StatsRepository.kt` | Optional `siteHostPackages` source (resolved outside the Room transaction); `leaderboardPackages(enabledBlocks, siteHosts)` = enabled app targets + every supported browser while any enabled block has a site, then ∩ installed. |
+| `TokiApplication.kt` | Supplies `detectionConfigLoader.load().browsers.keys`; config failure → empty set (cancellation rethrown), matching the service's app-only degradation. |
+| `DetectionEngineTest.kt` | Helpers carry host; new `siteTriggerCarriesTheHostingBrowserPackage` (Firefox window). |
+| `ChallengeRuntimeTest.kt` | New `siteSessionCarriesHostingBrowserIntoWalkAwayAndCompletion`. |
+| `StatsRedesignTest.kt` | New `siteOutcomesBelongToTheHostingBrowserPackage`, `enabledSiteBlocksAddHostingBrowsersToTheLeaderboard`. |
+| `StatsRepositoryTest.kt` (androidTest) | `sitesAreExcluded…` **replaced** by `siteNopesAttributeToHostingBrowserShareItsSequenceAndStatsWriteFailureRollsBackPairedEvent` (site nope → browser row with fallback saving; app nope on the same browser within 5 min ignored; host-less site → no row; forced-failure rollback retained, final count 1 → 3). New `enabledSiteBlockShowsHostingBrowserRowWithSiteSavingsAndFirstBrowserVisitSpent` (installed host browser row, uninstalled host absent, site pass spent = first browser visit 7s, disabling the site block drops the row while the 7-day total is retained). |
+| `ChallengeRepositoryTest.kt` (androidTest) | New `siteWalkAwayAndPushThroughAttributeToHostingBrowserInTheChallengeTransaction` (real repository path, shared sequence, idempotent completion, inclusive raw counter 1/2/3, raw events keep the domain target). |
+| `docs/components/stats.md`, `docs/components/persistence-events.md` | Site-exclusion rule replaced by the N6 contract; evidence-gate line. PRD §9/§17 already incorporated the decisions — not edited. |
+
+### Checks
+
+| Check | Result | Limits |
+|---|---|---|
+| `./build.sh assembleDebug testDebugUnitTest assembleDebugAndroidTest` (final run after all edits; `compileDebugKotlin` + `testDebugUnitTest` executed) | BUILD SUCCESSFUL; **220 JVM tests, 0 failures/errors/skips** (216 + 4 new) | Android-test **compilation only** |
+| `git diff --check` | PASS | — |
+| `shasum -c N6-SUBMISSION.sha256` | OK (15/15) | — |
+| N4/schema file hashes vs session start / PRE-N6 | unchanged | — |
+
+No adb, device, emulator, install, screenshot or DB extraction.
+
+### Interpretation and limits for review
+
+- **"Browsers hosting enabled site blocks"** is read as: every *installed supported* browser (bundled detection config) whenever any enabled block contains a site, zero rows included — site blocks are enforced in every supported browser, so each hosts them. An unused installed supported browser therefore shows a 0m row. Owner may prefer "only browsers with a site outcome"; that would be a one-line change in `leaderboardPackages`.
+- **Spent measurement for site passes** reuses `firstPostChallenge` unchanged against the browser package. The site completion path still only `finish()`es (accepted Phase 5/6 navigation, not changed); if Toki's own task or another app surfaces first, or the browser returns after 30s, spent stays unknown (conservative, never 0).
+- A site outcome with no host package (should not occur from detection; only a hand-crafted/legacy intent) records the raw event but no Stats outcome.
+- **P7-D2 evidence is now partial:** the recorded `OK (14 tests)` covers the pre-N6 StatsRepositoryTest/ChallengeRepositoryTest. This delta changes one and adds three instrumented cases (now StatsRepositoryTest 6, ChallengeRepositoryTest 9) — compiled, **not executed**; an isolated re-run (reusing AVD `toki-p7d-isolated`) is needed if Arjun wants N6 instrumented evidence. P7-D1 (migration) is unaffected.
+- Device behavior (real browser foreground/usage events, OEM) remains P7-D3/owner acceptance; the attributed final build is not yet produced.
+
+### Paste-ready reviewer prompt (different model/session — Codex recommended)
+
+> Read AGENTS.md and resume TS-P7-stats-feedback-final as the scoped reviewer. Review the accumulated uncommitted delta recorded in HANDBACK: GLM delta 2 (P7-N4 minutes-only chart labels: StatsPresentation/StatsPresentationTest, PRD §9/§17, stats.md) and Claude delta 3 (P7-N6 site outcomes attribute to the hosting browser; diff each file against submissions/pre-n6-claude/files/ or git HEAD; post-state in N6-SUBMISSION.sha256). Authority: PRD §17 "Phase 7 owner-review addendum — 4 October 2026" and §9. Focus: host-package propagation detection → BlockActivity → runtime → ChallengeRepository (including recreation/onNewIntent/pending walk-away), ledger transaction/idempotency/frozen-value preservation, the shared per-package dedup sequence, leaderboard source and its "hosting browsers" interpretation, first-browser-visit spent measurement, no schema change/no backfill, and that the replaced sites-excluded test was updated, not weakened. Do not re-review the PASS-WITH-NOTES tree beyond affected dependencies. Run non-device checks only for concrete open questions; no adb/device/emulator. Write REVIEW with a verdict for this exact submission, set CURRENT, and list remaining Android-execution evidence (P7-D2 re-run for the changed instrumented tests, P7-D3/D4, P7-O1).

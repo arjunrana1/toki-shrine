@@ -221,6 +221,57 @@ class ChallengeRepositoryTest {
         assertTrue(blocks.getBlockWithContents(blockId)!!.block.enabled)
     }
 
+    @Test
+    fun statsLedgerSharesRealChallengeTransactionAndSuccessfulReturnBreaksDedup() = runBlocking {
+        val blockId = createEnabledBlock()
+        val pkg = "com.example.target"
+        challenges.recordWalkAwayAndCount("nope1", blockId, pkg, "app", "block_screen")
+        now += 1_000
+        challenges.recordWalkAwayAndCount("ignored", blockId, pkg, "app", "typing")
+        val request = typingCompletion(blockId, "pass-with-target").copy(
+            purpose = ChallengePurpose.PAUSE, configuredAmount = 150, target = pkg, targetType = "app")
+        db.openHelper.writableDatabase.execSQL(
+            "CREATE TRIGGER fail_stats BEFORE INSERT ON stats_outcome WHEN NEW.kind = 'pass' BEGIN SELECT RAISE(ABORT, 'forced'); END")
+        assertThrows(android.database.sqlite.SQLiteException::class.java) { runBlocking { challenges.completePause(request) } }
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_COMPLETED))
+        db.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_stats")
+        assertTrue(challenges.completePause(request))
+        assertTrue(challenges.completePause(request))
+        now += 1_000
+        assertEquals(3, challenges.recordWalkAwayAndCount("nope2", blockId, pkg, "app", "typing"))
+        val rows = db.statsDao().outcomes("0000")
+        assertEquals(4, rows.size)
+        assertEquals(3, rows.count { it.counted })
+        assertEquals(pkg, db.eventDao().getAll().single { it.name == EventRepository.EVENT_CHALLENGE_COMPLETED }.target)
+    }
+
+    @Test
+    fun siteWalkAwayAndPushThroughAttributeToHostingBrowserInTheChallengeTransaction() = runBlocking {
+        val blockId = createEnabledBlock()
+        val browser = "com.android.chrome"
+        assertEquals(1, challenges.recordWalkAwayAndCount("site-nope", blockId, "reddit.com", "site", "block_screen", browser))
+        now += 1_000
+        // An app-triggered nope on the same browser package shares its sequence; a site nope
+        // without a known browser still counts toward the raw walk-away total but not Stats.
+        assertEquals(2, challenges.recordWalkAwayAndCount("app-nope", blockId, browser, "app", "typing"))
+        assertEquals(3, challenges.recordWalkAwayAndCount("no-host", blockId, "reddit.com", "site", "typing"))
+        val request = typingCompletion(blockId, "site-pass").copy(
+            purpose = ChallengePurpose.PAUSE, configuredAmount = 150,
+            target = "reddit.com", targetType = "site", hostPackage = browser)
+        assertTrue(challenges.completePause(request))
+        assertTrue(challenges.completePause(request))
+
+        val rows = db.statsDao().outcomes("0000")
+        assertEquals(listOf("site-nope", "app-nope", "site-pass"), rows.map { it.sessionId })
+        assertTrue(rows.all { it.packageName == browser })
+        assertEquals(listOf("nope", "nope", "pass"), rows.map { it.kind })
+        assertEquals(listOf(true, false, true), rows.map { it.counted })
+        // Raw events keep the domain target; only the Stats ledger uses the browser package.
+        assertEquals("reddit.com", db.eventDao().getAll().single { it.name == EventRepository.EVENT_CHALLENGE_COMPLETED }.target)
+        assertTrue(db.eventDao().getAll().filter { it.name == EventRepository.EVENT_WALK_AWAY && it.targetType == "site" }
+            .all { it.target == "reddit.com" })
+    }
+
     private suspend fun createEnabledBlock(method: FrictionType = FrictionType.TYPING): Long {
         val id = blocks.createBlock(
             BlockDraft(

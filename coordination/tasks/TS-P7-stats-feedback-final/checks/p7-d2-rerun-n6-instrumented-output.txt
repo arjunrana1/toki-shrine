@@ -1,0 +1,10 @@
+
+com.arjunrana.tokishrine.data.StatsMigrationTest:.
+com.arjunrana.tokishrine.data.StatsRepositoryTest:......
+com.arjunrana.tokishrine.data.ChallengeRepositoryTest:.........
+
+Time: 0.351
+
+OK (16 tests)
+
+

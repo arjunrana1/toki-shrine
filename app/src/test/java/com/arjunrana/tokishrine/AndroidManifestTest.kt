@@ -21,6 +21,17 @@ class AndroidManifestTest {
         )
     }
 
+    // Phase 7 Stats redesign: without the AppOp special-permission declaration
+    // the system never grants Usage Access, so the S5 state could never clear
+    // and the fifth checklist row could never reach a real granted state.
+    @Test
+    fun usageAccessPermissionIsDeclared() {
+        assertTrue(
+            "AndroidManifest.xml must declare android.permission.PACKAGE_USAGE_STATS",
+            manifest.contains("android:name=\"android.permission.PACKAGE_USAGE_STATS\""),
+        )
+    }
+
     // Phase 6: the pause countdown runs in a specialUse foreground service.
     // Without the permissions the service cannot start on API 34+, and an
     // exported pause service would let any app drive it.

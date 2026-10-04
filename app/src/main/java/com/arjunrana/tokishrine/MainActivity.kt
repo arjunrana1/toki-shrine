@@ -86,6 +86,11 @@ class MainActivity : ComponentActivity() {
     // same detail never stacks twice.
     private var pendingDetailBlockId by mutableStateOf<Long?>(null)
 
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch { (application as TokiApplication).statsRepository.refresh() }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         readDetailHint(intent)
@@ -125,12 +130,28 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(Permissions.snapshot(context))
                 }
 
+                // §10 usage_access_granted: the false→true transition is
+                // observed once at resume — from whichever entry point asked
+                // for it (checklist row or the Stats screen CTA). Already
+                // granted at entry logs nothing; revocation just resets the
+                // baseline for a later re-grant.
+                var usageAccessPreviouslyGranted by remember {
+                    mutableStateOf(Permissions.isGranted(context, AppPermission.USAGE_ACCESS))
+                }
+
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_RESUME) {
                             scope.launch {
                                 permissionEvents.settle { Permissions.isGranted(context, it) }
                                 permissionStates = Permissions.snapshot(context)
+                                val grantedNow = Permissions.isGranted(context, AppPermission.USAGE_ACCESS)
+                                if (grantedNow && !usageAccessPreviouslyGranted) {
+                                    runCatching {
+                                        app.eventRepository.log(EventRepository.EVENT_USAGE_ACCESS_GRANTED)
+                                    }
+                                }
+                                usageAccessPreviouslyGranted = grantedNow
                             }
                         }
                     }
@@ -374,8 +395,11 @@ class MainActivity : ComponentActivity() {
                             onOpenFeedback = { stack.add(Route.Feedback) },
                         )
 
-                        // Screen 23: the §9 figures over the event store.
+                        // Screen 23: the §9 "Your time" redesign over the
+                        // Stats repository state flow; local UI events are
+                        // logged inside the screen.
                         Route.Stats -> StatsScreen(
+                            statsRepo = app.statsRepository,
                             eventRepo = app.eventRepository,
                             appsRepo = app.installedAppsRepository,
                             onBack = { stack.removeAt(stack.lastIndex) },

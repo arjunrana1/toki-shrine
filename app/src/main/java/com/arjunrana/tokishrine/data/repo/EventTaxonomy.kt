@@ -50,6 +50,12 @@ object EventTaxonomy {
         EventRepository.EVENT_TURNOFF_ABANDONED,
         // Utilities (feature engagement)
         EventRepository.EVENT_STATS_VIEWED,
+        EventRepository.EVENT_STATS_INFO_OPENED,
+        EventRepository.EVENT_STATS_USAGE_ACCESS_CTA_TAPPED,
+        EventRepository.EVENT_USAGE_ACCESS_GRANTED,
+        EventRepository.EVENT_STATS_RECALIBRATE_TAPPED,
+        EventRepository.EVENT_BASELINE_RECALIBRATED,
+
         EventRepository.EVENT_SETTINGS_VIEWED,
         EventRepository.EVENT_FEEDBACK_OPENED,
         EventRepository.EVENT_FEEDBACK_SENT,

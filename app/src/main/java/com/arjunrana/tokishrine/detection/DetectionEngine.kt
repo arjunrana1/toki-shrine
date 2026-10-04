@@ -6,12 +6,16 @@ import com.arjunrana.tokishrine.data.repo.EventRepository
 // values (app | site); startedAtElapsedMs is the original app event or site
 // reading time. BlockActivity combines it with its resumed time so §10
 // latency includes both settling and the actual activity launch.
+// hostPackage is the foreground package that fired: the app itself for an
+// app trigger, the hosting browser for a site trigger (Stats attribution,
+// PRD §9 / 4 October §17 addendum).
 data class DetectionTrigger(
     val triggerType: String,
     val target: String,
     val blockId: Long,
     val blockName: String,
     val startedAtElapsedMs: Long,
+    val hostPackage: String,
 )
 
 // The engine's decisions for one input. The service executes them: settle
@@ -130,6 +134,7 @@ class DetectionEngine(
                 ref,
                 startedAtElapsedMs = now,
                 now = now,
+                hostPackage = packageName,
             )?.let { actions += it }
         }
         return actions
@@ -244,6 +249,7 @@ class DetectionEngine(
                 pending.ref,
                 startedAtElapsedMs = pending.scheduledAtMs,
                 now = now,
+                hostPackage = pending.packageName,
             ),
         )
     }
@@ -263,6 +269,7 @@ class DetectionEngine(
         ref: BlockRef,
         startedAtElapsedMs: Long,
         now: Long,
+        hostPackage: String,
     ): DetectionAction.Trigger? {
         val key = debounceKey(triggerType, target, ref.blockId)
         val last = lastFired[key]
@@ -276,6 +283,7 @@ class DetectionEngine(
                 blockId = ref.blockId,
                 blockName = ref.blockName,
                 startedAtElapsedMs = startedAtElapsedMs,
+                hostPackage = hostPackage,
             ),
         )
     }

@@ -8,9 +8,10 @@ import android.provider.Settings
 import android.text.TextUtils
 import androidx.core.content.ContextCompat
 import com.arjunrana.tokishrine.TokiAccessibilityService
+import com.arjunrana.tokishrine.data.stats.AndroidUsageSource
 
 /*
- * The four onboarding permissions (PRD §12). Declaration order is the
+ * The five onboarding permissions (PRD §12). Declaration order is the
  * checklist display order, and row copy plus the Essential/Better
  * experience grouping follow the owner-supplied `Accessibility screen
  * design v2.png` (P3-F02, 19 September) — that reference supersedes the
@@ -48,6 +49,12 @@ enum class AppPermission(
         rowTitle = "Notifications",
         rowDescription = "Shows the pause countdown",
     ),
+    USAGE_ACCESS(
+        eventValue = "usage_access",
+        essential = false,
+        rowTitle = "Usage access",
+        rowDescription = "Measures app foreground time for Stats; never app contents",
+    ),
 }
 
 object Permissions {
@@ -57,6 +64,10 @@ object Permissions {
         AppPermission.OVERLAY -> Settings.canDrawOverlays(context)
         AppPermission.BATTERY -> isBatteryExempt(context)
         AppPermission.NOTIFICATIONS -> isNotificationsGranted(context)
+        // Stats-only (PRD §12): blocking never depends on it. The AppOps
+        // check lives in the Stats data layer; mirror the same source of
+        // truth here so checklist/settings rows show real system state.
+        AppPermission.USAGE_ACCESS -> AndroidUsageSource(context).hasAccess()
     }
 
     fun snapshot(context: Context): Map<AppPermission, Boolean> =

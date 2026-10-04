@@ -49,14 +49,15 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.TerminalAction
 import kotlinx.coroutines.launch
 
-// Screen 2: exactly four rows, two states each — pending and granted —
-// plus a progress bar and "n of 4" count (PRD §6). Row order, grouping
+// Screen 2: exactly five rows, two states each — pending and granted —
+// plus a progress bar and "n of 5" count (PRD §12). Row order, grouping
 // and copy follow the owner-supplied `Accessibility screen design v2.png`
 // (P3-F02, 19 September): Essential permissions (Accessibility, Battery),
-// then For a better experience (Overlay, Notifications). The displayed
-// state is the hoisted system snapshot, refreshed on every app resume.
-// ChecklistMode lives in ui.navigation with the routes: it is restored
-// navigation state (review blocker 1).
+// then For a better experience (Overlay, Notifications, Usage Access —
+// the Phase 7 Stats addition). The displayed state is the hoisted system
+// snapshot, refreshed on every app resume. ChecklistMode lives in
+// ui.navigation with the routes: it is restored navigation state
+// (review blocker 1).
 @Composable
 fun PermissionChecklistScreen(
     mode: ChecklistMode,
@@ -145,13 +146,13 @@ fun PermissionChecklistScreen(
                     Box(
                         Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth(grantedCount / 4f)
+                            .fillMaxWidth(grantedCount / 5f)
                             .background(colors.accent),
                     )
                 }
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    "$grantedCount of 4",
+                    "$grantedCount of 5",
                     fontSize = 12.sp,
                     color = colors.neutral.step500,
                 )
@@ -170,6 +171,12 @@ fun PermissionChecklistScreen(
                     }
                     AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
                         notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    // Stats-only special permission (PRD §12): the system
+                    // Usage access screen; the outcome settles from real
+                    // state on resume like the other settings-based rows.
+                    AppPermission.USAGE_ACCESS -> onRequestPermission(AppPermission.USAGE_ACCESS) {
+                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                     }
                 }
             }
@@ -317,4 +324,5 @@ private fun rowIcon(permission: AppPermission): Int = when (permission) {
     AppPermission.OVERLAY -> Ph.SquareHalf
     AppPermission.BATTERY -> Ph.BatteryCharging
     AppPermission.NOTIFICATIONS -> Ph.Bell
+    AppPermission.USAGE_ACCESS -> Ph.ChartBar
 }

@@ -66,7 +66,7 @@ open class EventRepository(
     suspend fun <T> atomically(block: suspend () -> T): T =
         db.withTransaction { block() }
 
-    // All six PRD §9 figures in one read. nowMs/zone are parameters so the
+    // Legacy pre-redesign figures; retained until the GLM screen replacement. nowMs/zone are parameters so the
     // formulas are pinned down exactly in tests; production uses defaults.
     suspend fun getStats(nowMs: Long = clock(), zone: ZoneId = ZoneId.systemDefault()): StatsSnapshot {
         ensureFirstLaunchRecorded()
@@ -135,6 +135,11 @@ open class EventRepository(
         const val EVENT_TURNOFF_STARTED = "turnoff_started"
         const val EVENT_TURNOFF_COMPLETED = "turnoff_completed"
         const val EVENT_TURNOFF_ABANDONED = "turnoff_abandoned"
+        const val EVENT_STATS_INFO_OPENED = "stats_info_opened"
+        const val EVENT_STATS_USAGE_ACCESS_CTA_TAPPED = "stats_usage_access_cta_tapped"
+        const val EVENT_USAGE_ACCESS_GRANTED = "usage_access_granted"
+        const val EVENT_STATS_RECALIBRATE_TAPPED = "stats_recalibrate_tapped"
+        const val EVENT_BASELINE_RECALIBRATED = "baseline_recalibrated"
         const val EVENT_STATS_VIEWED = "stats_viewed"
 
         // target_type values, aligned with §10's trigger_type (app | site).

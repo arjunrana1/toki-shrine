@@ -3,6 +3,7 @@ package com.arjunrana.tokishrine.data.repo
 import androidx.room.withTransaction
 import com.arjunrana.tokishrine.challenge.CompletionRequest
 import com.arjunrana.tokishrine.data.db.TokiDatabase
+import com.arjunrana.tokishrine.data.stats.StatsLedger
 import com.arjunrana.tokishrine.data.entity.AppMeta
 import com.arjunrana.tokishrine.data.entity.Event
 import com.arjunrana.tokishrine.data.entity.FrictionType
@@ -69,13 +70,17 @@ class ChallengeRepository(
         }
     }
 
-    /** Inserts the walk-away before reading the inclusive local-day global count. */
+    /**
+     * Inserts the walk-away before reading the inclusive local-day global count.
+     * [hostPackage] is the hosting browser for a site walk-away (its Stats package).
+     */
     suspend fun recordWalkAwayAndCount(
         sessionId: String,
         blockId: Long,
         target: String,
         targetType: String,
         source: String,
+        hostPackage: String? = null,
     ): Int = db.withTransaction {
         require(targetType == EventRepository.TARGET_TYPE_APP || targetType == EventRepository.TARGET_TYPE_SITE)
         val markerKey = walkAwayMarker(sessionId)
@@ -90,9 +95,10 @@ class ChallengeRepository(
                     blockId = blockId,
                     target = target,
                     targetType = targetType,
-                    paramsJson = json(mapOf("source" to source)),
+                    paramsJson = json(mapOf("source" to source, "session_id" to sessionId)),
                 ),
             )
+            StatsLedger(db.statsDao()).record(sessionId, target, targetType, hostPackage, false, eventTime, zone())
             meta.putIfAbsent(AppMeta(markerKey, eventTime.toString()))
         }
         val dayStart = Instant.ofEpochMilli(eventTime)
@@ -126,6 +132,9 @@ class ChallengeRepository(
         if (!configMatches(block.pauseChars, block.countdownSeconds, request)) return@withTransaction false
         ensureFirstLaunch()
         insertPauseCompletionEvents(request)
+        StatsLedger(db.statsDao()).record(
+            request.sessionId, request.target, request.targetType, request.hostPackage, true, clock(), zone(),
+        )
         markCompleted(request.sessionId)
         true
     }
@@ -159,7 +168,10 @@ class ChallengeRepository(
         insert(
             EventRepository.EVENT_CHALLENGE_COMPLETED,
             request.blockId,
+            target = request.target,
+            targetType = request.targetType,
             params = mapOf(
+                "session_id" to request.sessionId,
                 "type" to request.method.eventValue,
                 "duration_ms" to request.durationMs,
                 "attempts" to request.attempts,
@@ -203,12 +215,14 @@ class ChallengeRepository(
     private fun completedMarker(sessionId: String) = "challenge_completed:$sessionId"
     private fun walkAwayMarker(sessionId: String) = "challenge_walk_away:$sessionId"
 
-    private suspend fun insert(name: String, blockId: Long, params: Map<String, Any?> = emptyMap()) {
+    private suspend fun insert(name: String, blockId: Long, params: Map<String, Any?> = emptyMap(), target: String? = null, targetType: String? = null) {
         events.insert(
             Event(
                 name = name,
                 timestampUtc = clock(),
                 blockId = blockId,
+                target = target,
+                targetType = targetType,
                 paramsJson = json(params),
             ),
         )

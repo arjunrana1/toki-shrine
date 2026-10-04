@@ -1,53 +1,87 @@
-# Independent review — TS-P7-stats-feedback-final
+# REVIEW — accumulated N4 + N6 delta (scoped re-review, 4 October 2026)
 
-- **Reviewed submission:** uncommitted working tree over base `12ee572` (Phase 7 implementation). The PRD §8/§10, coordination, phase-07 and P6-closure diffs present in the tree are Arjun's pre-approved planning edits, not submission content; `docs/components/persistence-events.md` carries the owner's taxonomy line plus the implementer's discharged-migration bullets, which accurately describe the code.
-- **Verdict:** **PASS WITH NOTES** (P7-N1, P7-N2 — expectation-setting observations, no repair requested). Stats §9 correctness, feedback handoff semantics, event-retirement completeness, the variant-seam collapse, the migration posture and the accessibility touches all check out against PRD §§6/8–10/13/17 and the persistence-events contract. This is code review plus non-device verification only; instrumented tests are compile-verified and every device/DB assertion remains owner acceptance (P7-O1 onward).
-- **Reviewer:** GLM 5.3, 23 September 2026, assigned by Arjun. **Model-diversity caveat:** this is a GLM implementation reviewed by GLM; per Arjun's assignment, model-diverse (Codex) confirmation is still pending on the migration-posture, event-retirement and transactional-Stats areas before Phase 7 closure. No device, emulator, adb, installation, screenshot or instrumented execution was performed.
+## Verdict
 
-## Area findings
+**PASS WITH NOTES** for the exact accumulated uncommitted delta on top of the PASS-WITH-NOTES combined Stats tree (base HEAD `89ef9e3` + Codex data submission + GLM delta 1):
 
-### 1. Stats screen vs PRD §9 and the persistence-events contract — pass
+- **GLM delta 2 — P7-N4** minutes-only chart labels: `StatsPresentation.kt` (SHA-256 `54a8a443…`), `StatsPresentationTest.kt` (`034e665d…`), PRD §9/§17, `docs/components/stats.md`.
+- **Claude delta 3 — P7-N6** site outcomes attribute to the hosting browser: the 15 files in [N6-SUBMISSION.sha256](N6-SUBMISSION.sha256).
 
-- All six §9 figures come from the pre-existing `EventRepository.getStats()` (unchanged this phase except its comment); the formulas were re-verified against the contract: week window opens at start of day six days ago local (`calendarWeekStart`), best-day buckets local (`strftime … 'localtime'`), days-active day 0 on launch day, rate `walk_away / (walk_away + challenge_completed)` with 0.0 on zero denominator, `turnoff_completed` and retired `challenge_abandoned` out of the denominator (an instrumented test seeds literal retired rows and asserts exclusion — compile-verified).
-- Leaderboard: `countsByTarget` filters `target_type = 'app'`, so sites are excluded per contract while `countByName`/`countByNameSince` stay inclusive; rows render `InstalledAppsRepository.labelFor` (never raw packages) and descending counts. Tie order within equal counts is unspecified (PRD requires only descending) — no finding.
-- `stats_viewed` logs once per intentional entry via `LaunchedEffect(Unit)`, the established `settings_viewed` idiom. Screen copy/layout matches the `23-stats.png` render (hero total, "since you started, …" line, three cards, "MOST WALKED AWAY FROM" rows); the 63% mock figure is reproduced by `StatsFormat.walkAwayRatePercent`. Null-snapshot handling (blank frame below the app bar) matches the app's established first-load idiom in `BlockListScreen`; empty data renders zeros with the leaderboard section hidden (documented decision; the mock defines no empty state).
+No blockers. Code review plus one non-device JVM re-run only; **the changed/added instrumented cases, real device usage behavior, the attributed final build and owner acceptance remain NOT VERIFIED** (list at the end).
 
-### 2. Feedback intent and handoff-only `feedback_sent` — pass
+Reviewer: Claude (Opus 5.5), a different session from the N6 implementer but **the same model**. The N4 portion is fully independent (GLM author). For N6 the owner chose this session; if strict model independence matters, a short Codex cross-check of N6 can be added. This review does not cover that.
 
-- `feedbackMailIntent` builds ACTION_SENDTO with `mailto:arjranaprep@gmail.com` data, `EXTRA_SUBJECT` "Feedback from user", typed body as `EXTRA_TEXT`, no stream/attachment extras — exactly §13; pinned by `FeedbackMailTest` (compile-verified).
-- `feedback_sent` is logged only when `FeedbackEmail.handedOff(hasHandler, launchSucceeded)` is true, i.e. a handler resolved **and** `startActivity` succeeded — handoff-only, never delivery; the compound predicate is pinned on the JVM (`FeedbackEmailTest`). Handler absence or launch failure keeps the screen and saveable draft with the inline message; the manifest `<queries>` SENDTO/mailto block grants package visibility, not a permission. Screen copy matches the `25-feedback.png` render minus the PRD-removed diagnostic-log toggle; draft persistence via `rememberSaveable`; `NocturneTextField`'s new `multiline` param defaults off, so existing callers are unchanged.
+The previous combined review is preserved unchanged in [submissions/combined-stats-redesign-review/REVIEW.md](submissions/combined-stats-redesign-review/REVIEW.md). Notes P7-N3–N7 and the owner verdicts on them stand.
 
-### 3. Retirement of `bubble_dragged` / `challenge_abandoned` — pass
+## Submission identity (reviewer-verified)
 
-- Greps over `app/src` find no remaining production reference to either name, their former constants, `recordAbandoned`, `AbandonReason`, `ChallengeEffect.Abandoned` or `onBubbleDragged`; the only occurrences are comments, the `EventTaxonomy` retired set, and tests seeding literal historical rows.
-- Behavior is preserved: the bubble's drag branch still repositions/stays dropped and drag-to-dismiss is untouched (only the `onBubbleDragged` call was removed); `onBackgrounded` and `BackHandler` (ACTIVE → `moveTaskToBack`) keep app-switch/lock/Back nonterminal; `escape()`/`gateWalkAway()` remain the only intentional escapes, emitting `walk_away`/`turnoff_abandoned` as before. No deletion path for historical rows exists anywhere in the app.
-- `EventTaxonomy` (35 active / 6 retired) matches PRD §10 exactly, and `EventTaxonomyTest`'s reflection sweep over `EventRepository`'s `EVENT_*` String constants guarantees the active set cannot drift from what is emittable.
+- `shasum -a 256 -c N6-SUBMISSION.sha256` → 15/15 OK.
+- `shasum -c submissions/pre-n6-claude/PRE-N6-APP.sha256` → exactly 9 mismatches. These are the 9 N6 app files that were already modified before N6. The other 4 N6 app files (BlockActivity, DetectionEngine, DetectionEngineTest, ChallengeRuntimeTest) were clean at HEAD and are diffed against git. 33 modified/untracked `app/` paths = 29 pre-N6 + those 4. Nothing else in `app/` changed.
+- No schema change: `TokiDatabase.kt` `ca6791e1…`, `StatsStore.kt` `3626a387…`, `schemas/…/4.json` `e8eae786…` all equal PRE-N6. Room stays at v4, so the recorded P7-D1 migration evidence still applies. No dependency, toolchain, manifest or raw-event payload change.
+- N4 file hashes match the values recorded in HANDBACK delta 3 (N6 left them untouched).
 
-### 4. BuildVariantChallengeLimits seam collapse and test re-pinning — pass
+## What was reviewed (authority: PRD §17 "Phase 7 owner-review addendum — 4 October 2026", §9 as incorporated)
 
-- Both variant files are deleted; `BlockRepository` now holds single main-source production constants: typing 100–200 step 10 (default 150), wait 60–300 step 5 (default 60), disable ladders 220/350/700 and 180/360/720 (middle preselected), pause 5–100 step 5 (default 15) — matching the task scope and §7/§17.
-- `CreateFlowStateTest` keeps its structure with values re-pinned to production (not weakened), and the new `ProductionChallengeValuesTest` pins constants and defaults so a reintroduced variant override fails loudly.
+**P7-N4.** `barValueLabel` gives whole minutes using the same `roundToLong` nearest-minute rounding as `StatsDurationFormat.duration`, so 99.5m → `100m` in both. Unknown values stay "—" and zero stays `0m`. Bar heights and stubs are unchanged, and only the two chart cards (`statsBarSpecs`) use it. The hero, tiles, totals and app rows keep the §9 format. `heavyDayBarLabelsStayMinutesOnly` pins 140m/100m and the rounding boundary. PRD §9/§17 and stats.md agree. Visual fit on a heavy day remains P7-S6/P7-O21.
 
-### 5. Migration posture — pass
+**P7-N6: host propagation.**
+- `DetectionTrigger.hostPackage` is a required parameter, so no construction site can omit it. An app trigger uses its own package. A site trigger uses `PendingSettle.packageName`, which `onSettleElapsed` has already validated equals the active window's package and the window's package at fire time. The service passes it as `EXTRA_HOST_PACKAGE`.
+- `BlockActivity.resolveSession` reads the extra each time it resolves and passes it into `ChallengeConfig` and the deferred pending-walk-away `WalkAway`. `WalkAway` and `CompletionRequest` (including `resumePendingCompletion`) take it from the config, and `handle(WalkAway)` forwards it to `recordWalkAwayAndCount`.
+- Recreation re-reads the system-retained intent, so the host survives. `onNewIntent` replaces the intent only when no unfinished challenge, pending walk-away or walk-away card owns the activity, so a relaunch cannot switch a live session's host. `completePause` and `recordWalkAwayAndCount` are the only ledger callers, and both pass the host.
+- A legacy or hand-made intent without the extra records the raw event but no Stats outcome. This is conservative and consistent with no backfill.
 
-- `fallbackToDestructiveMigration()` is removed; `TokiApplication` documents the loud pre-v3 failure. `exportSchema = true` plus the KSP `room.schemaLocation` arg (existing toolchain, no new dependency) produced the checked-in `app/schemas/…/3.json`: version 3, no `show_typos`, entity set and `event` columns matching §10. No Phase 7 entity changed, so the exported identity hash matches the in-field v3 and existing installs open without a migration — the compile-verified `existingRowsSurviveReopenWithoutDestructiveFallback` instrumented test mirrors the shipped open path. The persistence-events doc records the discharged obligation accurately.
+**P7-N6: ledger, transaction, idempotency and frozen values.**
+- `StatsLedger.statsPackage` maps: app → target, site → host, anything else or blank → no outcome. A site outcome is never recorded under its domain.
+- The `record` body is otherwise unchanged. It runs inside the existing challenge Room transaction, after the raw event and before the walk-away marker or `markCompleted`. The session-ID outcome precheck plus the marker/`completionExists` guards keep duplicates as no-ops.
+- `savedMs` and `baselineId` are frozen at resolution, and pre-capture rows keep the fallback value with a null baseline.
 
-### 6. Accessibility touches — pass (code level; TalkBack/large-text remain P7-O20/O21)
+**P7-N6: shared dedup sequence.** `lastCounted(pkg)` uses the resolved browser package. Site and app nopes on one browser therefore share a single fixed five-minute anchor, and a pass ends the sequence, as §9 requires. This is pinned on the JVM (package rule), in StatsRepositoryTest (site nope then app nope on the same browser → counted/ignored) and in ChallengeRepositoryTest (real repository path; idempotent duplicate completion; raw counter stays inclusive at 1/2/3; raw events keep the domain target).
 
-- `NocturneAppbar`'s back control is now a 44 dp target with `clearAndSetSemantics` label "Back" and `Role.Button`, benefiting every screen; home's Stats/Settings header buttons are 44 dp labeled buttons; Stats and Feedback apply status/navigation/IME insets and scroll. Send remains a 46 dp full-width button.
+**P7-N6: leaderboard.**
+- `leaderboardPackages` = app targets of enabled blocks, plus the bundled-config supported browsers while any enabled block has a site, then intersected with installed packages.
+- The browser source is the same `DetectionConfigLoader` map the service uses for address-bar reading. Every site outcome therefore comes from a package in that set.
+- It is resolved outside the Room transaction. A config failure degrades to app rows only, and cancellation is rethrown.
+- Removing or disabling every site block drops the browser rows while the totals are kept, matching §9 ("browsers with no enabled site block disappear … historical totals remain"). A browser that is also an app target appears once.
+- The "hosting browsers" interpretation is a reasonable reading of §9: site blocks are enforced in every supported browser, so each one hosts them. See P7-N8 for owner confirmation.
 
-## Notes (non-blocking)
+**P7-N6: first-browser-visit spent.** `firstPostChallenge` is unchanged and runs against `outcome.packageName` (now the browser). The guards still apply: first non-Toki completed visit, within 30s, covered history, unique claim, otherwise unknown. `enabledSiteBlockShowsHostingBrowserRow…` pins 7s attributed to the site pass. Toki's own visits are skipped, so Toki surfacing first does not by itself make the visit unknown; the 30s limit does. See P7-N9.
 
-- **P7-N1 — engagement events re-log on activity recreation.** `stats_viewed`/`feedback_opened` use `LaunchedEffect(Unit)`, which restarts when the activity is recreated (e.g. rotation), adding a row for a single intentional entry. This is the established, previously accepted `settings_viewed` semantics, so it is consistent, not a defect — but P7-O3's "exactly one `stats_viewed` row per intentional entry" pass condition will surface it if the owner rotates mid-visit. Test without rotating, or accept rotation rows as the same established semantics.
-- **P7-N2 — Feedback entered from Settings returns to Settings after a successful send.** `onSent` pops one stack entry, so the home entry lands on home (the mock's `data-go="06"` reading, as the HANDBACK states) while the Settings entry lands back on Settings. PRD pins no pop target for the Settings path and per-origin return is standard back-stack behavior; recorded so the owner expects it during P7-O8/P7-O11.
+**No backfill.** There is no migration and no historical scan. Ledger rows are written only from live terminal paths.
 
-## Evidence
+**Replaced test was updated, not weakened.** `sitesAreExcluded…` became `siteNopesAttributeToHostingBrowserShareItsSequenceAndStatsWriteFailureRollsBackPairedEvent`:
+- It now asserts the new positive behavior: browser package, counted/ignored order, fallback/zero saved values.
+- It keeps the old negative guard: a host-less site writes no row and nothing is recorded under the domain.
+- It keeps the forced-failure rollback that pairs the raw event with the Stats row, and re-checks after the trigger is dropped. The final count rising from 1 to 3 follows from the two new rows.
 
-- Reviewer-run `./build.sh testDebugUnitTest` — task `UP-TO-DATE` against the submission tree, and the result XMLs count **194/194** (0 failures/errors/skipped over 24 classes), matching the HANDBACK.
-- Reviewer-run `git diff --check 12ee572` — clean. Hex-colour grep over `app/src/main/java` — only the two pre-existing comment lines (`TypingChallengeScreen` `#8B0000`, `WalkAwayMomentScreen` `#0b0d17`), both outside this diff. Manifest audit — permission inventory unchanged (VIBRATE, POST_NOTIFICATIONS, SYSTEM_ALERT_WINDOW, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE); no network permission; only manifest addition is the `<queries>` mailto/SENDTO block. `dependencies {}` block is byte-identical to base; only the KSP schema arg was added.
-- Reviewer inspection: retired-name greps (no production emitters), schema 3.json contents, both mock renders (23/25), Back/drag/suspension paths, OWNER-CHECKS prepared with the required columns including the Phase 1–6 smoke (P7-O23).
-- Implementer-attributed and not re-run: `assembleDebug`, `assembleDebugAndroidTest` (compile-only), `assembleRelease`. All instrumented assertions and device behavior remain owner acceptance.
+The contract docs (stats.md, persistence-events.md) replace the exclusion rule consistently.
 
-## Next actor
+## Independent check run by this review
 
-Arjun: optionally route this verdict to Codex for the pending model-diverse confirmation on the migration/event-retirement/transactional areas, then run owner acceptance from P7-O1 (`install -r` data preservation) through the checklist. Code review is complete; no repair is requested from the implementer.
+- `./build.sh testDebugUnitTest --rerun-tasks` → BUILD SUCCESSFUL, **220 JVM tests, 0 failures/errors/skips** (XML under `app/build/test-results/testDebugUnitTest/`). This matches the builder's 220 on this exact tree.
+- Checksum, scope and schema-identity verification as above.
+- Android-test compilation was not re-run. The builder's `assembleDebugAndroidTest` success is the attributed evidence, and the changed sources are unchanged since (15/15 OK).
+
+## Notes (non-blocking; IDs continue the task sequence)
+
+- **P7-N8 — leaderboard interpretation (owner confirmation).** While any enabled block has a site, every installed supported browser shows a row, including a 0m row for an unused browser. The alternative, "only browsers with a site outcome", is a one-line change in `StatsRepository.leaderboardPackages`. Confirm during P7-S acceptance. No code change requested.
+- **P7-N9 — site push-throughs can make spent unknown more often.**
+  - A site pass now enters the spent measurement, but the site completion path still uses a plain `finish()`. That navigation was accepted in Phases 5/6. BlockActivity runs in Toki's task, so finishing can reveal Toki rather than the browser.
+  - If the user does not reach the browser within 30s, the pass stays unmeasured. The day's and week's spent then shows "—" with "Some visits couldn't be measured". This is conservative and §9-correct (never 0), but could become a frequent owner-visible state.
+  - Observe in P7-D3 and P7-S acceptance. A possible later fix is to return to `hostPackage` on site completion. That is a navigation change and needs an owner decision; it is not in N6 scope.
+- **P7-N10 — site nope valuation.** A counted site nope is saved at the browser's whole-app usual visit length, or the 10-minute fallback when there are fewer than 3 visits or no baseline. This is not specific to the site. It follows directly from §9's per-package baseline now that the browser is the Stats app. Record only.
+
+## Remaining Android-execution and owner evidence (NOT VERIFIED; do not close Phase 7 without them)
+
+1. **P7-D2 re-run** in the isolated environment (AVD `toki-p7d-isolated` can be reused) for the N6-changed instrumented sources:
+   - `StatsRepositoryTest`: 6 cases, including the replaced `siteNopesAttribute…` case and the new `enabledSiteBlockShowsHostingBrowserRow…`.
+   - `ChallengeRepositoryTest`: 9 cases, including the new `siteWalkAwayAndPushThroughAttribute…`.
+
+   The recorded `OK (14 tests)` predates N6. P7-D1 (`StatsMigrationTest`) does not need a re-run because there is no schema change, but running it together is cheap.
+2. **P7-D3**: real `AndroidUsageSource`/OEM behavior, now also covering browser visits after a site challenge (P7-N9) and the browser row on the real device.
+3. **P7-D4**: on-device active-event payload / once-per-entry audit. Raw site events must keep the domain target.
+4. **P7-O1**: the separately attributed final build, installed over the existing v3 install without uninstall or clear.
+5. **Arjun's experience/visual acceptance**: P7-S1–S10, including the heavy-day minutes-only labels (S6/O21) and the N6 browser-row behavior (P7-N8/N9 observations), plus the retained checks in [OWNER-CHECKS](OWNER-CHECKS.md).
+
+## Next
+
+No code changes requested. Arjun decides: authorize the isolated P7-D2 re-run (with D1) and the attributed final build for P7-O1/D3/D4 and experience acceptance, or optionally route a Codex cross-check of N6 first. Phase 7 stays open through the evidence above, then commit and close.

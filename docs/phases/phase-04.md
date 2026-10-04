@@ -1,10 +1,12 @@
 # Phase 4 — Detection engine
 
-Phase 3 is cleared. Implementation is authorized through [TS-P4-detection-engine](../../coordination/tasks/TS-P4-detection-engine/TASK.md).
+Implemented and closed in [TS-P4-detection-engine](../../coordination/tasks/TS-P4-detection-engine/TASK.md): reviewed repair `9b3da43`, owner results and executed parser evidence are recorded there. P4-06 is explicitly waived; P4-09 Samsung overnight survival is an owner-accepted deferred risk, not a pass.
 
 Read only for this phase or an affected acceptance question. Scope/acceptance below was relocated from the original root instructions. PRD and applicable §17 amendments resolve stale copy/values; current WORKFLOW governs who performs checks. Historical shell/device commands describe evidence, not standing authorization; build through `./build.sh` and leave device operations to the authorized owner.
 
-Senior model should own service/window/URL timing and state correctness; GLM may implement bounded loader/UI work against agreed contracts. The Phase 3 accessibility service is only a grantable prerequisite, not the implemented detection engine. Read PRD §§10/13/14 and affected persistence/permissions contracts. Prototype platform observations are not validation of this app. Overnight Samsung survival remains unverified.
+Senior model should own changes to service/window/URL timing and state correctness; GLM may implement bounded loader/UI work against agreed contracts. Read PRD §§10/13/14 and affected persistence/permissions contracts. Prototype platform observations are not validation of this app. Overnight Samsung survival remains unverified and the Phase 6 pause service inherits that environmental risk.
+
+Current sources under `app/src/main/java/com/arjunrana/tokishrine/`: `TokiAccessibilityService.kt`, `detection/{DetectionEngine,DetectionCoordinator,DetectionConfigLoader,ActiveBlocks,BlockShownEvent,DomainMatcher}.kt` and bundled assets under `app/src/main/assets/`. JVM detection tests live under `app/src/test/.../detection/`; `AssetDetectionConfigLoaderTest` is under `app/src/androidTest/.../detection/`. The placeholder described below was the Phase 4 acceptance host; Phase 5 replaced it with the real interruption/challenge UI.
 
 ## Scope and acceptance
 

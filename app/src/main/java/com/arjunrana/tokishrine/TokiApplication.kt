@@ -1,6 +1,7 @@
 package com.arjunrana.tokishrine
 
 import android.app.Application
+import android.content.Intent
 import androidx.room.Room
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.TokiDatabase
@@ -11,9 +12,12 @@ import com.arjunrana.tokishrine.detection.AssetDetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionConfigLoader
 import com.arjunrana.tokishrine.detection.DetectionCoordinator
 import com.arjunrana.tokishrine.pause.PauseCoordinator
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.arjunrana.tokishrine.data.stats.AndroidUsageSource
+import com.arjunrana.tokishrine.data.stats.StatsRepository
 
 class TokiApplication : Application() {
 
@@ -21,13 +25,7 @@ class TokiApplication : Application() {
 
     val database: TokiDatabase by lazy {
         Room.databaseBuilder(this, TokiDatabase::class.java, TokiDatabase.NAME)
-            // Phase 7 migration posture: the dev-only destructive fallback is
-            // retired. Schema v3 stands (exported under app/schemas), so an
-            // existing v3 install — the only version in the field — opens
-            // with its blocks and events preserved, and any future version
-            // bump must ship an explicit migration. A pre-v3 install, of
-            // which none exists, now fails loudly instead of silently
-            // wiping data.
+            .addMigrations(TokiDatabase.MIGRATION_3_4)
             .build()
     }
 
@@ -37,6 +35,23 @@ class TokiApplication : Application() {
         EventRepository(database)
     }
     val installedAppsRepository: InstalledAppsRepository by lazy { InstalledAppsRepository(this) }
+    val statsRepository: StatsRepository by lazy {
+        StatsRepository(database, AndroidUsageSource(this), packageName,
+            installedPackages = {
+                packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+                    .mapNotNull { it.activityInfo?.packageName }.toSet()
+            },
+            siteHostPackages = {
+                // A broken bundled config already disables site detection; Stats keeps app rows.
+                try {
+                    detectionConfigLoader.load().browsers.keys
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    emptySet()
+                }
+            })
+    }
     val detectionCoordinator = DetectionCoordinator()
 
     // Process owner of the live pause set (Phase 6): pause access for
