@@ -1,0 +1,14 @@
+802cad771f82afb68894840dfcf4049cc69c17bfd9b1db51abf9cf4c08d294ec  app/src/main/java/com/arjunrana/tokishrine/MainActivity.kt
+3dff62ff3001273a9acbd4ce835242dff043112f40da960ed203e488f1701f78  app/src/main/java/com/arjunrana/tokishrine/ui/components/NocturneUi.kt
+e0b875a8550cbbfbe6b366de2dd39bfdd34f56971d899607dce0b84c76a6ca53  app/src/main/java/com/arjunrana/tokishrine/ui/navigation/Routes.kt
+73d718b8d2e07e070746e1705bcc93800aa16f2a5de464d2bee2bc1201dbd50a  app/src/main/java/com/arjunrana/tokishrine/ui/screens/AddMoreScreen.kt
+3cbad4fe07af6042062b1ef2367ddf8b6b8fde4625ab5ffe7a132c6371aebb64  app/src/main/java/com/arjunrana/tokishrine/ui/screens/PermissionChecklistScreen.kt
+65e5173d8b07c022584337003be3da05fa4602559590dae323b7815a8777e203  app/src/main/java/com/arjunrana/tokishrine/ui/screens/SettingsScreen.kt
+c98e56829d743688ad2dc34be29f5fbd9e6a37536c8a0bda55a9a5be8f78826f  app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsPresentation.kt
+fbdf69e6085024f3862881a0faf218d40858d49a1701d1b2d7b6afd917e0278e  app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsScreen.kt
+553fd64e5b97d6f1d80897bbb05e9843ce625656e31c38eedc283b06a0b5e304  app/src/main/java/com/arjunrana/tokishrine/ui/screens/SupportedBrowsersScreen.kt
+9d0b958411b1145737d22623d37dd0c4d41a865eac7c9eb304f47e2bf0ddf426  app/src/test/java/com/arjunrana/tokishrine/ui/navigation/RouteCodecTest.kt
+40ff96cf02db8bac0cc2fcddb1b7d53a2f9cbc3d5454200ef77f38412caedcc7  app/src/test/java/com/arjunrana/tokishrine/ui/screens/StatsPresentationTest.kt
+760473fb0fc0bcd1119b7f1841bfffbab070d58bdbcad3829408995799afd6d9  app/src/test/java/com/arjunrana/tokishrine/ui/screens/SupportedBrowsersPresentationTest.kt
+c135e10ab254c755a1d22408c78d56479a20ae4fa300a806756246651467053f  docs/components/navigation-permissions.md
+904ea78558f0d90caa490dde3aadf369f73597c2c2647cecd5d33ac0f368aa3f  docs/components/stats.md

@@ -293,7 +293,7 @@ Rows explicitly marked **retired** are historical compatibility only: they are n
 | Event | Params |
 |---|---|
 | `block_screen_shown` | `block_id`, `trigger_type` (`app` \| `site`), `target`, `latency_ms` |
-| `walk_away` | `block_id`, `target`, `source` (`block_screen` \| `typing` \| `countdown`) |
+| `walk_away` | `block_id`, `target`, `source` (`block_screen` \| `typing` \| `countdown` \| `auto_away`) |
 | `challenge_started` | `block_id`, `type` (`typing` \| `delay`) |
 | `challenge_completed` | `block_id`, `type`, `duration_ms`, `attempts` |
 | `challenge_abandoned` (retired; no longer emitted) | Historical: `block_id`, `type`, `progress_pct`, `reason` (`app_switch` \| `screen_off`) |
@@ -440,7 +440,7 @@ Recorded with rationale so future changes are informed rather than re-litigated.
 
 ### Supported browsers
 
-Website blocking reads the address bar via the accessibility node tree. Nine browsers, shipped as bundled JSON:
+Website blocking reads the address bar via the accessibility node tree. Nine browsers, shipped as bundled JSON (**seven since the 10 October 2026 addendum**: DuckDuckGo and Vivaldi dropped):
 
 | Package | Address-bar view ID |
 |---|---|
@@ -634,3 +634,110 @@ Arjun's decisions on the combined-review notes P7-N3–P7-N7 (verdicts recorded 
 
 - **Chart bar labels are minutes-only.** The two seven-bar chart cards' per-day value labels always render whole minutes (`140m`), never §9's `2h 12m` hours+minutes form, which clips in the ~35dp bar column. Wider figures (hero, tiles, chart totals, app rows) keep the §9 duration format. Incorporated into §9's Dates/format paragraph.
 - **Site-block savings attribute to the hosting browser.** §9's former rule that "a browser is an app only when the interruption targeted its package, not a URL" is superseded: when a site block triggers in a browser and the user nopes out, the Stats outcome is recorded against that browser's package, so the browser appears on the blocked-apps leaderboard and its time-saved row aggregates site-block savings. Arjun settled the remaining semantics the same day (incorporated into §9): site pause push-throughs count as attempts attributed to the browser; post-challenge spent time for a site challenge is the first completed visit to the hosting browser under the same conservative attribution guards; site- and app-triggered nopes on one browser package share that package's single five-minute dedup sequence; browsers hosting enabled site blocks appear on the app leaderboard; and past site outcomes are never backfilled — site savings count only from the build implementing this. The addendum does not authorize recording site outcomes before that implementation lands.
+
+### Phase 7 owner-experience addendum — 8 October 2026
+
+Arjun's device feedback on the debug testing-values build (`70bd8e8` + Claude delta 5), with his answers to the clarifying questions in the same session. **Recorded, not yet implemented**: it supersedes conflicting text above, including §6 screens 21/22, §8's nonterminal app-switch/lock rule and §9, only from the build that implements it. Change requests P7-F1–P7-F15 in the TS-P7 task carry ownership and scope.
+
+**Challenge screens (pause and turn-off)**
+- **Never mind at the bottom.** The pause typing challenge's header "Never mind" moves under Submit as a full-width outlined secondary button, matching the turn-off layout. Submit stays the primary button and stays disabled until the passage length is reached. The waiting challenge keeps its bottom button.
+- **Back no longer suspends.** While a challenge is active, Back/back-gesture does not send it to the background. The Never mind button wiggles (with a light haptic) to call attention to itself. This applies to typing and waiting, for both pause and turn-off.
+- **Auto-nope after 15 s away.** "Away" means the challenge or its gate screen is not visible: app switch, Home, or a locked or switched-off screen.
+  - **What happens:** after 15 continuous seconds away, a pause challenge is recorded as a nope. On a turn-off challenge it's a Never Mind; the block stays on.
+  - **What doesn't count:** time on screen without progress never counts. A waiting challenge left visible still completes and counts as a push-through.
+  - **How it's valued:** an auto-nope is valued and counted exactly like a chosen nope: an attempt, saving the usual visit length or 10 m, with the five-minute dedup unchanged. It carries a distinguishable walk-away source (`auto_away`).
+  - **No Walk-Away moment:** it's recorded quietly and no counter screen is shown.
+  - **Coming back in time:** returning within 15 s resumes the same challenge, but typed text is cleared and the wait restarts (as today).
+  - **A failed save never costs a completed challenge** (owner decision, 8 October, F-A review P7-F-A2). If saving a completed challenge fails while the screen is on, it is retried as before. If the screen is off or Toki is hidden, the completion is kept and saved when the user is next on screen. The away clock never starts from a failed save.
+  - Auto-nope also stops suspended challenges from different blocks clashing later.
+
+**Blocks — Add more.** The block detail APPS & SITES label row gains an **Add more** action, available while the block is ON.
+- It opens a standalone "What should this cover" screen with no step indicators and no Next. The primary action is **Confirm and Save Block**; the secondary is **Never mind**. Never mind and Back return to the block.
+- **Add-only:** existing apps and sites show as included but can't be removed there. Removing still requires turning the block off first.
+- Ownership rules are unchanged ("Already added to a block").
+- Additions to an ON block protect on the next detection update. If that block already has an active pause, newly added targets share the remaining pause and start being blocked when it ends (Arjun, 8 October F-B review; pause is per block).
+
+**Stats — layout update** (supersedes the §9 hero/tile arrangement; references in `design/screens/stats-redesign/`, files dated 2026-10-08).
+- **Today** (local midnight): "Time saved today ⓘ" hero with a `today` suffix, then the line "Screen time Xh Ym today". The comparison to your usual is **removed**. Two equal-size tiles follow: **Attempts today** (counted nopes + push-throughs) and **Nope rate today ⓘ** with its bar.
+- **This week** card: **Avg time saved** (`48m / day`, 7-day saved ÷ 7) and **Nope rate · N of M**.
+- **Time saved on blocked apps ⓘ**: rows read "N nopes this week" plus a visit-length chip (`~6m /visit ✎`, or `12m/visit · yours` when set by the user). Saved time sits on the right. The list is a fixed-height box of about five rows that scrolls on its own.
+- The two seven-day charts and the Recalibrate card are unchanged. Attempts/day is retired.
+- **Time saved sheet:** generous spacing with the copy "Each nope skips a visit. We count the time that visit usually takes.", the Nopes × Usual visit length = Time saved formula, and "Usual visit length comes from your 7 days before Toki. You can set your own per app." The "Tried again within 5 minutes…" line is removed.
+- **No enabled blocks:** the S6 empty state shows only when there is also no outcome in the seven-day window. Otherwise the dashboard stays visible with a small "No blocks are on" note, and apps with outcomes this week stay listed. Owner to confirm on implementation review.
+
+**Stats — usual visit length.**
+- **Measured value:** ignore visits shorter than 30 s, then take the 75th-percentile visit length. Fewer than three such visits falls back to 10 m. The percentile and the 30 s floor are config values.
+- **Per-app override:** tapping a row's chip opens the "<App> · time per visit" sheet. It has a minutes stepper, 3/5/10/15/20m presets, the live "N nopes × Xm = saved this week" line, Save, and "Use measured (Xm)". The override always wins.
+- **Re-valuing:** an override **re-values that app's counted nopes for the week shown**, not only future ones. This supersedes §9's frozen per-outcome valuation for apps with an override.
+
+**Config.** One plain Kotlin config file holds the editable lists and values, checked at compile time. Images stay in `res/drawable`, and values that differ by variant stay in the variant `ChallengeValues.kt`. Contents:
+- gate background images, headlines and humour/subtext lines;
+- the typing word list;
+- the disable ladders ("a bit", "a bit more", "make it hurt") for characters and time;
+- the pause ranges;
+- the auto-nope seconds;
+- the visit-length percentile and minimum visit.
+
+**Typing passages.** Increase variety: a larger word list, no immediate repeats, and the exact-length fill must no longer force the same short closing words.
+
+**Feedback (screen 25 / §13).**
+- **Expected:** Send it opens the mail app to the fixed recipient, with subject "Feedback from user" and the typed text as the body. The user sends it from the mail app.
+- **Bug:** Gmail opened with no subject and no body because both were passed only as intent extras. They must also be encoded in the `mailto:` URI.
+- **No draft:** typed text survives only rotation or recreation. It's cleared on leaving the screen and after a successful handoff, and never persisted. This supersedes P7-O10's process-death expectation.
+
+### Phase 7 owner-feedback addendum — 9 October 2026
+
+Arjun's device test of the 8 October build (debug APK `65460244…`). It supersedes conflicting text above, including the 8 October addendum, only from the build that implements it. TASK rows P7-F16–P7-F28 carry ownership.
+
+**Challenges**
+- **Escape label:** the challenge escape button reads **"Nope, not now"** on typing and waiting challenges, for pause and turn-off alike. The block (gate) screen keeps "Not now".
+- **Back nudge:** the haptic is one step stronger (a click instead of a tick).
+- **After an auto-nope, land on the phone's home screen** (pause and turn-off), including when it happens while the screen is off. Toki is not shown. A turn-off challenge the user abandons with the button still returns to the block.
+
+**Celebration (Walk-Away moment, screen 16)**
+- **Layout:** follows the 9 October reference (image, bold title, grey subtitle, "N wins today" pill) on a light lavender background. This is a deliberate exception to the dark theme for this screen only. Tap-to-continue and the automatic dismissal stay.
+- **Titles:** one title is picked at random from these pairs, each with its own image:
+  - "Look who's taking control 😎" (cat)
+  - "Okay, someone's on a roll!" (DiCaprio toast)
+  - "You absolute legend." (Michael Scott)
+  - "FOUR TIMES?! WHO ARE YOU? 🔥" (Elmo fire). Eligible **only on the day's fourth nope**.
+  - "Your phone is losing this battle." (victory dance)
+  - "Touching grass: Professional level." (a suitable meme)
+- **Subtitles:** one is picked at random:
+  - "Your future self says thanks."
+  - "Doomscrolling took another L."
+  - "Plot twist: You chose yourself."
+  - "That could've been N minutes of reels." N is this nope's valued visit length: the app's own setting if the user set one, else the measured or fallback value. It is only offered when the nope saved time (not a repeat within five minutes).
+  - "Another distraction defeated. Flawless victory."
+  - "Your screen time is trembling."
+  - "You're the main character today."
+- **Images:** supplied by Arjun. The rights and licensing decision is his before any public release.
+
+**Stats**
+- **Hero:** remove the "X saved so far" line.
+- **THIS WEEK:** the nope rate shows only "N%" ("—" with no attempts), without "N of M".
+- **Today tiles:** Attempts today and Nope rate today are equal in size and aligned as in S1 v2.
+- **App list:**
+  - Rows size to their content (no clipping). The box is at most about five rows and scrolls on its own.
+  - Every chip reads `~Xm/visit ✎` in the same outlined style. A user-set value is **not** marked ("· yours" is removed).
+- **Visit-length sheet:** as S8. The presets fill the full width in equal widths, and the stepper is shown large inside a tinted box.
+- **Time saved info sheet:** the first sentence becomes "Each ‘nope’ saves you a visit."
+- **Not a bug:** today's figures reset at local midnight. Stats history is never removed by turning blocks off or deleting them.
+
+**CTAs.** Paired full-width buttons outside the challenge screens match the challenge screens:
+- 50 dp tall, 10 dp radius, a 15 sp medium label;
+- a 12 dp gap between stacked buttons.
+
+This covers Add more, the visit-length sheet, the Stats info sheets and the Recalibrate card.
+
+**Settings and permissions**
+- **Settings:**
+  - The Theme row is removed.
+  - "Supported browsers" opens a list of every supported browser from the bundled detection configuration.
+- **Permission checklist:** the screen scrolls, so every row (including Usage Access under "Better experience") is reachable.
+
+**Owner changes — 10 October 2026** (supersede conflicting text above, including §9's five-minute rule and the escape-label bullet):
+- **Repeat-nope window is two minutes.** A nope within two minutes of the last counted nope for the same package (a site's browser included) does not count again. At two minutes a new nope counts. The fixed anchor, push-through reset and backwards-clock rules are unchanged.
+- **The friction (block) screen's main button reads "Nope, not now"**, matching the challenge escape.
+- **Seven supported browsers.** DuckDuckGo (`com.duckduckgo.mobile.android`) and Vivaldi (`com.vivaldi.browser`) are dropped from website blocking and the bundled detection config; the Settings subtitle and Supported browsers screen show the remaining seven. Supersedes "nine browsers" in §2 and the Supported browsers table.
+- **The waiting challenge's escape matches the typing escape:** 50 dp tall, 15 sp label.

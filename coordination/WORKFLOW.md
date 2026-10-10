@@ -24,9 +24,15 @@ Use the task's invariants, files, exclusions and planned checks. For stateful wo
 
 After **one unsuccessful GLM repair submission of an assigned finding**, reassess ownership before another GLM repair. Prefer senior implementation for unresolved correctness reasoning. Count by defect across sessions/task names, not transient compiler errors within a run. For repeated infrastructure failures, stop that path after two attempts, report diagnosis and next bounded action; this is not a second product-repair allowance.
 
-## Direct owner → GLM corrections
+## Every change is recorded (owner rule, 11 October 2026)
 
-Arjun can report small, clear testing issues directly to GLM without waiting for Codex or finishing the checklist. GLM records reproduction/expected/observed behavior and affected check IDs in the active task, makes the bounded correction, verifies proportionately and updates HANDBACK/CURRENT. A new task folder is unnecessary for every typo.
+No change goes to an install, a handoff or a commit without its records, however small and whichever model makes it. This includes one-line constants, copy, owner-directed edits outside a review cycle and repairs made during review. Required: a TASK row (stable ID), a HANDBACK entry (files, checks and their results, limits), a `D<n>-SUBMISSION.sha256` identity, an OWNER-CHECKS install record with the APK hash when installed, and CURRENT last. If a change is found without them, record it retroactively before any further work on that area.
+
+When changing a constant or rule, search every test that depends on its old value, including instrumented tests, before handing back. Instrumented tests are only compiled here, so a still-passing compiled test is not evidence that it checks the new rule. Device results are attributed to the APK hash that was actually installed when they ran.
+
+## Direct owner corrections (any model)
+
+Arjun can report small, clear testing issues directly to GLM (or another session he chooses) without waiting for Codex or finishing the checklist. The implementer records reproduction/expected/observed behavior and affected check IDs in the active task, makes the bounded correction, verifies proportionately and completes the records above. A new task folder is unnecessary for every typo.
 
 Escalate before editing if diagnosis involves critical state/data logic, an ambiguous requirement or scope expansion. One unsuccessful submitted repair triggers reassessment. A previous PASS still applies only to its reviewed submission; new changes are pending review. Arjun may continue testing, recording the installed build; Codex reviews the accumulated diff at the next checkpoint. Retest affected checks and retain unaffected results with their original build attribution.
 

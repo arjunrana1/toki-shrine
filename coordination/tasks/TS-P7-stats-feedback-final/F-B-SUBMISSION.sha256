@@ -1,0 +1,17 @@
+1fd83dc2405aaf06e3eeac26d6a4016075bfb5d1329e8e95f062ab6a0f29b95c  app/src/main/java/com/arjunrana/tokishrine/data/stats/StatsStore.kt
+c5371dc57079e7a7cac2c7ac145a30e3c3c6aea030451ea37634c7baa8435da7  app/src/main/java/com/arjunrana/tokishrine/data/stats/StatsLedger.kt
+3acadb3edb9f497e2c48a6cf9eac9ff1e93ce09486829b728345e9269c672227  app/src/main/java/com/arjunrana/tokishrine/data/stats/StatsDashboard.kt
+2816b0a98e34a46bb91edef601817a440cda39fc332a0fc6e986b4ebe94d7e4f  app/src/main/java/com/arjunrana/tokishrine/data/stats/StatsRepository.kt
+43b9019eacc2def8361c54f2f2078630170b5b3b995781b5d013cc18705345a0  app/src/main/java/com/arjunrana/tokishrine/data/db/TokiDatabase.kt
+05b551a703375de93c8d8e1bc966758eda577783ce728e97a1358273ad6c025b  app/src/main/java/com/arjunrana/tokishrine/TokiApplication.kt
+c76b0cb43472284296e686827c2dd2bc13e09ff921283911879b85c5fb3a0195  app/src/main/java/com/arjunrana/tokishrine/data/repo/BlockRepository.kt
+23a82ae0c8ed8f861446e102f1b9a2cb5ebcc6f116911c17e9fec11d03ff0391  app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsPresentation.kt
+7e81e917ead6baf157da571a6c798ab06a1bc11665689c85e1a78dd3f9777fdd  app/src/main/java/com/arjunrana/tokishrine/ui/screens/StatsScreen.kt
+bff0251628cc77f6e657152c415a4412afc797c08135356c9e45165fdf09bfcb  app/schemas/com.arjunrana.tokishrine.data.db.TokiDatabase/3.json
+e8eae7860117b35f959f941a1f2456147f48a07dabaa7a02c23271e2a6b2c5c7  app/schemas/com.arjunrana.tokishrine.data.db.TokiDatabase/4.json
+121d998715d2bed0bf3919307f192cac405acae626143371d9922f70ec70d485  app/schemas/com.arjunrana.tokishrine.data.db.TokiDatabase/5.json
+d2c560e2498631f1c18b1bf45f8225efc44ba5b82883536ceda6ded45264989a  app/src/test/java/com/arjunrana/tokishrine/data/stats/StatsRedesignTest.kt
+7730c0527fa3575d27be20aa5044a5d0c030ecd530a6175297a8883f9ef20ea0  app/src/test/java/com/arjunrana/tokishrine/ui/screens/StatsPresentationTest.kt
+e98c5615912d9089fcdfeac4a0b1ad474639b890fc6894baec9719eb2b7b9024  app/src/androidTest/java/com/arjunrana/tokishrine/data/StatsRepositoryTest.kt
+476b3b33b18a2b254a6a543a373008b0d67b501df22fb2dff74a9b8a8572ed1d  app/src/androidTest/java/com/arjunrana/tokishrine/data/StatsMigrationTest.kt
+5e6aec73decbfda8cc630fac3d1225733d2e63f1c03d142eaec3447e556475c4  app/src/androidTest/java/com/arjunrana/tokishrine/data/BlockRepositoryTest.kt
