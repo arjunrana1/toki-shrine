@@ -1,12 +1,20 @@
 package com.arjunrana.tokishrine.data.repo
 
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_DEFAULT
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MIN
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_STEP
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-// Phase 7 final approval removes the temporary debug overrides (§17 Phase 5
-// addendum): every build variant — debug included — enforces the production
-// §7 values at the persistence boundary. These assertions pin the single
-// main-source constants so an attempted variant override fails loudly here.
+// Release-variant guard (run with testReleaseUnitTest): the release build
+// enforces the production §7 / §17 values at the persistence boundary. The
+// debug variant's temporary owner-testing values (7 October 2026) are pinned
+// separately by DebugChallengeValuesTest, so neither set can drift silently.
 class ProductionChallengeValuesTest {
 
     @Test

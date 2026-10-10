@@ -49,6 +49,8 @@ fun DelayCountdownScreen(
     remainingSeconds: Int,
     onEscape: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Bumped on Back while active; the escape button wiggles on each new value (P7-F2). */
+    escapeNudge: Int = 0,
 ) {
     val colors = NocturneTheme.colors
     val glow = colors.accentRamp.step900
@@ -156,15 +158,17 @@ fun DelayCountdownScreen(
             val escapeShape = RoundedCornerShape(10.dp)
             Box(
                 Modifier
+                    .escapeNudge(escapeNudge)
                     .fillMaxWidth()
-                    .height(56.dp)
+                    // 50 dp / 15 sp: the same escape as the typing challenge.
+                    .height(50.dp)
                     .border(1.dp, colors.neutral.step600, escapeShape)
                     .clickable { onEscape() },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = delayEscapeLabel(purpose),
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.text,
                 )

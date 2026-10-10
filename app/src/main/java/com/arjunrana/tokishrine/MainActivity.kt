@@ -41,6 +41,7 @@ import com.arjunrana.tokishrine.ui.navigation.ChecklistMode
 import com.arjunrana.tokishrine.ui.navigation.Route
 import com.arjunrana.tokishrine.ui.navigation.RouteStackSaver
 import com.arjunrana.tokishrine.ui.screens.AccessibilityExplainerScreen
+import com.arjunrana.tokishrine.ui.screens.AddMoreScreen
 import com.arjunrana.tokishrine.ui.screens.BatteryInstructionsScreen
 import com.arjunrana.tokishrine.ui.screens.BlockDetailScreen
 import com.arjunrana.tokishrine.ui.screens.BlockListScreen
@@ -49,6 +50,7 @@ import com.arjunrana.tokishrine.ui.screens.FeedbackScreen
 import com.arjunrana.tokishrine.ui.screens.PermissionChecklistScreen
 import com.arjunrana.tokishrine.ui.screens.SettingsScreen
 import com.arjunrana.tokishrine.ui.screens.StatsScreen
+import com.arjunrana.tokishrine.ui.screens.SupportedBrowsersScreen
 import com.arjunrana.tokishrine.ui.screens.TurnOnScreen
 import com.arjunrana.tokishrine.ui.screens.WelcomeScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
@@ -128,6 +130,18 @@ class MainActivity : ComponentActivity() {
                 }
                 var permissionStates by remember {
                     mutableStateOf(Permissions.snapshot(context))
+                }
+
+                // P7-F27: the supported-browser set comes from the bundled
+                // detection configuration (the loader caches after the first
+                // read); Settings' subtitle and the dedicated screen render
+                // the same list. Null while loading or when the asset is
+                // corrupt — both screens degrade without it.
+                var supportedBrowsers by remember { mutableStateOf<List<String>?>(null) }
+                LaunchedEffect(Unit) {
+                    supportedBrowsers = runCatching {
+                        app.detectionConfigLoader.load().browsers.keys.toList()
+                    }.getOrNull()
                 }
 
                 // §10 usage_access_granted: the false→true transition is
@@ -305,6 +319,15 @@ class MainActivity : ComponentActivity() {
                             onTurnOff = { startActivity(BlockActivity.turnOffIntent(context, it)) },
                             onEditContents = { stack.add(Route.Create(editBlockId = it)) },
                             onEditFriction = { stack.add(Route.Create(editBlockId = it, startStep = 3)) },
+                            // P7-F5: add-only contents screen, available while ON.
+                            onAddMore = { stack.add(Route.AddMore(it)) },
+                        )
+
+                        is Route.AddMore -> AddMoreScreen(
+                            blockId = route.blockId,
+                            blockRepo = app.blockRepository,
+                            appsRepo = app.installedAppsRepository,
+                            onDone = { stack.removeAt(stack.lastIndex) },
                         )
 
                         is Route.Checklist -> PermissionChecklistScreen(
@@ -388,11 +411,22 @@ class MainActivity : ComponentActivity() {
                         Route.Settings -> SettingsScreen(
                             states = permissionStates,
                             eventRepo = app.eventRepository,
+                            supportedBrowsers = supportedBrowsers,
                             onBack = { stack.removeAt(stack.lastIndex) },
                             onOpenPermissionHealth = {
                                 stack.add(Route.Checklist(ChecklistMode.SETTINGS))
                             },
+                            onOpenSupportedBrowsers = {
+                                stack.add(Route.SupportedBrowsers)
+                            },
                             onOpenFeedback = { stack.add(Route.Feedback) },
+                        )
+
+                        // P7-F27: every supported browser from the bundled
+                        // detection configuration.
+                        Route.SupportedBrowsers -> SupportedBrowsersScreen(
+                            browsers = supportedBrowsers,
+                            onBack = { stack.removeAt(stack.lastIndex) },
                         )
 
                         // Screen 23: the §9 "Your time" redesign over the

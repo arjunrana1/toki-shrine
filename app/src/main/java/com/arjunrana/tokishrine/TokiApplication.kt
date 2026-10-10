@@ -25,7 +25,7 @@ class TokiApplication : Application() {
 
     val database: TokiDatabase by lazy {
         Room.databaseBuilder(this, TokiDatabase::class.java, TokiDatabase.NAME)
-            .addMigrations(TokiDatabase.MIGRATION_3_4)
+            .addMigrations(TokiDatabase.MIGRATION_3_4, TokiDatabase.MIGRATION_4_5)
             .build()
     }
 

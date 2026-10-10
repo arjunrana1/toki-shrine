@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.arjunrana.tokishrine.data.permissions.BatteryOem
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,19 +26,16 @@ class AssetDetectionConfigLoaderTest {
         }
 
     @Test
-    fun bundledAssetLoadsTheNineSupportedBrowsers() = runBlocking {
+    fun bundledAssetLoadsTheSevenSupportedBrowsers() = runBlocking {
         val config = AssetDetectionConfigLoader(ApplicationProvider.getApplicationContext()).load()
-        assertEquals(9, config.browsers.size)
+        assertEquals(7, config.browsers.size)
         assertEquals("com.android.chrome:id/url_bar", config.browsers["com.android.chrome"])
         assertEquals(
             "com.sec.android.app.sbrowser:id/location_bar_edit_text",
             config.browsers["com.sec.android.app.sbrowser"],
         )
         assertEquals("com.opera.browser:id/url_field", config.browsers["com.opera.browser"])
-        assertEquals(
-            "com.duckduckgo.mobile.android:id/omnibarTextInput",
-            config.browsers["com.duckduckgo.mobile.android"],
-        )
+        assertNull(config.browsers["com.duckduckgo.mobile.android"])
     }
 
     @Test

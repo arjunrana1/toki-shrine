@@ -129,8 +129,9 @@ fun ordinal(n: Int): String {
 // "Turning off ·" eyebrow — the block name alone is sufficient.
 fun challengeTitle(purpose: ChallengePurpose, blockName: String): String = blockName
 
-// Owner correction, 23 September 2026: the "Leave it on" vocabulary is
-// retired; the turn-off escape reads "Never Mind" (typing shows it as a
-// full-width button under Submit, delay keeps its outlined bottom button).
-fun delayEscapeLabel(purpose: ChallengePurpose): String =
-    if (purpose == ChallengePurpose.TURN_OFF) "Never Mind" else "Never mind"
+// Owner correction, 9 October 2026 (P7-F18): every challenge escape —
+// typing and waiting, pause and turn-off — reads "Nope, not now" (it
+// replaced "Never mind"/"Never Mind"). The gate keeps "Not now". Kept as a
+// purpose selector so the two purposes can diverge again without call sites.
+@Suppress("UNUSED_PARAMETER")
+fun delayEscapeLabel(purpose: ChallengePurpose): String = "Nope, not now"

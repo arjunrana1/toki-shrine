@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -64,10 +65,12 @@ import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.data.stats.StatsDashboard
 import com.arjunrana.tokishrine.data.stats.StatsDurationFormat
+import com.arjunrana.tokishrine.data.stats.StatsLedger
 import com.arjunrana.tokishrine.data.stats.StatsRepository
 import com.arjunrana.tokishrine.data.stats.StatsScreenState
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
 import com.arjunrana.tokishrine.ui.components.NocturneButton
+import com.arjunrana.tokishrine.ui.components.NocturneCtaButton
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.SectionLabel
 import com.arjunrana.tokishrine.ui.icons.Ph
@@ -147,6 +150,11 @@ fun StatsScreen(
 
     var infoSheet by rememberSaveable { mutableStateOf<StatsSheetKind?>(null) }
 
+    // P7-F6: the per-app visit-length sheet. The selection survives
+    // recreation as the package name and re-resolves against the latest
+    // dashboard, so a refresh under the sheet cannot desync the row.
+    var visitSheetPackage by rememberSaveable { mutableStateOf<String?>(null) }
+
     fun openInfoSheet(kind: StatsSheetKind, which: String) {
         logEvent(EventRepository.EVENT_STATS_INFO_OPENED, mapOf("which" to which))
         infoSheet = kind
@@ -183,6 +191,7 @@ fun StatsScreen(
                 recalibrateFailed = recalibrateFailed,
                 onBack = onBack,
                 onOpenInfoSheet = { kind, which -> openInfoSheet(kind, which) },
+                onOpenVisitSheet = { visitSheetPackage = it },
                 onRecalibrateTapped = {
                     logEvent(EventRepository.EVENT_STATS_RECALIBRATE_TAPPED, emptyMap())
                     confirmRecalibrate = true
@@ -201,12 +210,29 @@ fun StatsScreen(
                         StatsSheetKind.NopeRate -> NopeRateSheetContent(readyDashboard)
                     }
                     Spacer(Modifier.height(16.dp))
-                    NocturneButton(
+                    NocturneCtaButton(
                         "Got it",
                         variant = ButtonVariant.SECONDARY,
-                        block = true,
-                        height = 42.dp,
                         onClick = { infoSheet = null },
+                    )
+                }
+            }
+        }
+
+        // P7-F6 visit-length sheet: resolves the selected package against the
+        // same dashboard the list rendered. A package that vanished in a
+        // refresh simply closes the sheet. No §10 event exists for opening
+        // it or setting/clearing an override (F-B handback point 3).
+        visitSheetPackage?.let { packageName ->
+            val row = readyDashboard?.apps
+                ?.firstOrNull { it.packageName == packageName }
+                ?.let { statsAppRows(listOf(it), appsRepo::labelFor).single() }
+            if (row != null) {
+                InfoSheet(onDismiss = { visitSheetPackage = null }) {
+                    VisitLengthSheetContent(
+                        row = row,
+                        statsRepo = statsRepo,
+                        onDone = { visitSheetPackage = null },
                     )
                 }
             }
@@ -281,6 +307,7 @@ private fun ReadyContent(
     recalibrateFailed: Boolean,
     onBack: () -> Unit,
     onOpenInfoSheet: (StatsSheetKind, String) -> Unit,
+    onOpenVisitSheet: (String) -> Unit,
     onRecalibrateTapped: () -> Unit,
 ) {
     val colors = NocturneTheme.colors
@@ -312,38 +339,31 @@ private fun ReadyContent(
         )
         Spacer(Modifier.height(8.dp))
 
-        // — Hero —
+        // — Today hero (S1 v2, 8 October §17 addendum: local midnight) —
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Time saved per day",
+                "Time saved today",
                 fontSize = 12.5.sp,
                 color = colors.neutral.step400,
             )
             StatsInfoButton(
-                description = "About time saved per day",
+                description = "About time saved today",
                 onClick = { onOpenInfoSheet(StatsSheetKind.TimeSaved, "time_saved_hero") },
             )
         }
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = StatsDurationFormat.duration(dashboard.savedPerDayMs),
+                text = StatsDurationFormat.duration(dashboard.todaySavedMs),
                 style = tabular(fontSize = 68.0, weight = FontWeight.Normal),
                 color = colors.accentRamp.step200,
             )
             Text(
-                "/ day",
+                "today",
                 fontSize = 15.sp,
                 color = colors.neutral.step500,
                 modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
             )
         }
-        Text(
-            text = "${StatsDurationFormat.duration(dashboard.savedMs)} saved so far",
-            fontSize = 14.sp,
-            color = colors.neutral.step200,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        val screenTime = screenTimeLine(dashboard.screenDailyMs, dashboard.screenChangePercent)
         when {
             !dashboard.usageAvailable -> Text(
                 // §9/§10: neutral unavailability note; saved/outcome figures
@@ -353,30 +373,49 @@ private fun ReadyContent(
                 color = colors.neutral.step500,
                 modifier = Modifier.padding(top = 6.dp),
             )
-            screenTime != null -> Text(
-                screenTime,
+            else -> todayScreenTimeLine(dashboard.todayScreenMs)?.let { line ->
+                // P7-F13: "Screen time X today"; the "vs your usual"
+                // comparison is gone, and an unknown day hides the line.
+                Text(
+                    line,
+                    fontSize = 12.sp,
+                    color = colors.neutral.step500,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+        if (!dashboard.blocksOn) {
+            // P7-F10: outcomes this week keep the dashboard alive even with
+            // every block off — say so instead of showing the S6 empty state.
+            Text(
+                "No blocks are on",
                 fontSize = 12.sp,
-                color = colors.neutral.step500,
+                color = colors.neutral.step400,
                 modifier = Modifier.padding(top = 6.dp),
             )
         }
         Spacer(Modifier.height(24.dp))
 
-        // — Tiles —
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // — Today tiles (S1 v2, P7-F22): equal height on the tallest tile;
+        //    number first, label below, the bar at the right tile's bottom —
+        Row(
+            Modifier.height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             Column(
                 Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .background(colors.surface, RoundedCornerShape(12.dp))
                     .padding(14.dp),
             ) {
                 Text(
-                    text = dashboard.attemptsPerDay.roundToInt().toString(),
+                    text = dashboard.todayAttempts.toString(),
                     style = tabular(fontSize = 24.0, weight = FontWeight.Medium),
                     color = colors.text,
                 )
                 Text(
-                    "Attempts / day",
+                    "Attempts today",
                     fontSize = 11.5.sp,
                     color = colors.neutral.step500,
                     modifier = Modifier.padding(top = 4.dp),
@@ -385,19 +424,20 @@ private fun ReadyContent(
             Column(
                 Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .background(colors.surface, RoundedCornerShape(12.dp))
                     .padding(14.dp),
             ) {
                 Text(
-                    // §9/§10: an em dash with an empty bar when there are no
+                    // §9/§10: an em dash with an empty bar when today has no
                     // resolved attempts — never a fabricated 0%.
-                    text = if (dashboard.attempts == 0) "—" else "${dashboard.nopeRatePercent}%",
+                    text = if (dashboard.todayAttempts == 0) "—" else "${dashboard.todayNopeRatePercent}%",
                     style = tabular(fontSize = 24.0, weight = FontWeight.Medium),
                     color = colors.text,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Nope rate",
+                        "Nope rate today",
                         fontSize = 11.5.sp,
                         color = colors.neutral.step500,
                     )
@@ -407,16 +447,46 @@ private fun ReadyContent(
                         onClick = { onOpenInfoSheet(StatsSheetKind.NopeRate, "nope_rate") },
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.weight(1f))
                 RateBar(
-                    fraction = if (dashboard.attempts == 0) 0f else dashboard.nopeRatePercent / 100f,
+                    fraction = if (dashboard.todayAttempts == 0) 0f else dashboard.todayNopeRatePercent / 100f,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
         Spacer(Modifier.height(24.dp))
 
-        // — Blocked apps (nested list, ~300dp with overflow fade) —
+        // — This week (S1 v2): average saved per day and the N-of-M rate —
+        SectionLabel("THIS WEEK")
+        Spacer(Modifier.height(10.dp))
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(colors.surface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 13.dp),
+        ) {
+            WeekStatLine(
+                label = "Avg time saved",
+                value = "${StatsDurationFormat.duration(dashboard.savedPerDayMs)} / day",
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 11.dp)
+                    .height(1.dp)
+                    .background(colors.divider),
+            )
+            WeekStatLine(
+                label = "Nope rate",
+                value = weekNopeRateLine(dashboard.nopeRatePercent, dashboard.attempts),
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+
+        // — Blocked apps (P7-F20): rows wrap their content (no fixed row
+        //    height, so large fonts never clip); the box caps at about five
+        //    rows and scrolls on its own, collapsing when there are few
+        //    apps. Tapping anywhere on a row opens the visit sheet —
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SectionLabel(
@@ -429,17 +499,24 @@ private fun ReadyContent(
                     onClick = { onOpenInfoSheet(StatsSheetKind.TimeSaved, "time_saved_list") },
                 )
             }
+            Text(
+                "Visit times look off? Tap an app to set your own.",
+                fontSize = 12.sp,
+                color = colors.neutral.step400,
+            )
+            val listScroll = rememberScrollState()
             Box {
                 Column(
                     Modifier
-                        .heightIn(max = 300.dp)
-                        .verticalScroll(rememberScrollState()),
+                        .heightIn(max = (LIST_BOX_ROWS * APP_ROW_APPROX_HEIGHT).dp)
+                        .verticalScroll(listScroll),
                 ) {
-                    appRows.forEachIndexed { index, row ->
+                    appRows.forEach { row ->
                         Row(
                             Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 11.dp),
+                                .clickable { onOpenVisitSheet(row.packageName) }
+                                .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(Modifier.weight(1f)) {
@@ -449,12 +526,22 @@ private fun ReadyContent(
                                     fontWeight = FontWeight.Medium,
                                     color = colors.text,
                                 )
-                                Text(
-                                    text = appRowSubtitle(row),
-                                    fontSize = 11.5.sp,
-                                    color = colors.neutral.step500,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                ) {
+                                    // Weighted, so it is measured after the
+                                    // chip: at large font the subtitle wraps
+                                    // and the chip keeps its width (P7-N16).
+                                    Text(
+                                        text = appRowSubtitle(row),
+                                        fontSize = 11.5.sp,
+                                        color = colors.neutral.step500,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                    )
+                                    Spacer(Modifier.width(5.dp))
+                                    VisitChip(text = row.visitChip)
+                                }
                             }
                             Text(
                                 text = StatsDurationFormat.duration(row.savedMs),
@@ -471,16 +558,19 @@ private fun ReadyContent(
                     }
                 }
                 // Mock's overflow fade: pure background — no pointer input,
-                // so list scrolling under it stays live.
-                Box(
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(34.dp)
-                        .background(
-                            Brush.verticalGradient(0f to Color.Transparent, 1f to colors.bg),
-                        ),
-                )
+                // so list scrolling under it stays live. Drawn only while more
+                // rows sit below, so it never covers the last row (P7-G12-1).
+                if (listScroll.canScrollForward) {
+                    Box(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(34.dp)
+                            .background(
+                                Brush.verticalGradient(0f to Color.Transparent, 1f to colors.bg),
+                            ),
+                    )
+                }
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -531,7 +621,6 @@ private fun ReadyContent(
                 .fillMaxWidth()
                 .border(1.dp, colors.neutral.step800, RoundedCornerShape(14.dp))
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
                 "Recalibrate time spent on apps",
@@ -539,6 +628,7 @@ private fun ReadyContent(
                 fontWeight = FontWeight.Medium,
                 color = colors.text,
             )
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Usual time per app seems off? Hit recalibrate and we'll re-measure it " +
                     "from your last 7 days.",
@@ -547,6 +637,7 @@ private fun ReadyContent(
                 color = colors.neutral.step400,
             )
             if (recalibrateFailed) {
+                Spacer(Modifier.height(10.dp))
                 Text(
                     "Recalibration didn't finish, so your usual time hasn't changed.",
                     fontSize = 12.sp,
@@ -554,11 +645,12 @@ private fun ReadyContent(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            NocturneButton(
+            // P7-F25: the card's CTA keeps the shared 50dp/10dp/15sp pair
+            // spec, ≥16dp below the content above it.
+            Spacer(Modifier.height(16.dp))
+            NocturneCtaButton(
                 "Recalibrate",
                 variant = ButtonVariant.SECONDARY,
-                block = true,
-                height = 40.dp,
                 enabled = !recalibrating,
                 onClick = onRecalibrateTapped,
             )
@@ -869,64 +961,50 @@ private fun InfoSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) {
 @Composable
 private fun TimeSavedSheetContent() {
     val colors = NocturneTheme.colors
-    Text(
-        "Time saved",
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Medium,
-        color = colors.text,
-    )
-    Text(
-        "Every time you explicitly nope out, we estimate the time a usual visit " +
-            "would have taken.",
-        fontSize = 13.5.sp,
-        lineHeight = 21.sp,
-        color = colors.neutral.step300,
-    )
-    // Corrected PRD §9 copy — the PNG's pre-install/abandonment claims are
-    // superseded and intentionally not reproduced here.
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(colors.neutral.step900, RoundedCornerShape(12.dp))
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FormulaChip("Nopes")
-        Text("×", fontSize = 12.sp, color = colors.neutral.step500)
-        FormulaChip("Usual visit length")
-        Text("=", fontSize = 12.sp, color = colors.neutral.step500)
-        FormulaChip("Time saved", accent = true)
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    // S2 v2 (8 October §17 addendum): the corrected copy with generous
+    // spacing; the "Tried again within 5 minutes…" line is removed.
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text(
-            "How we get \"usual visit length\"",
-            fontSize = 13.sp,
+            "Time saved",
+            fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             color = colors.text,
         )
         Text(
-            "We use recent available app history when you allow usage access, up to " +
-                "7 days. If we have fewer than 3 usable visits, we use 10 minutes per " +
-                "visit. Recalibrating updates future estimates.",
-            fontSize = 12.5.sp,
-            lineHeight = 19.sp,
+            "Each ‘nope’ saves you a visit. We count the time that visit usually takes.",
+            fontSize = 13.5.sp,
+            lineHeight = 21.sp,
+            color = colors.neutral.step300,
+        )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(colors.neutral.step900, RoundedCornerShape(12.dp))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FormulaChip("Nopes")
+            Text("×", fontSize = 12.sp, color = colors.neutral.step500)
+            FormulaChip("Usual visit length")
+            Text("=", fontSize = 12.sp, color = colors.neutral.step500)
+            FormulaChip("Time saved", accent = true)
+        }
+        Text(
+            "Usual visit length comes from your 7 days before Toki. You can set your own per app.",
+            fontSize = 13.sp,
+            lineHeight = 20.sp,
             color = colors.neutral.step400,
         )
     }
-    Text(
-        "Repeated nopes within 5 minutes count once. Completing a challenge counts " +
-            "as a separate try.",
-        fontSize = 12.sp,
-        lineHeight = 18.sp,
-        color = colors.neutral.step500,
-    )
 }
 
 @Composable
 private fun NopeRateSheetContent(dashboard: StatsDashboard) {
     val colors = NocturneTheme.colors
-    val rateFraction = if (dashboard.attempts == 0) 0f else dashboard.nopeRatePercent / 100f
+    // Opened from the "Nope rate today" tile: explain today's figures (P7-N12).
+    val today = todayNopeRateSheetFigures(dashboard)
+    val rateFraction = if (today.attempts == 0) 0f else today.ratePercent / 100f
     Text(
         "Nope rate",
         fontSize = 18.sp,
@@ -963,13 +1041,13 @@ private fun NopeRateSheetContent(dashboard: StatsDashboard) {
         }
         Row(Modifier.fillMaxWidth()) {
             Text(
-                "${dashboard.nopes} nopes",
+                "${today.nopes} nopes",
                 fontSize = 12.sp,
                 color = colors.accentRamp.step200,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                "${dashboard.passes} pushed through",
+                "${today.passes} pushed through",
                 fontSize = 12.sp,
                 color = colors.neutral.step400,
             )
@@ -978,13 +1056,13 @@ private fun NopeRateSheetContent(dashboard: StatsDashboard) {
     // §9: resolved attempt counts; "No tries yet" replaces a fabricated
     // percentage when nothing has been counted.
     Text(
-        text = if (dashboard.attempts == 0) {
-            buildAnnotatedString { append("No tries yet.") }
+        text = if (today.attempts == 0) {
+            buildAnnotatedString { append("No tries yet today.") }
         } else {
             buildAnnotatedString {
-                append("${dashboard.nopes} of ${dashboard.attempts} tries this week = ")
+                append("${today.nopes} of ${today.attempts} tries today = ")
                 withStyle(SpanStyle(color = colors.accentRamp.step200)) {
-                    append("${dashboard.nopeRatePercent}%")
+                    append("${today.ratePercent}%")
                 }
                 append(". Higher is better.")
             }
@@ -996,6 +1074,225 @@ private fun NopeRateSheetContent(dashboard: StatsDashboard) {
 }
 
 // — Shared small pieces —
+
+// @phosphor-icons/web 2.1.1 regular .ph-pencil-simple, verified against the
+// same release the bundled font and Ph.Info come from (cmap-checked), for the
+// S7 visit-chip edit affordance beyond the shared Ph table.
+private const val PhPencilSimple = 0xe3b4
+
+// The S7 app box (P7-F20): at most about five wrapped rows, so the cap is
+// five default-height rows (8 + 23.25 + 4 + 27.25 + 8 dp content plus the
+// 1dp divider ≈ 72dp; rows wrap and grow with font scale, P7-N17); fewer
+// apps leave no reserved empty space.
+private const val APP_ROW_APPROX_HEIGHT = 72
+private const val LIST_BOX_ROWS = 5
+
+@Composable
+private fun WeekStatLine(label: String, value: String) {
+    val colors = NocturneTheme.colors
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            fontSize = 13.sp,
+            color = colors.neutral.step400,
+        )
+        Text(
+            value,
+            style = tabular(fontSize = 14.0, weight = FontWeight.Medium),
+            color = colors.text,
+        )
+    }
+}
+
+/**
+ * The S7 chip (P7-F20): outlined 1dp/8dp, reading "~6m/visit ✎" for every app —
+ * a user-set value carries no separate mark or tint (9 October §17 addendum).
+ */
+@Composable
+private fun VisitChip(text: String) {
+    val colors = NocturneTheme.colors
+    Row(
+        Modifier
+            .border(1.dp, colors.neutral.step700, RoundedCornerShape(8.dp))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, fontSize = 11.sp, color = colors.neutral.step300)
+        Spacer(Modifier.width(3.dp))
+        PhosphorIcon(PhPencilSimple, tint = colors.neutral.step300, size = 11)
+    }
+}
+
+/*
+ * The S8 "<App> · time per visit" sheet (P7-F6). Save writes the override
+ * through StatsRepository.setVisitOverride; "Use measured (Xm)" clears it.
+ * A false return (write failed) keeps the sheet open with an inline note.
+ * §10 logs nothing here (F-B handback point 3: no override events exist).
+ */
+@Composable
+private fun VisitLengthSheetContent(
+    row: StatsAppRow,
+    statsRepo: StatsRepository,
+    onDone: () -> Unit,
+) {
+    val colors = NocturneTheme.colors
+    val scope = rememberCoroutineScope()
+    var minutes by rememberSaveable(row.packageName) {
+        mutableStateOf(initialSheetMinutes(row).coerceIn(StatsLedger.OVERRIDE_MINUTES_MIN, StatsLedger.OVERRIDE_MINUTES_MAX))
+    }
+    var working by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+
+    fun submit(clear: Boolean) {
+        working = true
+        failed = false
+        scope.launch {
+            val ok = try {
+                if (clear) statsRepo.clearVisitOverride(row.packageName)
+                else statsRepo.setVisitOverride(row.packageName, minutes)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            working = false
+            if (ok) onDone() else failed = true
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Text(
+            "${row.label} · time per visit",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.text,
+        )
+        Text(
+            "How long does a typical visit last for you? " +
+                visitSheetMeasuredLabel(row.usesFallback, row.measuredVisitMs),
+            fontSize = 13.5.sp,
+            lineHeight = 21.sp,
+            color = colors.neutral.step300,
+        )
+        // P7-F21 (S8): the stepper sits in a tinted rounded box with the
+        // number shown large; presets fill the width in equal widths.
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(colors.accentRamp.step900, RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            VisitStepperButton(
+                glyph = Ph.Minus,
+                enabled = !working && minutes > StatsLedger.OVERRIDE_MINUTES_MIN,
+                onClick = { minutes-- },
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    minutes.toString(),
+                    style = tabular(fontSize = 56.0, weight = FontWeight.Medium),
+                    color = colors.text,
+                )
+                Text(
+                    "min",
+                    fontSize = 13.sp,
+                    color = colors.neutral.step500,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+            VisitStepperButton(
+                glyph = Ph.Plus,
+                enabled = !working && minutes < StatsLedger.OVERRIDE_MINUTES_MAX,
+                onClick = { minutes++ },
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(3, 5, 10, 15, 20).forEach { preset ->
+                val selected = minutes == preset
+                Text(
+                    "${preset}m",
+                    fontSize = 12.sp,
+                    color = if (selected) colors.accentRamp.step200 else colors.neutral.step300,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .border(
+                            1.dp,
+                            if (selected) colors.accent else colors.neutral.step700,
+                            RoundedCornerShape(8.dp),
+                        )
+                        .clickable(enabled = !working) { minutes = preset }
+                        .padding(vertical = 7.dp),
+                )
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                visitSheetNopesLine(row.nopes, minutes),
+                fontSize = 13.sp,
+                color = colors.neutral.step300,
+            )
+            Text(
+                visitSheetSavedLine(row.nopes * minutes * 60_000L),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.accentRamp.step200,
+            )
+        }
+        if (failed) {
+            Text(
+                "Couldn't save that. Try again.",
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        // P7-F25: the sheet's CTA pair follows the shared spec — Save
+        // accent-outlined, "Use measured" secondary, a 12dp gap between
+        // them; the sheet's own 18dp rhythm keeps ≥16dp above the pair.
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            NocturneCtaButton(
+                "Save",
+                enabled = !working,
+                onClick = { submit(clear = false) },
+            )
+            NocturneCtaButton(
+                "Use measured (${StatsDurationFormat.visitMinutes(row.measuredVisitMs)}m)",
+                variant = ButtonVariant.SECONDARY,
+                enabled = !working,
+                onClick = { submit(clear = true) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisitStepperButton(glyph: Int, enabled: Boolean, onClick: () -> Unit) {
+    val colors = NocturneTheme.colors
+    Box(
+        Modifier
+            .size(44.dp)
+            .border(1.dp, colors.neutral.step700, RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled) { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        PhosphorIcon(
+            glyph,
+            tint = if (enabled) colors.neutral.step200 else colors.neutral.step700,
+            size = 16,
+        )
+    }
+}
 
 @Composable
 private fun RateBar(fraction: Float, modifier: Modifier = Modifier) {

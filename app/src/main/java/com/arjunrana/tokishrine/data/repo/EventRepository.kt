@@ -146,6 +146,13 @@ open class EventRepository(
         const val TARGET_TYPE_APP = "app"
         const val TARGET_TYPE_SITE = "site"
 
+        // walk_away `source` values (§10). auto_away: the gate or pause
+        // challenge was out of sight for 15 s (8 October §17 addendum).
+        const val WALK_AWAY_SOURCE_BLOCK_SCREEN = "block_screen"
+        const val WALK_AWAY_SOURCE_TYPING = "typing"
+        const val WALK_AWAY_SOURCE_COUNTDOWN = "countdown"
+        const val WALK_AWAY_SOURCE_AUTO_AWAY = "auto_away"
+
         // Block-management events (§10) fired by the list/create/edit flows.
         const val EVENT_BLOCK_CREATE_STARTED = "block_create_started"
         const val EVENT_BLOCK_CREATE_STEP_COMPLETED = "block_create_step_completed"

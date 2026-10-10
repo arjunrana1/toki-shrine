@@ -42,16 +42,16 @@ class StatsRepositoryTest {
     private suspend fun nope(id: String) = db.withTransaction { StatsLedger(db.statsDao()).record(id, "app", "app", null, false, now, zone) }
 
     @Test fun baselineFrozenRecalibrationAffectsFutureOnlyAndRevocationPreservesData() = runBlocking {
-        raw = visits(5_000)
+        raw = visits(40_000)
         repo.refresh()
-        assertEquals(5_000L, db.statsDao().baselines().single().visitMs)
+        assertEquals(40_000L, db.statsDao().baselines().single().visitMs)
         nope("old")
         val baseline = db.statsDao().state()!!.baselineId
         now += 600_000
-        raw = visits(20_000)
+        raw = visits(80_000)
         repo.refresh()
         assertEquals(baseline, db.statsDao().state()!!.baselineId)
-        assertEquals(5_000L, db.statsDao().outcome("old")!!.savedMs)
+        assertEquals(40_000L, db.statsDao().outcome("old")!!.savedMs)
         access = false
         repo.refresh()
         assertEquals(StatsScreenState.NoUsageAccess, repo.state.value)
@@ -62,13 +62,14 @@ class StatsRepositoryTest {
         assertTrue(repo.recalibrate())
         assertNotEquals(baseline, db.statsDao().state()!!.baselineId)
         nope("new")
-        assertEquals(5_000L, db.statsDao().outcome("old")!!.savedMs)
+        assertEquals(40_000L, db.statsDao().outcome("old")!!.savedMs)
+        assertEquals(80_000L, db.statsDao().baselines().single().visitMs) // p75 of three 40 s and three 80 s visits
         assertEquals(db.statsDao().baselines().single().visitMs, db.statsDao().outcome("new")!!.savedMs)
         assertEquals(1, db.eventDao().getAll().count { it.name == "baseline_recalibrated" })
     }
 
     @Test fun insufficientHistoryFallsBackAndFailedRecalibrationPreservesBaseline() = runBlocking {
-        raw = visits(5_000).take(4)
+        raw = visits(40_000).take(4)
         repo.refresh()
         assertEquals(600_000L, db.statsDao().baselines().single().visitMs)
         val before = db.statsDao().state()
@@ -77,19 +78,74 @@ class StatsRepositoryTest {
         assertEquals(before, db.statsDao().state())
     }
 
+    @Test fun visitsUnderThirtySecondsNeverFormABaseline() = runBlocking {
+        raw = visits(29_999)
+        repo.refresh()
+        assertEquals(StatsBaseline("app", StatsLedger.FALLBACK_MS, 0), db.statsDao().baselines().single())
+    }
+
+    @Test fun overrideRevaluesTheWeekSurvivesRecalibrateAndClearingRestoresFrozenValues() = runBlocking {
+        BlockRepository(db, clock = { now }).let { blocks ->
+            blocks.setEnabled(blocks.createBlock(BlockDraft("B", listOf("app"), emptyList(), FrictionType.TYPING, 15, 150, 350, 60, 360)), true)
+        }
+        raw = visits(40_000)
+        repo.refresh()
+        nope("a"); now += 600_000; nope("b")
+        assertTrue(repo.setVisitOverride("app", 12))
+        fun row() = (repo.state.value as StatsScreenState.Ready).dashboard.apps.single()
+        assertEquals(2 * 720_000L, row().savedMs)
+        assertEquals(720_000L, row().userVisitMs)
+        assertEquals(40_000L, row().measuredVisitMs)
+        // Stored contributions are never rewritten.
+        assertEquals(listOf(40_000L, 40_000L), db.statsDao().outcomes("0000").map { it.savedMs })
+        assertTrue(repo.recalibrate())
+        assertEquals(2 * 720_000L, row().savedMs)
+        assertTrue(repo.clearVisitOverride("app"))
+        assertEquals(80_000L, row().savedMs)
+        assertNull(row().userVisitMs)
+        assertThrows(IllegalArgumentException::class.java) { runBlocking { repo.setVisitOverride("app", 0) } }
+        assertThrows(IllegalArgumentException::class.java) { runBlocking { repo.setVisitOverride("app", StatsLedger.OVERRIDE_MINUTES_MAX + 1) } }
+        assertTrue(db.statsDao().overrides().isEmpty())
+    }
+
+    @Test fun emptyStateOnlyWithoutEnabledBlocksAndWithoutOutcomesThisWeek() = runBlocking {
+        // A pre-midnight lock event makes today's history complete from local midnight.
+        val midnight = Instant.parse("2026-10-04T00:00:00Z").toEpochMilli()
+        raw = listOf(StatsUsageEvent("stop", midnight - 60_000, "app", "", UsageKind.STOP, "UTC")) + visits(40_000)
+        repo.refresh()
+        assertEquals(StatsScreenState.NoBlocks, repo.state.value)
+        nope("kept")
+        repo.refresh()
+        val ready = (repo.state.value as StatsScreenState.Ready).dashboard
+        assertFalse(ready.blocksOn)
+        assertEquals(listOf("app"), ready.apps.map { it.packageName }) // its block is gone, its outcome this week keeps it
+        assertEquals(1, ready.todayAttempts)
+        assertEquals(1, ready.todayNopes)
+        assertEquals(120_000L, ready.todayScreenMs)
+        now += 7 * StatsRepository.DAY_MS
+        repo.refresh()
+        assertEquals(StatsScreenState.NoBlocks, repo.state.value)
+    }
+
     @Test fun ignoredNopesNeverExtendWindowAndSuccessEndsSequence() = runBlocking {
-        nope("one"); now += 299_000; nope("ignored"); now += 1_000; nope("two")
+        // Relative to DEDUP_MS so a window change cannot make this pass vacuously:
+        // "ignored" lands 1 s inside the window, "two" exactly at its end. Had the
+        // ignored nope extended the window, "two" would be ignored too.
+        nope("one"); now += StatsLedger.DEDUP_MS - 1_000; nope("ignored"); now += 1_000; nope("two")
         db.withTransaction { StatsLedger(db.statsDao()).record("pass", "app", "app", null, true, now, zone) }
         nope("three"); nope("three")
         val rows = db.statsDao().outcomes("0000")
         assertEquals(5, rows.size)
-        assertEquals(4, rows.count { it.counted })
+        assertEquals(
+            mapOf("one" to true, "ignored" to false, "two" to true, "pass" to true, "three" to true),
+            rows.associate { it.sessionId to it.counted },
+        )
     }
 
     @Test fun siteNopesAttributeToHostingBrowserShareItsSequenceAndStatsWriteFailureRollsBackPairedEvent() = runBlocking {
         db.withTransaction { StatsLedger(db.statsDao()).record("site", "example.com", "site", "browser", false, now, zone) }
         now += 60_000
-        // An app nope on the same browser package continues the site nope's five-minute sequence.
+        // An app nope on the same browser package continues the site nope's dedup sequence.
         db.withTransaction { StatsLedger(db.statsDao()).record("app-on-browser", "browser", "app", "browser", false, now, zone) }
         // Without a known hosting browser a site outcome is never recorded against the domain.
         db.withTransaction { StatsLedger(db.statsDao()).record("no-host", "example.com", "site", null, false, now, zone) }

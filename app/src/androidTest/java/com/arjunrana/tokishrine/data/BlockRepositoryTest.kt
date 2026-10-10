@@ -12,6 +12,9 @@ import com.arjunrana.tokishrine.data.repo.ConflictingOwnershipException
 import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_CHOICES
 import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_CHOICES
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.data.repo.TargetRemovalException
+import com.arjunrana.tokishrine.detection.ActiveBlockIndex
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -557,5 +560,58 @@ class BlockRepositoryTest {
             repo.deleteBlock(id)
         }
         assertTrue(repo.getBlocksWithContents().isEmpty())
+    }
+
+    // P7-F5 "Add more": additions save on an ON block without touching
+    // anything else, and the blocks flow detection follows carries them.
+    @Test
+    fun addTargetsAddsToAnOnBlockAndReachesDetectionImmediately() = runBlocking {
+        val id = repo.createBlock(draft("Social", apps = listOf("com.a"), sites = listOf("a.com")))
+        assertTrue(repo.setEnabledRecordingTransition(id, true))
+        val before = repo.getBlockWithContents(id)!!.block
+        val events = db.eventDao().getAll().size
+
+        assertEquals(2, repo.addTargets(id, listOf("com.a", "com.b"), listOf(" A.com. ", "b.com")))
+
+        val after = repo.getBlockWithContents(id)!!
+        assertEquals(before, after.block) // still ON, nothing else changed
+        assertEquals(setOf("com.a", "com.b"), after.apps.map { it.packageName }.toSet())
+        assertEquals(setOf("a.com", "b.com"), after.sites.map { it.domain }.toSet())
+        assertEquals(events, db.eventDao().getAll().size)
+        val index = ActiveBlockIndex.from(repo.observeBlocksWithContents().first(), excludePackage = "self")
+        assertEquals(id, index.apps.getValue("com.b").blockId)
+        assertEquals(id, index.sites.getValue("b.com").blockId)
+        // Re-saving the same selection adds nothing.
+        assertEquals(0, repo.addTargets(id, listOf("com.b", "com.a"), listOf("b.com", "a.com")))
+    }
+
+    @Test
+    fun addTargetsRejectsAnyRemovalAndKeepsPriorData() = runBlocking {
+        val id = repo.createBlock(draft("Social", apps = listOf("com.a"), sites = listOf("a.com")))
+        assertThrows(TargetRemovalException::class.java) {
+            runBlocking { repo.addTargets(id, listOf("com.new"), listOf("a.com")) }
+        }
+        assertThrows(TargetRemovalException::class.java) {
+            runBlocking { repo.addTargets(id, listOf("com.a", "com.new"), listOf("new.com")) }
+        }
+        val read = repo.getBlockWithContents(id)!!
+        assertEquals(listOf("com.a"), read.apps.map { it.packageName })
+        assertEquals(listOf("a.com"), read.sites.map { it.domain })
+    }
+
+    @Test
+    fun addTargetsRespectsOwnershipAtomically() = runBlocking {
+        val id = repo.createBlock(draft("Social", apps = listOf("com.a")))
+        val other = repo.createBlock(draft("Other", apps = listOf("com.owned"), sites = listOf("owned.com")))
+        assertThrows(ConflictingOwnershipException::class.java) {
+            runBlocking { repo.addTargets(id, listOf("com.a", "com.new", "com.owned"), emptyList()) }
+        }
+        assertThrows(ConflictingOwnershipException::class.java) {
+            runBlocking { repo.addTargets(id, listOf("com.a", "com.new"), listOf("owned.com")) }
+        }
+        assertEquals(listOf("com.a"), repo.getBlockWithContents(id)!!.apps.map { it.packageName })
+        assertTrue(repo.getBlockWithContents(id)!!.sites.isEmpty())
+        assertEquals(listOf("com.owned"), repo.getBlockWithContents(other)!!.apps.map { it.packageName })
+        assertThrows(IllegalStateException::class.java) { runBlocking { repo.addTargets(999, listOf("com.x"), emptyList()) } }
     }
 }

@@ -77,6 +77,16 @@ object EventTaxonomy {
         "bubble_dragged",
     )
 
+    // The walk_away `source` parameter values. auto_away (8 October §17
+    // addendum) is a pause nope recorded after 15 s away; it is counted and
+    // valued exactly like a chosen nope and shows no Walk-Away moment.
+    val WALK_AWAY_SOURCES: Set<String> = setOf(
+        EventRepository.WALK_AWAY_SOURCE_BLOCK_SCREEN,
+        EventRepository.WALK_AWAY_SOURCE_TYPING,
+        EventRepository.WALK_AWAY_SOURCE_COUNTDOWN,
+        EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY,
+    )
+
     fun isActive(name: String): Boolean = name in ACTIVE
 
     fun isRetired(name: String): Boolean = name in RETIRED

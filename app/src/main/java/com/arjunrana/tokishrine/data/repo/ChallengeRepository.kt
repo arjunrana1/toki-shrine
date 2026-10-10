@@ -73,6 +73,8 @@ class ChallengeRepository(
     /**
      * Inserts the walk-away before reading the inclusive local-day global count.
      * [hostPackage] is the hosting browser for a site walk-away (its Stats package).
+     * Every [source], `auto_away` included, takes this same path: one raw
+     * event, one Stats nope with the usual valuation and dedup, per session.
      */
     suspend fun recordWalkAwayAndCount(
         sessionId: String,
@@ -83,6 +85,7 @@ class ChallengeRepository(
         hostPackage: String? = null,
     ): Int = db.withTransaction {
         require(targetType == EventRepository.TARGET_TYPE_APP || targetType == EventRepository.TARGET_TYPE_SITE)
+        require(source in EventTaxonomy.WALK_AWAY_SOURCES)
         val markerKey = walkAwayMarker(sessionId)
         val existingTime = meta.get(markerKey)?.toLongOrNull()
         val eventTime = existingTime ?: clock()
@@ -108,6 +111,20 @@ class ChallengeRepository(
             .toInstant()
             .toEpochMilli()
         events.countByNameSince(EventRepository.EVENT_WALK_AWAY, dayStart)
+    }
+
+    /**
+     * The celebration's "That could've been N minutes" value (P7-F17): the
+     * visit this recorded nope is worth on Stats — the user's own visit length
+     * for that app when set, else the frozen measured/fallback saving. Null
+     * when the nope saved nothing (deduped within two minutes, or a site
+     * without a known browser) or was not recorded. Read-only.
+     */
+    suspend fun nopeVisitMs(sessionId: String): Long? {
+        val stats = db.statsDao()
+        val outcome = stats.outcome(sessionId) ?: return null
+        if (outcome.kind != "nope" || !outcome.counted || outcome.savedMs <= 0L) return null
+        return stats.overrideFor(outcome.packageName)?.visitMs ?: outcome.savedMs
     }
 
     suspend fun recordTurnOffAbandoned(blockId: Long, progressPct: Int) = db.withTransaction {

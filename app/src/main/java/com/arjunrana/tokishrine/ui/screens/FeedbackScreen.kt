@@ -34,9 +34,12 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 // typed text to the device mail client via the email intent. The mock's
 // "Attach a diagnostic log" toggle is removed — no logs are collected.
 //
-// The draft is saveable, so a recreation or process death keeps the typed
-// text. A failed handoff (no mail app / launch failure) keeps the screen and
-// the draft, and explains itself inline; only a successful handoff pops.
+// There is no draft (P7-F15): the typed text is saveable instance state only,
+// so a rotation or system recreation keeps it, but it is never written to
+// disk, the database or an event, and it is gone once the screen is left or a
+// handoff succeeds. A failed handoff (no mail app / launch failure) keeps the
+// screen and the text, and explains itself inline; only a successful handoff
+// pops.
 @Composable
 fun FeedbackScreen(
     eventRepo: EventRepository,

@@ -113,7 +113,7 @@ fun BlockGateScreen(
             )
             Spacer(Modifier.weight(1f))
             GateFilledButton(
-                text = "Not now",
+                text = "Nope, not now", // owner, 10 October: matches the challenge escape
                 height = 58,
                 fontSize = 17.5f,
                 onClick = onWalkAway,

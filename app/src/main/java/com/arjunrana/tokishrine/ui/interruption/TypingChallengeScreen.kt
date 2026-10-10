@@ -110,8 +110,8 @@ private class MismatchTransformation(
  * typed text are supplied, every user action is an explicit callback, and
  * the screen never clears or regenerates anything. [onSubmit] reports the
  * current text; completion and duplicate suppression are TS-P5B's. The
- * visible button is the only submit path; the escape action is the header's
- * ghost control.
+ * visible button is the only submit path; the escape action is the
+ * full-width outlined button under Submit (8 October §17 addendum, P7-F1).
  */
 @Composable
 fun TypingChallengeScreen(
@@ -125,6 +125,8 @@ fun TypingChallengeScreen(
     onWalkAway: () -> Unit,
     modifier: Modifier = Modifier,
     turnOffChars: Int = 0,
+    /** Bumped on Back while active; Never mind wiggles on each new value (P7-F2). */
+    escapeNudge: Int = 0,
 ) {
     val colors = NocturneTheme.colors
     val mismatches = if (showTypingMismatches) mismatchSpans(passage, typedText) else emptyList()
@@ -155,19 +157,6 @@ fun TypingChallengeScreen(
                 color = colors.neutral.step600,
                 modifier = Modifier.weight(1f),
             )
-            // Owner correction, 23 September: the turn-off flow escapes via
-            // the full-width Never Mind button under Submit, not a header
-            // ghost; the pause challenge keeps its header escape.
-            if (purpose != ChallengePurpose.TURN_OFF) {
-                Text(
-                    text = "Never mind",
-                    fontSize = 13.sp,
-                    color = colors.neutral.step300,
-                    modifier = Modifier
-                        .clickable { onWalkAway() }
-                        .padding(vertical = 2.dp),
-                )
-            }
         }
         if (purpose == ChallengePurpose.TURN_OFF) {
             Row(
@@ -308,18 +297,21 @@ fun TypingChallengeScreen(
             onClick = { onSubmit(typedText) },
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
         )
-        if (purpose == ChallengePurpose.TURN_OFF) {
-            TurnOffEscapeButton(
-                onClick = onWalkAway,
-                modifier = Modifier.padding(top = 10.dp),
-            )
-        }
+        // P7-F1 (8 October §17 addendum): the pause challenge escapes with
+        // the same full-width outlined button under Submit as turn-off —
+        // both read "Nope, not now" since 9 October (delayEscapeLabel).
+        EscapeButton(
+            label = delayEscapeLabel(purpose),
+            onClick = onWalkAway,
+            modifier = Modifier.padding(top = 10.dp).escapeNudge(escapeNudge),
+        )
     }
 }
 
-/** The turn-off escape (PRD §6 screen 22, owner-corrected copy): outlined, under Submit. */
+/** The escape (PRD §6 screen 22, owner-corrected copy; pause since P7-F1): outlined, under Submit. */
 @Composable
-private fun TurnOffEscapeButton(
+private fun EscapeButton(
+    label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -334,7 +326,7 @@ private fun TurnOffEscapeButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Never Mind",
+            text = label,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             color = colors.text,

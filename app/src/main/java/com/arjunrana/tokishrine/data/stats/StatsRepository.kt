@@ -78,8 +78,8 @@ class StatsRepository(
                         if (old == null || recalibrate) {
                             val recent = visits.filter { it.start >= now - 7 * DAY_MS }
                             val baselines = recent.groupBy { it.packageName }.filterKeys { it != ownPackage }.map { (pkg, rows) ->
-                                val valid = rows.filter { it.durationMs > 0 }
-                                StatsBaseline(pkg, if (valid.size >= 3) valid.sumOf { it.durationMs } / valid.size else StatsLedger.FALLBACK_MS, valid.size)
+                                val (visitMs, samples) = StatsLedger.usualVisit(rows.map { it.durationMs })
+                                StatsBaseline(pkg, visitMs, samples)
                             }
                             val daily = UsageVisits.dailyMs(coverage.flatMap { span -> UsageVisits.parse(raw.filter { it.at in span.start..span.end }, minOf(span.end, now)) })
                             val completeDays = (1L..7L).map(today::minusDays).filter { date ->
@@ -107,20 +107,24 @@ class StatsRepository(
                         }
                     }
                     val blocks = db.blockDao().getBlocksWithContents().filter { it.block.enabled }
-                    if (blocks.isEmpty()) {
+                    val outcomes = dao.outcomes(today.minusDays(6).toString())
+                    val weekOutcomes = outcomes.filter { it.counted }
+                    // P7-F10: the empty state only when nothing is on and nothing happened this week.
+                    if (blocks.isEmpty() && weekOutcomes.isEmpty()) {
                         StatsScreenState.NoBlocks
                     } else {
                         val coverage = dao.coverage()
                         val raw = dao.usage().filter { it.at <= now }
                         val visits = coverage.flatMap { span -> UsageVisits.parse(raw.filter { it.at in span.start..span.end }, minOf(span.end, now)) }
                         val daily = UsageVisits.dailyMs(visits)
-                        val weekStart = today.minusDays(6).atStartOfDay(zone()).toInstant().toEpochMilli()
-                        val screenDaily = if (fresh != null && UsageVisits.covered(weekStart, now, coverage))
-                            (0L..6L).sumOf { daily[today.minusDays(it).toString()] ?: 0L } / 7 else null
+                        val todayStart = today.atStartOfDay(zone()).toInstant().toEpochMilli()
+                        val screenToday = if (fresh != null && UsageVisits.covered(todayStart, now, coverage))
+                            daily[today.toString()] ?: 0L else null
                         StatsScreenState.Ready(StatsDashboardCalculator.calculate(
-                            today, dao.outcomes(today.minusDays(6).toString()),
-                            leaderboardPackages(blocks, siteHosts).intersect(installed),
-                            dao.baselines(), dao.state(), screenDaily, fresh != null,
+                            today, outcomes,
+                            leaderboardPackages(blocks, siteHosts, weekOutcomes.map { it.packageName }.toSet()).intersect(installed),
+                            dao.baselines(), dao.state(), fresh != null,
+                            overrides = dao.overrides(), todayScreenMs = screenToday, blocksOn = blocks.isNotEmpty(),
                         ))
                     }
                 }
@@ -135,6 +139,41 @@ class StatsRepository(
         }
     }
 
+    /**
+     * Sets the user's usual visit length for [packageName] in whole minutes
+     * ([StatsLedger.OVERRIDE_MINUTES_MIN]..[StatsLedger.OVERRIDE_MINUTES_MAX]),
+     * then refreshes [state]. It re-values that app's counted nopes for the
+     * week shown; stored outcome values are never rewritten. False means the
+     * write failed and nothing changed.
+     */
+    suspend fun setVisitOverride(packageName: String, minutes: Int): Boolean {
+        require(packageName.isNotBlank()) { "Package name required" }
+        require(minutes in StatsLedger.OVERRIDE_MINUTES_MIN..StatsLedger.OVERRIDE_MINUTES_MAX) {
+            "Visit length must be ${StatsLedger.OVERRIDE_MINUTES_MIN}..${StatsLedger.OVERRIDE_MINUTES_MAX} minutes"
+        }
+        return writeOverride { dao.override(StatsVisitOverride(packageName, minutes * 60_000L, clock())) }
+    }
+
+    /** "Use measured": removes the override so the measured baseline and frozen values apply again. */
+    suspend fun clearVisitOverride(packageName: String): Boolean = writeOverride { dao.clearOverride(packageName) }
+
+    private suspend fun writeOverride(write: suspend () -> Unit): Boolean {
+        val written = withContext(Dispatchers.IO) {
+            mutex.withLock {
+                try {
+                    write()
+                    true
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    false
+                }
+            }
+        }
+        if (written) refresh()
+        return written
+    }
+
     companion object {
         const val DAY_MS = 86_400_000L
         const val RETENTION_MS = 8 * DAY_MS
@@ -143,9 +182,16 @@ class StatsRepository(
          * App targets of enabled blocks, plus every supported browser while an
          * enabled block has a site: site outcomes attribute to the hosting
          * browser (4 October §17 addendum), so it appears with zero rows too.
+         * Packages with a counted outcome this week stay listed even when their
+         * block is off or they left it (8 October §17 addendum, P7-F10).
          */
-        fun leaderboardPackages(enabledBlocks: List<BlockWithContents>, siteHosts: Set<String>): Set<String> =
+        fun leaderboardPackages(
+            enabledBlocks: List<BlockWithContents>,
+            siteHosts: Set<String>,
+            weekOutcomePackages: Set<String> = emptySet(),
+        ): Set<String> =
             enabledBlocks.flatMap { it.apps }.map { it.packageName }.toSet() +
-                if (enabledBlocks.any { it.sites.isNotEmpty() }) siteHosts else emptySet()
+                (if (enabledBlocks.any { it.sites.isNotEmpty() }) siteHosts else emptySet()) +
+                weekOutcomePackages
     }
 }

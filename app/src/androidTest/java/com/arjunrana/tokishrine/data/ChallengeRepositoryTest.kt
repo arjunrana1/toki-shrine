@@ -11,6 +11,8 @@ import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.ChallengeRepository
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.data.stats.StatsLedger
+import com.arjunrana.tokishrine.data.stats.StatsVisitOverride
 import com.arjunrana.tokishrine.ui.interruption.ChallengePurpose
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -19,6 +21,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -246,6 +249,21 @@ class ChallengeRepositoryTest {
     }
 
     @Test
+    fun nopeVisitIsTheOverrideElseTheFrozenSavingAndNullForADedupedNope() = runBlocking {
+        // P7-F17: the celebration's "That could've been N minutes" value.
+        val blockId = createEnabledBlock()
+        val pkg = "com.example.target"
+        challenges.recordWalkAwayAndCount("first", blockId, pkg, "app", "block_screen")
+        assertEquals(StatsLedger.FALLBACK_MS, challenges.nopeVisitMs("first"))
+        now += 1_000
+        challenges.recordWalkAwayAndCount("repeat", blockId, pkg, "app", "typing")
+        assertNull(challenges.nopeVisitMs("repeat")) // deduped within two minutes: no saving
+        assertNull(challenges.nopeVisitMs("never-recorded"))
+        db.statsDao().override(StatsVisitOverride(pkg, 12 * 60_000L, now))
+        assertEquals(12 * 60_000L, challenges.nopeVisitMs("first"))
+    }
+
+    @Test
     fun siteWalkAwayAndPushThroughAttributeToHostingBrowserInTheChallengeTransaction() = runBlocking {
         val blockId = createEnabledBlock()
         val browser = "com.android.chrome"
@@ -270,6 +288,36 @@ class ChallengeRepositoryTest {
         assertEquals("reddit.com", db.eventDao().getAll().single { it.name == EventRepository.EVENT_CHALLENGE_COMPLETED }.target)
         assertTrue(db.eventDao().getAll().filter { it.name == EventRepository.EVENT_WALK_AWAY && it.targetType == "site" }
             .all { it.target == "reddit.com" })
+    }
+
+    @Test
+    fun autoAwayNopeTakesTheChosenNopePathWithItsOwnSource() = runBlocking {
+        // P7-F3: an auto-nope after 15 s away is the same walk-away
+        // transaction as a chosen nope — raw event, inclusive count, counted
+        // Stats nope with the usual valuation and the unchanged dedup.
+        val blockId = createEnabledBlock()
+        val pkg = "com.example.target"
+        val auto = EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY
+        assertEquals(1, challenges.recordWalkAwayAndCount("auto1", blockId, pkg, "app", auto))
+        assertEquals(1, challenges.recordWalkAwayAndCount("auto1", blockId, pkg, "app", auto))
+        now += 1_000
+        assertEquals(2, challenges.recordWalkAwayAndCount("chosen", blockId, pkg, "app", "typing"))
+        now += StatsLedger.DEDUP_MS
+        assertEquals(3, challenges.recordWalkAwayAndCount("auto2", blockId, pkg, "app", auto))
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { challenges.recordWalkAwayAndCount("unknown", blockId, pkg, "app", "abandoned") }
+        }
+
+        val rows = db.statsDao().outcomes("0000")
+        assertEquals(listOf("auto1", "chosen", "auto2"), rows.map { it.sessionId })
+        assertTrue(rows.all { it.kind == "nope" && it.packageName == pkg })
+        assertEquals(listOf(true, false, true), rows.map { it.counted })
+        assertEquals(listOf(StatsLedger.FALLBACK_MS, 0L, StatsLedger.FALLBACK_MS), rows.map { it.savedMs })
+        assertEquals(
+            listOf(auto, "typing", auto),
+            db.eventDao().getAll().filter { it.name == EventRepository.EVENT_WALK_AWAY }
+                .map { JSONObject(it.paramsJson!!).getString("source") },
+        )
     }
 
     private suspend fun createEnabledBlock(method: FrictionType = FrictionType.TYPING): Long {

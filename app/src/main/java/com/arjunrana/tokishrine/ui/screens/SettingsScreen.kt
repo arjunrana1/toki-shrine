@@ -32,16 +32,20 @@ import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 
-// Screen 24: permission health · supported browsers · theme · send
-// feedback · about and version. The mock's "Countdown messages — updated
-// remotely" row is removed (PRD §6). Send feedback opens screen 25 (Phase 7);
-// the supported browsers row remains informational (PRD §13 list).
+// Screen 24: permission health · supported browsers · send feedback ·
+// about and version. The mock's "Countdown messages — updated remotely" row
+// is removed (PRD §6), and the Theme row is gone with the app permanently
+// dark (P7-F26, 9 October §17 addendum). Send feedback opens screen 25
+// (Phase 7). The supported-browsers row's subtitle and screen derive from
+// the bundled detection configuration (P7-F27).
 @Composable
 fun SettingsScreen(
     states: Map<AppPermission, Boolean>,
     eventRepo: EventRepository,
+    supportedBrowsers: List<String>?,
     onBack: () -> Unit,
     onOpenPermissionHealth: () -> Unit,
+    onOpenSupportedBrowsers: () -> Unit,
     onOpenFeedback: () -> Unit,
 ) {
     val colors = NocturneTheme.colors
@@ -93,7 +97,10 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = { PhosphorIcon(Ph.Globe, tint = colors.neutral.step400, size = 19) },
                     title = "Supported browsers",
-                    subtitle = "Chrome, Firefox, Samsung Internet + 6 more",
+                    // Derived from the bundled detection config's browser
+                    // list (P7-F27); null while it loads hides the line.
+                    subtitle = supportedBrowsers?.let(::supportedBrowsersSubtitle),
+                    onClick = onOpenSupportedBrowsers,
                     trailing = { PhosphorIcon(Ph.CaretRight, tint = colors.neutral.step500, size = 17) },
                 )
             }
@@ -103,12 +110,6 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .background(colors.surface, RoundedCornerShape(12.dp)),
             ) {
-                SettingsRow(
-                    icon = { PhosphorIcon(Ph.Moon, tint = colors.neutral.step400, size = 19) },
-                    title = "Theme",
-                    value = "Dark",
-                )
-                RowDivider()
                 SettingsRow(
                     icon = { PhosphorIcon(Ph.PaperPlaneTilt, tint = colors.neutral.step400, size = 19) },
                     title = "Send feedback",

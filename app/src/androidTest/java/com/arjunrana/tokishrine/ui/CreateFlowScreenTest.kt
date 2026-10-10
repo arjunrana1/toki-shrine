@@ -26,9 +26,14 @@ import com.arjunrana.tokishrine.data.entity.Event
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.BlockDraft
 import com.arjunrana.tokishrine.data.repo.BlockRepository
+import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_DEFAULT
+import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_DEFAULT
+import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.ui.screens.CreateFlowScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
+import com.arjunrana.tokishrine.ui.util.formatCountdown
 import androidx.compose.ui.semantics.SemanticsActions
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -285,8 +290,9 @@ class CreateFlowScreenTest {
     // finds the guard taken and does nothing. Exactly one block, exactly one
     // block_created, exactly one navigation — and no abandonment after it.
     // The five-step wizard logs steps 1..5; the created payload carries the
-    // redesign defaults (150 chars / 60 s wait / 15 min pause, middle ladder
-    // rungs 350 chars and 360 s).
+    // variant's fresh-draft defaults (release: 150 chars / 60 s wait, middle
+    // ladder rungs 350 chars and 360 s; debug owner testing: 20 / 20 s and
+    // the 20 first rungs) and the 15 min pause.
     @Test
     fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
         eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
@@ -341,10 +347,10 @@ class CreateFlowScreenTest {
         assertEquals(0, params.getInt("site_count"))
         assertEquals("typing", params.getString("friction_type"))
         assertEquals(15, params.getInt("pause_minutes"))
-        assertEquals(150, params.getInt("pause_chars"))
-        assertEquals(350, params.getInt("turnoff_chars"))
-        assertEquals(60, params.getInt("countdown_seconds"))
-        assertEquals(360, params.getInt("turnoff_seconds"))
+        assertEquals(PAUSE_CHARS_DEFAULT, params.getInt("pause_chars"))
+        assertEquals(DISABLE_CHARS_DEFAULT, params.getInt("turnoff_chars"))
+        assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, params.getInt("countdown_seconds"))
+        assertEquals(DISABLE_WAIT_SECONDS_DEFAULT, params.getInt("turnoff_seconds"))
 
         // The seeded holder plus exactly one new block.
         val blocks = runBlocking { blockRepo.getBlocksWithContents() }
@@ -892,7 +898,7 @@ class CreateFlowScreenTest {
         awaitText("The details")
         compose.onNodeWithText("Passage length").assertDoesNotExist() // typing field hidden
         awaitText("Wait before you're in")
-        awaitText("1 min")
+        awaitText(formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT))
         awaitText("Block stays off for")
         awaitText("15 min")
         awaitText("Then it comes back on its own. Minimum 5 minutes.")
@@ -902,7 +908,7 @@ class CreateFlowScreenTest {
         next() // step_completed(3)
         awaitText("4 / 5")
         awaitText("Disabling the block")
-        // Waiting ladder inherited, middle rung preselected: Next alone is valid.
+        // Waiting ladder inherited, default rung preselected: Next alone is valid.
         awaitText("Wait a bit")
         awaitText("Wait a bit more")
         awaitText("Make it hurt")
@@ -912,7 +918,7 @@ class CreateFlowScreenTest {
         next() // step_completed(4)
 
         awaitText("5 / 5")
-        awaitText("Wait 1 min") // pause cost row: no phone-in-hand copy
+        awaitText("Wait ${formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT)}") // pause cost row: no phone-in-hand copy
         awaitText("Wait 6 min") // disable cost row follows the chosen rung
         compose.onNodeWithText("Save block").performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
@@ -920,19 +926,19 @@ class CreateFlowScreenTest {
         val saved = runBlocking { blockRepo.getBlocksWithContents() }
             .first { it.block.name == "Evening wind-down" }
         assertEquals(FrictionType.DELAY, saved.block.frictionType)
-        assertEquals(60, saved.block.countdownSeconds)
+        assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, saved.block.countdownSeconds)
         assertEquals(15, saved.block.pauseMinutes)
         assertEquals(360, saved.block.turnoffSeconds)
         // The typing method's columns keep their untouched drafts.
-        assertEquals(150, saved.block.pauseChars)
-        assertEquals(350, saved.block.turnoffChars)
+        assertEquals(PAUSE_CHARS_DEFAULT, saved.block.pauseChars)
+        assertEquals(DISABLE_CHARS_DEFAULT, saved.block.turnoffChars)
         assertEquals(false, saved.block.enabled)
 
         val created = events().last()
         assertEquals(EventRepository.EVENT_BLOCK_CREATED, created.name)
         val params = JSONObject(created.paramsJson!!)
         assertEquals("delay", params.getString("friction_type"))
-        assertEquals(60, params.getInt("countdown_seconds"))
+        assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, params.getInt("countdown_seconds"))
         assertEquals(360, params.getInt("turnoff_seconds"))
     }
 

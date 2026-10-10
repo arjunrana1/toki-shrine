@@ -48,6 +48,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_DEFAULT
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MIN
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.data.apps.AppEntry
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
@@ -60,17 +68,9 @@ import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_CHOICES
 import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_MAX
 import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_MIN
-import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_STEP
-import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_MAX
-import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_MIN
-import com.arjunrana.tokishrine.data.repo.PAUSE_MINUTES_STEP
 import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_MAX
 import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_MIN
-import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.BoundedTargetList
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
@@ -563,7 +563,8 @@ fun CreateFlowScreen(
         ) {
             when {
                 state.showSearch -> AppSearchPane(
-                    state = state,
+                    selectedApps = state.apps,
+                    ownerBlockId = state.editBlockId,
                     blockRepo = blockRepo,
                     appsRepo = appsRepo,
                     onClose = { state.showSearch = false },
@@ -635,26 +636,11 @@ private fun StepContents(
     onBack: () -> Unit,
     onNext: () -> Unit,
 ) {
-    var siteInput by remember { mutableStateOf("") }
     var siteOwnerships by remember { mutableStateOf<Map<String, Long>?>(null) }
 
     LaunchedEffect(Unit) {
         siteOwnerships = blockRepo.siteOwnerships()
     }
-
-    // A domain owned by another block cannot be added: the entry shows
-    // Already added to a block (owner decision — no owner name, no dialog).
-    // Nothing can be added until ownership finishes loading, so a target can
-    // never enter the draft unchecked. Input must also be a complete domain
-    // (owner addendum, 13 September): the field is single-line and pasted
-    // line breaks stay in the value, keeping it invalid — "reddit" or a
-    // multiline paste like "reddit.com\nabdes" is rejected, never merged.
-    val ownerships = siteOwnerships
-    val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
-    val inputIsValidDomain = isValidFullDomain(canonicalInput)
-    val inputHeldElsewhere = ownerships != null &&
-        canonicalInput.isNotEmpty() &&
-        ownerships[canonicalInput]?.let { it != state.editBlockId } == true
 
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
@@ -695,54 +681,13 @@ private fun StepContents(
                 Text("Search your installed apps…", fontSize = 13.5.sp, color = NocturneTheme.colors.neutral.step500)
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                NocturneTextField(
-                    value = siteInput,
-                    // Single-line field: Enter inserts nothing. Pasted line
-                    // breaks are NOT stripped (owner clarification,
-                    // 13 September): the raw value stays and keeps Add
-                    // disabled — "reddit.com\nabdes" must never merge into
-                    // an addable domain. Only removing the break does.
-                    onValueChange = { siteInput = it },
-                    hint = "example.com",
-                    leading = { PhosphorIcon(Ph.Globe, tint = NocturneTheme.colors.neutral.step500) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                )
-                Spacer(Modifier.width(8.dp))
-                NocturneButton(
-                    "Add",
-                    variant = ButtonVariant.SECONDARY,
-                    height = 38.dp,
-                    enabled = ownerships != null && inputIsValidDomain && !inputHeldElsewhere,
-                    onClick = {
-                        if (ownerships == null || !inputIsValidDomain || inputHeldElsewhere) return@NocturneButton
-                        siteInput = ""
-                        if (state.sites.none { it == canonicalInput }) state.sites.add(canonicalInput)
-                    },
-                )
-            }
-            Spacer(Modifier.height(6.dp))
-            when {
-                inputHeldElsewhere -> Text(
-                    "Already added to a block",
-                    fontSize = 11.5.sp,
-                    lineHeight = 17.sp,
-                    color = NocturneTheme.colors.neutral.step300,
-                )
-                siteInput.isNotBlank() && !inputIsValidDomain -> Text(
-                    "Enter a complete domain like reddit.com",
-                    fontSize = 11.5.sp,
-                    lineHeight = 17.sp,
-                    color = NocturneTheme.colors.neutral.step300,
-                )
-                else -> Text(
-                    "Type a full domain. Works in Chrome and other supported browsers.",
-                    fontSize = 11.5.sp,
-                    lineHeight = 17.sp,
-                    color = NocturneTheme.colors.neutral.step500,
-                )
-            }
+            SiteAddSection(
+                ownerships = siteOwnerships,
+                ownerBlockId = state.editBlockId,
+                onAdd = { domain ->
+                    if (state.sites.none { it == domain }) state.sites.add(domain)
+                },
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -796,8 +741,10 @@ private fun StepContents(
     }
 }
 
+// onRemove null renders the locked state (lock glyph, no removal) — the
+// add-only "Add more" screen (P7-F5) shows existing targets that way.
 @Composable
-private fun SelectedRow(label: String, glyph: Int, onRemove: () -> Unit) {
+internal fun SelectedRow(label: String, glyph: Int, onRemove: (() -> Unit)?) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -810,23 +757,110 @@ private fun SelectedRow(label: String, glyph: Int, onRemove: () -> Unit) {
             color = NocturneTheme.colors.text,
             modifier = Modifier.weight(1f),
         )
-        PhosphorIcon(
-            Ph.X,
-            tint = NocturneTheme.colors.neutral.step500,
-            size = 14,
-            modifier = Modifier.clickable { onRemove() },
-        )
+        if (onRemove != null) {
+            PhosphorIcon(
+                Ph.X,
+                tint = NocturneTheme.colors.neutral.step500,
+                size = 14,
+                modifier = Modifier.clickable { onRemove() },
+            )
+        } else {
+            // @phosphor-icons/web 2.1.1 regular .ph-lock-simple, verified
+            // against the bundled font's cmap like the shared Ph glyphs.
+            PhosphorIcon(0xe308, tint = NocturneTheme.colors.neutral.step700, size = 14)
+        }
+    }
+}
+
+// The contents step's website entry (screens 7/8), extracted (P7-F5) so the
+// add-only Add more screen reuses the identical validation and copy.
+//
+// A domain owned by another block cannot be added: the entry shows "Already
+// added to a block" (owner decision — no owner name, no dialog). Nothing can
+// be added until ownership finishes loading, so a target can never enter a
+// selection unchecked. Input must also be a complete domain (owner addendum,
+// 13 September): the field is single-line and pasted line breaks stay in the
+// value, keeping it invalid — "reddit" or a multiline paste like
+// "reddit.com\nabdes" is rejected, never merged.
+@Composable
+internal fun SiteAddSection(
+    ownerships: Map<String, Long>?,
+    ownerBlockId: Long?,
+    onAdd: (String) -> Unit,
+) {
+    var siteInput by remember { mutableStateOf("") }
+    val canonicalInput = siteInput.trim().trimEnd('.').lowercase()
+    val inputIsValidDomain = isValidFullDomain(canonicalInput)
+    val inputHeldElsewhere = ownerships != null &&
+        canonicalInput.isNotEmpty() &&
+        ownerships[canonicalInput]?.let { it != ownerBlockId } == true
+
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            NocturneTextField(
+                value = siteInput,
+                // Single-line field: Enter inserts nothing. Pasted line
+                // breaks are NOT stripped (owner clarification,
+                // 13 September): the raw value stays and keeps Add
+                // disabled — "reddit.com\nabdes" must never merge into
+                // an addable domain. Only removing the break does.
+                onValueChange = { siteInput = it },
+                hint = "example.com",
+                leading = { PhosphorIcon(Ph.Globe, tint = NocturneTheme.colors.neutral.step500) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            Spacer(Modifier.width(8.dp))
+            NocturneButton(
+                "Add",
+                variant = ButtonVariant.SECONDARY,
+                height = 38.dp,
+                enabled = ownerships != null && inputIsValidDomain && !inputHeldElsewhere,
+                onClick = {
+                    if (ownerships == null || !inputIsValidDomain || inputHeldElsewhere) return@NocturneButton
+                    siteInput = ""
+                    onAdd(canonicalInput)
+                },
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        when {
+            inputHeldElsewhere -> Text(
+                "Already added to a block",
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = NocturneTheme.colors.neutral.step300,
+            )
+            siteInput.isNotBlank() && !inputIsValidDomain -> Text(
+                "Enter a complete domain like reddit.com",
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = NocturneTheme.colors.neutral.step300,
+            )
+            else -> Text(
+                "Type a full domain. Works in Chrome and other supported browsers.",
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = NocturneTheme.colors.neutral.step500,
+            )
+        }
     }
 }
 
 // — App search (screen 8) —
+// Parameterized (P7-F5) so the add-only "Add more" screen reuses the pane:
+// [selectedApps] is the caller's mutable selection, [ownerBlockId] exempts
+// this block's own targets from "held elsewhere", and [lockedPackages]
+// renders rows that cannot be toggled (targets already in the block).
 
 @Composable
-private fun AppSearchPane(
-    state: CreateFlowState,
+internal fun AppSearchPane(
+    selectedApps: MutableList<AppEntry>,
+    ownerBlockId: Long?,
     blockRepo: BlockRepository,
     appsRepo: InstalledAppsRepository,
     onClose: () -> Unit,
+    lockedPackages: Set<String> = emptySet(),
 ) {
     var query by remember { mutableStateOf("") }
     val allApps = remember { mutableStateListOf<AppEntry>() }
@@ -887,21 +921,23 @@ private fun AppSearchPane(
 
         LazyColumn(Modifier.weight(1f)) {
             items(filtered, key = { it.packageName }) { entry ->
-                val selected = state.apps.any { it.packageName == entry.packageName }
+                val selected = selectedApps.any { it.packageName == entry.packageName } ||
+                    entry.packageName in lockedPackages
+                val locked = entry.packageName in lockedPackages
                 // Owned by another block (ON or OFF): visible but not
                 // selectable, labelled without naming the owner block. Rows
                 // stay inert until the ownership read completes — selecting
                 // before it is known could admit a target the repository
                 // would later have to reject.
-                val heldElsewhere = ownerships?.get(entry.packageName)?.let { it != state.editBlockId } == true
+                val heldElsewhere = ownerships?.get(entry.packageName)?.let { it != ownerBlockId } == true
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable(enabled = ownerships != null && !heldElsewhere) {
-                            if (selected) {
-                                state.apps.removeAll { it.packageName == entry.packageName }
-                            } else {
-                                state.apps.add(entry)
+                        .clickable(enabled = ownerships != null && !heldElsewhere && !locked) {
+                            if (selected && !locked) {
+                                selectedApps.removeAll { it.packageName == entry.packageName }
+                            } else if (!locked) {
+                                selectedApps.add(entry)
                             }
                         }
                         .padding(vertical = 11.dp),
@@ -1277,8 +1313,9 @@ private fun DetailsSheet(state: CreateFlowState) {
 
 // The method is inherited from step 3 and never asked again; the three
 // ladder choices are fixed and independent of the pause settings, with the
-// middle one recommended and preselected so Next alone is valid (PRD §17,
-// 19 September). Each method's choice is remembered per method draft.
+// middle one recommended and the variant's default rung preselected so Next
+// alone is valid (PRD §17, 19 September; the release default is the middle
+// rung). Each method's choice is remembered per method draft.
 @Composable
 private fun StepDisable(state: CreateFlowState, onBack: () -> Unit, onNext: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
@@ -1338,8 +1375,10 @@ private fun StepDisable(state: CreateFlowState, onBack: () -> Unit, onNext: () -
 }
 
 // Visible card copy from the disable reference, with the written ladder
-// values (3/6/12 minutes, not the mock's old note).
-private fun disableCardCopy(method: FrictionType, index: Int, value: Int): Pair<String, String> {
+// values (3/6/12 minutes, not the mock's old note). A rung under a minute
+// (the debug owner-testing 20 s) is named in seconds, never "0 minutes".
+internal fun disableCardCopy(method: FrictionType, index: Int, value: Int): Pair<String, String> {
+    val wait = if (value < 60) "$value seconds" else "${value / 60} minutes"
     val title = when (method) {
         FrictionType.TYPING -> when (index) {
             0 -> "Type a bit"
@@ -1359,9 +1398,9 @@ private fun disableCardCopy(method: FrictionType, index: Int, value: Int): Pair<
             else -> "Type $value characters. For blocks you don't trust yourself with."
         }
         FrictionType.DELAY -> when (index) {
-            0 -> "Wait for ${value / 60} minutes."
-            1 -> "Wait for ${value / 60} minutes."
-            else -> "Wait for ${value / 60} minutes. For blocks you don't trust yourself with."
+            0 -> "Wait for $wait."
+            1 -> "Wait for $wait."
+            else -> "Wait for $wait. For blocks you don't trust yourself with."
         }
     }
     return title to body

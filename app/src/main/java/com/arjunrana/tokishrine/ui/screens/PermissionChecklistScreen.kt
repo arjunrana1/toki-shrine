@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -114,86 +116,94 @@ fun PermissionChecklistScreen(
             if (mode != ChecklistMode.ONBOARDING) {
                 NocturneAppbar(title = "Permissions", onBack = onBack)
             }
-            Text(
-                "A few permissions",
-                fontSize = 23.sp,
-                fontWeight = FontWeight.Medium,
-                color = colors.text,
-                // Onboarding carries no appbar, so the heading itself owns
-                // the safe gap below the status bar (P3-F02/P3-F15).
-                modifier = Modifier.padding(
-                    top = if (mode == ChecklistMode.ONBOARDING) 56.dp else 6.dp,
-                ),
-            )
-            Text(
-                "Two are essential. The rest just make Toki Shrine nicer to live with.",
-                fontSize = 13.sp,
-                lineHeight = 20.sp,
-                color = colors.neutral.step500,
-                modifier = Modifier.padding(top = 4.dp, bottom = 14.dp),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 16.dp),
+            // P7-F28: the checklist body scrolls, so every row (including
+            // Usage Access under "For a better experience") is reachable on
+            // small screens and at large font; Continue stays pinned.
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
             ) {
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(colors.neutral.step800),
+                Text(
+                    "A few permissions",
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.text,
+                    // Onboarding carries no appbar, so the heading itself owns
+                    // the safe gap below the status bar (P3-F02/P3-F15).
+                    modifier = Modifier.padding(
+                        top = if (mode == ChecklistMode.ONBOARDING) 56.dp else 6.dp,
+                    ),
+                )
+                Text(
+                    "Two are essential. The rest just make Toki Shrine nicer to live with.",
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                    color = colors.neutral.step500,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 14.dp),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 16.dp),
                 ) {
                     Box(
                         Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(grantedCount / 5f)
-                            .background(colors.accent),
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    "$grantedCount of 5",
-                    fontSize = 12.sp,
-                    color = colors.neutral.step500,
-                )
-            }
-            val request: (AppPermission) -> Unit = { permission ->
-                when (permission) {
-                    AppPermission.ACCESSIBILITY -> onOpenAccessibilityExplainer()
-                    AppPermission.BATTERY -> onOpenBatteryInstructions()
-                    AppPermission.OVERLAY -> onRequestPermission(AppPermission.OVERLAY) {
-                        context.startActivity(
-                            Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}"),
-                            ),
+                            .weight(1f)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(colors.neutral.step800),
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(grantedCount / 5f)
+                                .background(colors.accent),
                         )
                     }
-                    AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
-                        notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    // Stats-only special permission (PRD §12): the system
-                    // Usage access screen; the outcome settles from real
-                    // state on resume like the other settings-based rows.
-                    AppPermission.USAGE_ACCESS -> onRequestPermission(AppPermission.USAGE_ACCESS) {
-                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "$grantedCount of 5",
+                        fontSize = 12.sp,
+                        color = colors.neutral.step500,
+                    )
+                }
+                val request: (AppPermission) -> Unit = { permission ->
+                    when (permission) {
+                        AppPermission.ACCESSIBILITY -> onOpenAccessibilityExplainer()
+                        AppPermission.BATTERY -> onOpenBatteryInstructions()
+                        AppPermission.OVERLAY -> onRequestPermission(AppPermission.OVERLAY) {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:${context.packageName}"),
+                                ),
+                            )
+                        }
+                        AppPermission.NOTIFICATIONS -> onRequestPermission(AppPermission.NOTIFICATIONS) {
+                            notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        // Stats-only special permission (PRD §12): the system
+                        // Usage access screen; the outcome settles from real
+                        // state on resume like the other settings-based rows.
+                        AppPermission.USAGE_ACCESS -> onRequestPermission(AppPermission.USAGE_ACCESS) {
+                            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                        }
                     }
                 }
+                PermissionGroup(
+                    label = "Essential permissions",
+                    permissions = AppPermission.values().filter { it.essential },
+                    states = states,
+                    onRequest = request,
+                )
+                PermissionGroup(
+                    label = "For a better experience",
+                    permissions = AppPermission.values().filter { !it.essential },
+                    states = states,
+                    onRequest = request,
+                    modifier = Modifier.padding(top = 24.dp),
+                )
             }
-            PermissionGroup(
-                label = "Essential permissions",
-                permissions = AppPermission.values().filter { it.essential },
-                states = states,
-                onRequest = request,
-            )
-            PermissionGroup(
-                label = "For a better experience",
-                permissions = AppPermission.values().filter { !it.essential },
-                states = states,
-                onRequest = request,
-                modifier = Modifier.padding(top = 24.dp),
-            )
-            Spacer(Modifier.weight(1f))
             NocturneButton(
                 "Continue",
                 block = true,

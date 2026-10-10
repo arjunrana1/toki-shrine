@@ -51,6 +51,18 @@ class EventTaxonomyTest {
     }
 
     @Test
+    fun walkAwaySourcesIncludeAutoAwayWithoutANewEventName() {
+        // P7-F3: auto_away is a walk_away source, not a new event; the
+        // active event count above stays 40.
+        assertEquals(
+            setOf("block_screen", "typing", "countdown", "auto_away"),
+            EventTaxonomy.WALK_AWAY_SOURCES,
+        )
+        assertEquals("auto_away", EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY)
+        assertTrue(EventTaxonomy.WALK_AWAY_SOURCES.none { EventTaxonomy.isActive(it) || EventTaxonomy.isRetired(it) })
+    }
+
+    @Test
     fun countdownEventsRemainActive() {
         // Phase 7 decision: countdown_started/completed stay active
         // diagnostics even as abandonment instrumentation retires.

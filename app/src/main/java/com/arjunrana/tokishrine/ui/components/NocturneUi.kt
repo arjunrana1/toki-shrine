@@ -64,6 +64,9 @@ fun NocturneButton(
     height: Dp = 44.dp,
     fontSize: Int = 14,
     paddingHorizontal: Dp = (8.4.dp * 1.2f),
+    // Null keeps the Nocturne 8dp token; the CTA pair below overrides to
+    // the challenge screens' 10dp (P7-F25, 9 October §17 addendum).
+    cornerRadius: Dp? = null,
     leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = NocturneTheme.colors
@@ -81,7 +84,7 @@ fun NocturneButton(
         ButtonVariant.GHOST -> NocturneTheme.spacing.s1
         else -> if (block) 0.dp else paddingHorizontal
     }
-    val buttonShape = MaterialTheme.shapes.medium
+    val buttonShape = cornerRadius?.let { RoundedCornerShape(it) } ?: MaterialTheme.shapes.medium
 
     Row(
         modifier = modifier
@@ -112,6 +115,33 @@ fun NocturneButton(
             ),
         )
     }
+}
+
+// The paired-CTA spec shared with the challenge screens (P7-F25, 9 October
+// §17 addendum): full width, 50dp tall, 10dp radius, 15sp medium label, with
+// a 12dp gap between a stacked pair (arranged by the caller). Used outside
+// the challenge screens for Add more, the visit-length sheet, the Stats
+// info sheets' "Got it" and the Recalibrate card; the challenge screens'
+// own buttons are untouched.
+@Composable
+fun NocturneCtaButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    variant: ButtonVariant = ButtonVariant.PRIMARY,
+    enabled: Boolean = true,
+) {
+    NocturneButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        variant = variant,
+        enabled = enabled,
+        block = true,
+        height = 50.dp,
+        fontSize = 15,
+        cornerRadius = 10.dp,
+    )
 }
 
 // — switch (.tgl / .k) —

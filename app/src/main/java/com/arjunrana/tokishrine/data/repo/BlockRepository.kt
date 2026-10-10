@@ -1,6 +1,14 @@
 package com.arjunrana.tokishrine.data.repo
 
 import androidx.room.withTransaction
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_DEFAULT
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MIN
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.data.db.BlockDao
 import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.db.TokiDatabase
@@ -21,32 +29,20 @@ class ConflictingOwnershipException(
     val isApp: Boolean,
 ) : IllegalStateException("Target '$target' is already owned by another block")
 
-// Production values follow PRD §7 / §17. The 23 September owner-test debug
-// overrides (20-char/20-second minima and 20-first-rung disable ladders) were
-// removed for Phase 7 final approval: every build variant — debug included —
-// now enforces these production values at the persistence boundary.
-const val PAUSE_MINUTES_MIN = 5
-const val PAUSE_MINUTES_MAX = 100
-const val PAUSE_MINUTES_STEP = 5
-const val PAUSE_CHARS_MIN = 100
-const val PAUSE_CHARS_MAX = 200
-const val PAUSE_CHARS_STEP = 10
-const val PAUSE_WAIT_SECONDS_MIN = 60
-const val PAUSE_WAIT_SECONDS_MAX = 300
-const val PAUSE_WAIT_SECONDS_STEP = 5
+// Raised by the add-only "Add more" save (P7-F5) when the selection omits a
+// target the block already holds. Removing still requires turning the block
+// off and editing it (PRD §4 / 8 October §17 addendum).
+class TargetRemovalException(
+    val target: String,
+    val isApp: Boolean,
+) : IllegalStateException("Add more cannot remove '$target' from its block")
 
-// Fixed disable ladders: no custom stepper or second method selector. The
-// middle entry remains the recommended preselection.
-val DISABLE_CHARS_CHOICES = listOf(220, 350, 700)
-val DISABLE_WAIT_SECONDS_CHOICES = listOf(180, 360, 720)
-
-// Fresh-draft defaults (PRD §7): typing 150 chars, waiting 60 s, pause 15
-// min, and the middle rung of each disable ladder.
-const val PAUSE_MINUTES_DEFAULT = 15
-const val PAUSE_CHARS_DEFAULT = 150
-const val PAUSE_WAIT_SECONDS_DEFAULT = 60
-const val DISABLE_CHARS_DEFAULT = 350
-const val DISABLE_WAIT_SECONDS_DEFAULT = 360
+// Pause ranges and steps shared by every build variant live in AppConfig
+// (PRD §17 "Config" / P7-F11). The typing/waiting floors, their fresh-draft
+// defaults and the fixed disable ladders live in the per-variant
+// ChallengeValues.kt: release keeps the production values; debug carries
+// Arjun's temporary 7 October 2026 owner-testing values. Both are enforced
+// at this persistence boundary.
 
 data class BlockDraft(
     val name: String,
@@ -183,6 +179,40 @@ open class BlockRepository(
                 existing.blockId != id -> throw ConflictingOwnershipException(domain, isApp = false)
             }
         }
+    }
+
+    // "Add more" (P7-F5, 8 October §17 addendum): an add-only save that is
+    // allowed while the block is ON. The lists are the full selection shown
+    // on the Add more screen — existing targets plus additions. Leaving out
+    // an existing target rejects the whole save (TargetRemovalException);
+    // a target owned by another block rejects it with
+    // ConflictingOwnershipException ("Already added to a block"). Nothing
+    // else on the block changes and no enabled transition or event is
+    // written. New rows reach detection with the blocks flow's next
+    // emission, so additions protect immediately. Returns how many targets
+    // were added (0 when the selection held nothing new).
+    suspend fun addTargets(id: Long, appPackageNames: List<String>, siteDomains: List<String>): Int = db.withTransaction {
+        val current = dao.getBlockWithContents(id) ?: error("Block $id does not exist")
+        val apps = appPackageNames.toSet()
+        val sites = siteDomains.map { canonicalDomain(it) }.toSet()
+        current.apps.firstOrNull { it.packageName !in apps }?.let { throw TargetRemovalException(it.packageName, isApp = true) }
+        current.sites.firstOrNull { it.domain !in sites }?.let { throw TargetRemovalException(it.domain, isApp = false) }
+        var added = 0
+        apps.forEach { packageName ->
+            val existing = dao.findAppByPackageName(packageName)
+            when {
+                existing == null -> { dao.insertApp(BlockedApp(blockId = id, packageName = packageName)); added++ }
+                existing.blockId != id -> throw ConflictingOwnershipException(packageName, isApp = true)
+            }
+        }
+        sites.forEach { domain ->
+            val existing = dao.findSiteByDomain(domain)
+            when {
+                existing == null -> { dao.insertSite(BlockedSite(blockId = id, domain = domain)); added++ }
+                existing.blockId != id -> throw ConflictingOwnershipException(domain, isApp = false)
+            }
+        }
+        added
     }
 
     suspend fun getBlockWithContents(id: Long): BlockWithContents? = dao.getBlockWithContents(id)

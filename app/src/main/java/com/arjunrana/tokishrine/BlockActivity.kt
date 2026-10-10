@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.os.PowerManager
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -21,6 +22,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import com.arjunrana.tokishrine.challenge.ChallengeConfig
 import com.arjunrana.tokishrine.challenge.ChallengeContentSelector
 import com.arjunrana.tokishrine.challenge.ChallengeEffect
@@ -33,8 +35,10 @@ import com.arjunrana.tokishrine.data.db.BlockWithContents
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.entity.FrictionType
 import com.arjunrana.tokishrine.data.repo.EventRepository
+import com.arjunrana.tokishrine.data.stats.StatsDurationFormat
 import com.arjunrana.tokishrine.detection.BlockShownEvent
 import com.arjunrana.tokishrine.ui.interruption.BlockGateScreen
+import com.arjunrana.tokishrine.ui.interruption.CelebrationPicker
 import com.arjunrana.tokishrine.ui.interruption.ChallengePurpose
 import com.arjunrana.tokishrine.ui.interruption.DelayCountdownScreen
 import com.arjunrana.tokishrine.ui.interruption.TypingChallengeScreen
@@ -42,6 +46,7 @@ import com.arjunrana.tokishrine.ui.interruption.WalkAwayMomentScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.BlockHaptics
 import java.util.UUID
+import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +66,11 @@ class BlockActivity : ComponentActivity() {
 
     private var loaded by mutableStateOf<LoadedSession?>(null)
     private var dailyWalkAwayCount by mutableStateOf<Int?>(null)
+
+    // P7-F17: the celebration pick is reproduced from this seed and the
+    // nope's valued minutes, both saved, so a recreation shows the same screen.
+    private var celebrationSeed = 0L
+    private var celebrationVisitMinutes: Long? = null
     private var renderVersion by mutableIntStateOf(0)
     private var inputReady by mutableStateOf(false)
     private var pendingWalkAwaySource: String? = null
@@ -70,6 +80,11 @@ class BlockActivity : ComponentActivity() {
     private var shownEventScheduled = false
     private var ticker: Job? = null
     private var autoDismiss: Job? = null
+    private var awayTimer: Job? = null
+    private var commitInFlight = false
+
+    /** Bumped when Back is pressed during an ACTIVE challenge: the Never mind wiggle signal (P7-F2). */
+    private var escapeNudge by mutableIntStateOf(0)
 
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -82,6 +97,8 @@ class BlockActivity : ComponentActivity() {
         app = application as TokiApplication
         shownEventScheduled = savedInstanceState?.getBoolean(STATE_SHOWN_EVENT_SCHEDULED) == true
         dailyWalkAwayCount = savedInstanceState?.getInt(STATE_DAILY_COUNT, -1)?.takeIf { it >= 0 }
+        celebrationSeed = savedInstanceState?.getLong(STATE_CELEBRATION_SEED) ?: 0L
+        celebrationVisitMinutes = savedInstanceState?.getLong(STATE_CELEBRATION_MINUTES, -1L)?.takeIf { it >= 1L }
         pendingWalkAwaySource = savedInstanceState?.getString(STATE_WALK_AWAY_SOURCE)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
@@ -95,7 +112,12 @@ class BlockActivity : ComponentActivity() {
                 BackHandler {
                     val phase = runtime?.view(now())?.phase
                     when (phase) {
-                        ChallengePhase.ACTIVE -> moveTaskToBack(true)
+                        // P7-F2: Back no longer suspends the challenge; it
+                        // draws attention to Never mind instead.
+                        ChallengePhase.ACTIVE -> {
+                            escapeNudge++
+                            BlockHaptics.nudge(this@BlockActivity)
+                        }
                         ChallengePhase.COMMITTING -> Unit
                         else -> finish()
                     }
@@ -104,7 +126,10 @@ class BlockActivity : ComponentActivity() {
                 val engine = runtime
                 val count = dailyWalkAwayCount
                 when {
-                    count != null -> WalkAwayMomentScreen(count, onDismiss = ::returnToHome)
+                    count != null -> WalkAwayMomentScreen(
+                        celebration = CelebrationPicker.pick(count, celebrationVisitMinutes, Random(celebrationSeed)),
+                        onDismiss = ::returnToHome,
+                    )
                     session == null || engine == null -> Box(
                         Modifier.fillMaxSize().background(NocturneTheme.colors.bg),
                     )
@@ -134,6 +159,7 @@ class BlockActivity : ComponentActivity() {
                         },
                         onSubmit = { if (inputReady) handle(engine.submitTyping(now())) },
                         onWalkAway = { if (inputReady) handle(engine.escape(now())) },
+                        escapeNudge = escapeNudge,
                         turnOffChars = if (session.purpose == ChallengePurpose.TURN_OFF) {
                             session.block.block.turnoffChars
                         } else {
@@ -146,6 +172,7 @@ class BlockActivity : ComponentActivity() {
                         totalSeconds = engine.config.totalSeconds,
                         remainingSeconds = engine.view(now()).remainingSeconds,
                         onEscape = { if (inputReady) handle(engine.escape(now())) },
+                        escapeNudge = escapeNudge,
                     )
                 }
             }
@@ -237,6 +264,21 @@ class BlockActivity : ComponentActivity() {
                 handle(pendingCompletion)
                 return@launch
             }
+            // P7-F3: a restored away-start is evaluated now — as a return
+            // when visible, otherwise expired or left running on its timer.
+            // A session that loaded after the activity was already hidden
+            // starts its away clock here.
+            val engine = runtime!!
+            val awayEffect = if (resumed) engine.onReturned(now()) else engine.expireAway(now())
+            if (awayEffect != null) {
+                handle(awayEffect)
+                return@launch
+            }
+            if (!resumed && !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                goAway(engine)
+            } else if (!resumed) {
+                scheduleAwayTimer(engine)
+            }
             if (purpose == ChallengePurpose.TURN_OFF) {
                 val started = runtime?.beginTurnOff(now())
                 if (started != null) handle(started) else persistStarted(runtime!!)
@@ -254,6 +296,20 @@ class BlockActivity : ComponentActivity() {
     override fun onPostResume() {
         super.onPostResume()
         resumed = true
+        awayTimer?.cancel()
+        awayTimer = null
+        val returned = runtime?.onReturned(now())
+        if (returned != null) {
+            handle(returned)
+            return
+        }
+        // A save that failed while hidden kept the completion (P7-F-A2):
+        // retry it now that the user is back on screen.
+        val retry = if (commitInFlight) null else runtime?.resumePendingCompletion(now())
+        if (retry != null) {
+            handle(retry)
+            return
+        }
         runtime?.onVisible(now())
         maybeRecordShown()
         startTickerIfNeeded()
@@ -262,16 +318,26 @@ class BlockActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val phase = runtime?.view(now())?.phase
-        if (phase == ChallengePhase.ACTIVE || phase == ChallengePhase.COMMITTING ||
-            phase == ChallengePhase.WALK_AWAY || dailyWalkAwayCount != null ||
-            pendingWalkAwaySource != null
-        ) {
-            // One unfinished challenge owns this task. A detection relaunch
-            // brings it forward instead of silently replacing its retained
-            // typing text or reset waiting attempt.
-            return
+        // P7-F3: a session already 15 s away (its timer delayed by sleep)
+        // ends quietly first, so the new launch loads instead of the expired
+        // session resuming only to vanish.
+        val expired = runtime?.expireAway(now())
+        if (expired != null) {
+            recordDetached(expired)
+        } else {
+            val phase = runtime?.view(now())?.phase
+            if (phase == ChallengePhase.ACTIVE || phase == ChallengePhase.COMMITTING ||
+                phase == ChallengePhase.WALK_AWAY || dailyWalkAwayCount != null ||
+                pendingWalkAwaySource != null
+            ) {
+                // One unfinished challenge owns this task. A detection
+                // relaunch brings it forward; onPostResume treats that as a
+                // return within the away limit.
+                return
+            }
         }
+        awayTimer?.cancel()
+        awayTimer = null
         setIntent(intent)
         loaded = null
         runtime = null
@@ -285,15 +351,10 @@ class BlockActivity : ComponentActivity() {
         ticker?.cancel()
         ticker = null
         val engine = runtime
-        if (engine != null && engine.view(now()).phase == ChallengePhase.ACTIVE) {
-            if (isChangingConfigurations) {
-                engine.onConfigurationHidden(now())
-            } else {
-                releaseDetectionSuppression()
-                engine.onBackgrounded()
-            }
-        } else if (!isChangingConfigurations && engine?.view(now())?.phase == ChallengePhase.GATE) {
-            releaseDetectionSuppression()
+        if (engine != null && isChangingConfigurations) {
+            if (engine.view(now()).phase == ChallengePhase.ACTIVE) engine.onConfigurationHidden(now())
+        } else if (engine != null) {
+            goAway(engine)
         }
         resumed = false
         super.onStop()
@@ -309,8 +370,10 @@ class BlockActivity : ComponentActivity() {
 
     private fun startTickerIfNeeded() {
         val engine = runtime ?: return
+        // An open away period (SCREEN_OFF before onStop) keeps the wait
+        // stopped until onPostResume's return (P7-F-A1).
         if (!resumed || engine.config.method != FrictionType.DELAY ||
-            engine.view(now()).phase != ChallengePhase.ACTIVE || !inputReady
+            engine.view(now()).phase != ChallengePhase.ACTIVE || !inputReady || engine.isAway()
         ) return
         if (ticker?.isActive == true) return
         val generation = engine.currentGeneration()
@@ -338,6 +401,7 @@ class BlockActivity : ComponentActivity() {
                 pendingWalkAwaySource = effect.source
                 releaseDetectionSuppression()
                 clearLiveChallenge()
+                val quiet = effect.source == EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY
                 app.applicationScope.launch {
                     val count = app.challengeRepository.recordWalkAwayAndCount(
                         effect.sessionId,
@@ -347,8 +411,23 @@ class BlockActivity : ComponentActivity() {
                         effect.source,
                         effect.hostPackage,
                     )
+                    // The celebration's "N minutes" line (P7-F17); a failed
+                    // read only drops that line, never the moment.
+                    val visitMs = if (quiet) null else runCatching {
+                        app.challengeRepository.nopeVisitMs(effect.sessionId)
+                    }.getOrNull()
                     withContext(Dispatchers.Main.immediate) {
                         if (destroyed) return@withContext
+                        if (quiet) {
+                            // Auto-nope: recorded, no Walk-Away moment, and
+                            // the phone's home screen — never Toki — is what
+                            // the user sees next, even after a screen-off
+                            // expiry (P7-F16).
+                            returnToHome()
+                            return@withContext
+                        }
+                        celebrationVisitMinutes = visitMs?.let(StatsDurationFormat::visitMinutes)
+                        celebrationSeed = Random.nextLong()
                         dailyWalkAwayCount = count
                         scheduleWalkAwayDismiss()
                     }
@@ -359,7 +438,9 @@ class BlockActivity : ComponentActivity() {
                 app.applicationScope.launch {
                     app.challengeRepository.recordTurnOffAbandoned(effect.blockId, effect.progressPct)
                 }
-                finish()
+                // The button escape returns to the block in Toki; the 15 s-away
+                // auto-nope lands on the phone's home screen (P7-F16).
+                if (effect.auto) returnToHome() else finish()
             }
             is ChallengeEffect.PersistCompletion -> persistCompletion(effect)
         }
@@ -400,6 +481,7 @@ class BlockActivity : ComponentActivity() {
     private fun persistCompletion(effect: ChallengeEffect.PersistCompletion) {
         inputReady = false
         ticker?.cancel()
+        commitInFlight = true
         app.applicationScope.launch {
             try {
                 val committed = if (effect.request.purpose == ChallengePurpose.PAUSE) {
@@ -408,6 +490,7 @@ class BlockActivity : ComponentActivity() {
                     app.challengeRepository.completeTurnOff(effect.request)
                 }
                 withContext(Dispatchers.Main.immediate) {
+                    commitInFlight = false
                     if (destroyed) return@withContext
                     if (!committed) {
                         runtime?.commitFailed(effect.request.token, now())
@@ -446,9 +529,15 @@ class BlockActivity : ComponentActivity() {
                 throw cancelled
             } catch (_: Throwable) {
                 withContext(Dispatchers.Main.immediate) {
-                    if (!destroyed && runtime?.commitFailed(effect.request.token, now()) == true) {
+                    commitInFlight = false
+                    val engine = runtime
+                    // P7-F-A2: on screen, back to ACTIVE as before; hidden or
+                    // screen off, the completion stays pending (no away
+                    // clock) and onPostResume retries it.
+                    val onScreen = resumed && screenInteractive()
+                    if (!destroyed && engine?.saveFailed(effect.request.token, now(), onScreen) == true) {
                         inputReady = true
-                        runtime?.onVisible(now())
+                        engine.onVisible(now())
                         startTickerIfNeeded()
                         refreshRuntimeUi()
                     }
@@ -458,14 +547,60 @@ class BlockActivity : ComponentActivity() {
     }
 
     private fun backgroundChallenge() {
+        // A SCREEN_OFF delivered late, after the user is already back on a
+        // lit screen, must not start an away period under their eyes.
+        if (resumed && screenInteractive()) return
+        runtime?.let(::goAway)
+        refreshRuntimeUi()
+    }
+
+    /**
+     * The gate or challenge left the screen (P7-F3): stop the visible wait,
+     * release detection suppression and run the away clock. Idempotent: the
+     * earliest away-start is kept.
+     */
+    private fun goAway(engine: ChallengeRuntime) {
+        val phase = engine.view(now()).phase
+        if (phase != ChallengePhase.ACTIVE && phase != ChallengePhase.GATE) return
         ticker?.cancel()
         ticker = null
-        val phase = runtime?.view(now())?.phase
-        if (phase == ChallengePhase.ACTIVE || phase == ChallengePhase.GATE) {
-            releaseDetectionSuppression()
+        releaseDetectionSuppression()
+        engine.onBackgrounded(now())
+        scheduleAwayTimer(engine)
+    }
+
+    private fun scheduleAwayTimer(engine: ChallengeRuntime) {
+        val remaining = engine.awayRemainingMs(now()) ?: return
+        awayTimer?.cancel()
+        awayTimer = activityScope.launch {
+            // Handler delays pause in deep sleep; elapsed realtime decides,
+            // so a late timer still expires correctly (or the return does).
+            delay(remaining)
+            if (runtime !== engine) return@launch
+            val effect = engine.expireAway(now())
+            if (effect != null) handle(effect) else scheduleAwayTimer(engine)
         }
-        runtime?.onBackgrounded()
-        refreshRuntimeUi()
+    }
+
+    /** Records an expired session that is being replaced by a new launch, without UI. */
+    private fun recordDetached(effect: ChallengeEffect) {
+        clearLiveChallenge()
+        when (effect) {
+            is ChallengeEffect.WalkAway -> app.applicationScope.launch {
+                app.challengeRepository.recordWalkAwayAndCount(
+                    effect.sessionId,
+                    effect.blockId,
+                    effect.target,
+                    effect.targetType,
+                    effect.source,
+                    effect.hostPackage,
+                )
+            }
+            is ChallengeEffect.TurnOffAbandoned -> app.applicationScope.launch {
+                app.challengeRepository.recordTurnOffAbandoned(effect.blockId, effect.progressPct)
+            }
+            else -> Unit
+        }
     }
 
     private fun releaseDetectionSuppression() {
@@ -522,6 +657,9 @@ class BlockActivity : ComponentActivity() {
         }
     }
 
+    // Starting HOME while hidden (a screen-off expiry) relies on Android's
+    // background-start exemption for apps with a bound accessibility service;
+    // if it is refused, finish() still ends the session as before.
     private fun returnToHome() {
         val home = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_HOME)
@@ -565,6 +703,8 @@ class BlockActivity : ComponentActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean(STATE_SHOWN_EVENT_SCHEDULED, shownEventScheduled)
         outState.putInt(STATE_DAILY_COUNT, dailyWalkAwayCount ?: -1)
+        outState.putLong(STATE_CELEBRATION_SEED, celebrationSeed)
+        outState.putLong(STATE_CELEBRATION_MINUTES, celebrationVisitMinutes ?: -1L)
         outState.putString(STATE_WALK_AWAY_SOURCE, pendingWalkAwaySource)
         val session = loaded
         val engine = runtime
@@ -602,6 +742,7 @@ class BlockActivity : ComponentActivity() {
         out.putInt(STATE_ATTEMPTS, snapshot.attempts)
         out.putLong(STATE_ACCRUED, snapshot.accruedVisibleMs)
         out.putLong(STATE_VISIBLE_SINCE, snapshot.visibleSinceMs ?: -1L)
+        out.putLong(STATE_AWAY_START, snapshot.awayStartMs ?: -1L)
     }
 
     private fun readSnapshot(saved: Bundle): ChallengeSnapshot? {
@@ -618,10 +759,14 @@ class BlockActivity : ComponentActivity() {
             attempts = saved.getInt(STATE_ATTEMPTS),
             accruedVisibleMs = saved.getLong(STATE_ACCRUED),
             visibleSinceMs = null,
+            awayStartMs = saved.getLong(STATE_AWAY_START, -1L).takeIf { it >= 0 },
         )
     }
 
     private fun now(): Long = SystemClock.elapsedRealtime()
+
+    private fun screenInteractive(): Boolean =
+        getSystemService(PowerManager::class.java)?.isInteractive != false
 
     private data class LoadedSession(
         val block: BlockWithContents,
@@ -648,6 +793,8 @@ class BlockActivity : ComponentActivity() {
         const val RESULT_BLOCK_DISABLED = "block_disabled"
 
         private const val STATE_SHOWN_EVENT_SCHEDULED = "shown_event_scheduled"
+        private const val STATE_CELEBRATION_SEED = "celebration_seed"
+        private const val STATE_CELEBRATION_MINUTES = "celebration_minutes"
         private const val STATE_SESSION_ID = "challenge_session_id"
         private const val STATE_PASSAGE = "challenge_passage"
         private const val STATE_HUMOUR = "challenge_humour"
@@ -662,6 +809,7 @@ class BlockActivity : ComponentActivity() {
         private const val STATE_ATTEMPTS = "challenge_attempts"
         private const val STATE_ACCRUED = "challenge_accrued"
         private const val STATE_VISIBLE_SINCE = "challenge_visible_since"
+        private const val STATE_AWAY_START = "challenge_away_start"
         private const val STATE_DAILY_COUNT = "daily_walk_away_count"
         private const val STATE_WALK_AWAY_SOURCE = "walk_away_source"
         private const val TICK_MS = 200L

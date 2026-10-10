@@ -13,9 +13,10 @@ import com.arjunrana.tokishrine.data.entity.Event
 
 @Database(
     entities = [Block::class, BlockedApp::class, BlockedSite::class, Event::class, AppMeta::class,
-        StatsBaseline::class, StatsState::class, StatsOutcome::class, StatsUsageEvent::class, StatsCoverage::class],
+        StatsBaseline::class, StatsState::class, StatsOutcome::class, StatsUsageEvent::class, StatsCoverage::class, StatsVisitOverride::class],
     // v4 adds Stats storage only. v3 blocks, events and markers are untouched.
-    version = 4,
+    // v5 adds the per-app visit-length override table only (P7-F6).
+    version = 5,
     exportSchema = true,
 )
 abstract class TokiDatabase : RoomDatabase() {
@@ -34,6 +35,14 @@ abstract class TokiDatabase : RoomDatabase() {
                 db.execSQL("CREATE TABLE IF NOT EXISTS stats_usage_event (`key` TEXT NOT NULL PRIMARY KEY, at INTEGER NOT NULL, packageName TEXT NOT NULL, activity TEXT NOT NULL, kind INTEGER NOT NULL, zoneId TEXT NOT NULL)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_stats_usage_event_at ON stats_usage_event (at)")
                 db.execSQL("CREATE TABLE IF NOT EXISTS stats_coverage (start INTEGER NOT NULL PRIMARY KEY, end INTEGER NOT NULL)")
+            }
+        }
+        // Additive only: no existing table or row changes. Stored baselines keep
+        // their old mean value until the next Recalibrate (Arjun, 8 October:
+        // no one-time p75 recompute).
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS stats_visit_override (packageName TEXT NOT NULL PRIMARY KEY, visitMs INTEGER NOT NULL, setAt INTEGER NOT NULL)")
             }
         }
         const val NAME = "toki-shrine.db"

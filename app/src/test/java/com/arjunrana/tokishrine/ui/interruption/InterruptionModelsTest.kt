@@ -166,7 +166,8 @@ class InterruptionModelsTest {
         // block name only — no "Turning off ·" eyebrow.
         assertEquals("The scroll pit", challengeTitle(ChallengePurpose.PAUSE, "The scroll pit"))
         assertEquals("The scroll pit", challengeTitle(ChallengePurpose.TURN_OFF, "The scroll pit"))
-        assertEquals("Never mind", delayEscapeLabel(ChallengePurpose.PAUSE))
-        assertEquals("Never Mind", delayEscapeLabel(ChallengePurpose.TURN_OFF))
+        // Owner correction, 9 October 2026 (P7-F18): one escape label for both.
+        assertEquals("Nope, not now", delayEscapeLabel(ChallengePurpose.PAUSE))
+        assertEquals("Nope, not now", delayEscapeLabel(ChallengePurpose.TURN_OFF))
     }
 }

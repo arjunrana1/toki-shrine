@@ -72,6 +72,7 @@ fun BlockDetailScreen(
     onTurnOff: (Long) -> Unit,
     onEditContents: (Long) -> Unit,
     onEditFriction: (Long) -> Unit,
+    onAddMore: (Long) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -199,6 +200,15 @@ fun BlockDetailScreen(
                             fontSize = 11.5.sp,
                             color = NocturneTheme.colors.accentRamp.step300,
                             modifier = Modifier.clickable { onEditContents(blockId) },
+                        )
+                    } else {
+                        // P7-F5 (8 October §17 addendum): while the block is
+                        // ON, the add-only screen replaces editing here.
+                        Text(
+                            "Add more",
+                            fontSize = 11.5.sp,
+                            color = NocturneTheme.colors.accentRamp.step300,
+                            modifier = Modifier.clickable { onAddMore(blockId) },
                         )
                     }
                 })

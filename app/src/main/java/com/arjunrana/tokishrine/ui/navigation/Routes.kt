@@ -19,10 +19,16 @@ sealed interface Route {
     data class Create(val editBlockId: Long? = null, val startStep: Int = 1) : Route
     data class TurnOn(val blockId: Long) : Route
     data class Detail(val blockId: Long) : Route
+    // P7-F5 (8 October §17 addendum): the add-only "What should this cover"
+    // screen a detail row's Add more opens while the block is ON.
+    data class AddMore(val blockId: Long) : Route
     data class Checklist(val mode: ChecklistMode) : Route
     data object AccessibilityExplainer : Route
     data object BatteryInstructions : Route
     data object Settings : Route
+    // P7-F27 (9 October §17 addendum): every supported browser from the
+    // bundled detection configuration, opened from the Settings row.
+    data object SupportedBrowsers : Route
     // Phase 7 screens: Stats (§6 screen 23) from the home header, Feedback
     // (§6 screen 25) from the home bottom action and Settings.
     data object Stats : Route
@@ -41,6 +47,7 @@ object RouteCodec {
         Route.BlockList -> "blockList"
         Route.Welcome -> "welcome"
         Route.Settings -> "settings"
+        Route.SupportedBrowsers -> "supportedBrowsers"
         Route.Stats -> "stats"
         Route.Feedback -> "feedback"
         Route.AccessibilityExplainer -> "explainer"
@@ -48,6 +55,7 @@ object RouteCodec {
         is Route.Checklist -> "checklist:${route.mode.name}"
         is Route.TurnOn -> "turnOn:${route.blockId}"
         is Route.Detail -> "detail:${route.blockId}"
+        is Route.AddMore -> "addMore:${route.blockId}"
         is Route.Create -> "create:${route.editBlockId ?: -1L}:${route.startStep}"
     }
 
@@ -57,6 +65,7 @@ object RouteCodec {
             "blockList" -> Route.BlockList
             "welcome" -> Route.Welcome
             "settings" -> Route.Settings
+            "supportedBrowsers" -> Route.SupportedBrowsers
             "stats" -> Route.Stats
             "feedback" -> Route.Feedback
             "explainer" -> Route.AccessibilityExplainer
@@ -66,6 +75,7 @@ object RouteCodec {
             }
             "turnOn" -> parts.getOrNull(1)?.toLongOrNull()?.let { Route.TurnOn(it) }
             "detail" -> parts.getOrNull(1)?.toLongOrNull()?.let { Route.Detail(it) }
+            "addMore" -> parts.getOrNull(1)?.toLongOrNull()?.let { Route.AddMore(it) }
             "create" -> {
                 val editBlockId = parts.getOrNull(1)?.toLongOrNull() ?: return null
                 val startStep = parts.getOrNull(2)?.toIntOrNull() ?: return null

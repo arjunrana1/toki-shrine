@@ -42,6 +42,12 @@ object BlockHaptics {
         vibrate(vibrator, VibrationEffect.EFFECT_CLICK)
     }
 
+    /** Click (one step above the original tick, P7-F19) when Back is pressed during an active challenge (P7-F2). */
+    fun nudge(context: Context) {
+        val vibrator = vibrator(context) ?: return
+        vibrate(vibrator, VibrationEffect.EFFECT_CLICK)
+    }
+
     private fun vibrator(context: Context): Vibrator? = runCatching {
         context.getSystemService(VibratorManager::class.java)?.defaultVibrator
     }.getOrNull()

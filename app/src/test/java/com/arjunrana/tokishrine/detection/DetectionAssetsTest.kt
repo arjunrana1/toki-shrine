@@ -31,21 +31,20 @@ class DetectionAssetsTest {
         "com.brave.browser" to "com.brave.browser:id/url_bar",
         "com.microsoft.emmx" to "com.microsoft.emmx:id/url_bar",
         "com.opera.browser" to "com.opera.browser:id/url_field",
-        "com.duckduckgo.mobile.android" to "com.duckduckgo.mobile.android:id/omnibarTextInput",
-        "com.vivaldi.browser" to "com.vivaldi.browser:id/url_bar",
     )
 
     @Test
-    fun browserMapCarriesExactlyTheNinePrdBrowsers() {
+    fun browserMapCarriesExactlyTheSevenSupportedBrowsers() {
         prdBrowsers.forEach { (packageName, viewId) ->
             assertTrue(
                 "Missing browser entry $packageName → $viewId",
                 normalized.contains("\"package\":\"$packageName\",\"urlViewId\":\"$viewId\""),
             )
         }
-        // Nine entries, no extras smuggled in.
+        // Seven entries (owner, 10 October: DuckDuckGo and Vivaldi dropped),
+        // no extras smuggled in.
         val urlViewIdOccurrences = Regex("\"urlViewId\":").findAll(asset).count()
-        assertEquals(9, urlViewIdOccurrences)
+        assertEquals(7, urlViewIdOccurrences)
     }
 
     @Test

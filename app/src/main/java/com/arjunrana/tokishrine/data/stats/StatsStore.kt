@@ -39,6 +39,14 @@ data class StatsUsageEvent(
     val zoneId: String,
 )
 
+/**
+ * The user's own usual visit length for one app (v5, P7-F6). It always wins
+ * over the measured baseline and survives Recalibrate; clearing it restores
+ * the measured value and each outcome's frozen contribution.
+ */
+@Entity(tableName = "stats_visit_override")
+data class StatsVisitOverride(@PrimaryKey val packageName: String, val visitMs: Long, val setAt: Long)
+
 @Entity(tableName = "stats_coverage")
 data class StatsCoverage(@PrimaryKey val start: Long, val end: Long)
 
@@ -63,6 +71,10 @@ interface StatsDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun usage(values: List<StatsUsageEvent>)
     @Query("SELECT * FROM stats_usage_event ORDER BY at, rowid") suspend fun usage(): List<StatsUsageEvent>
     @Query("DELETE FROM stats_usage_event WHERE at < :before") suspend fun pruneUsage(before: Long)
+    @Query("SELECT * FROM stats_visit_override") suspend fun overrides(): List<StatsVisitOverride>
+    @Query("SELECT * FROM stats_visit_override WHERE packageName = :pkg") suspend fun overrideFor(pkg: String): StatsVisitOverride?
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun override(value: StatsVisitOverride)
+    @Query("DELETE FROM stats_visit_override WHERE packageName = :pkg") suspend fun clearOverride(pkg: String)
     @Query("SELECT * FROM stats_coverage ORDER BY start") suspend fun coverage(): List<StatsCoverage>
     @Query("DELETE FROM stats_coverage") suspend fun clearCoverage()
     @Insert suspend fun coverage(values: List<StatsCoverage>)

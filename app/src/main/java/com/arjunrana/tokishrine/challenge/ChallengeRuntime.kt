@@ -1,6 +1,8 @@
 package com.arjunrana.tokishrine.challenge
 
+import com.arjunrana.tokishrine.config.AppConfig
 import com.arjunrana.tokishrine.data.entity.FrictionType
+import com.arjunrana.tokishrine.data.repo.EventRepository
 import com.arjunrana.tokishrine.ui.interruption.ChallengePurpose
 import kotlin.math.ceil
 
@@ -31,6 +33,8 @@ data class ChallengeSnapshot(
     val attempts: Int,
     val accruedVisibleMs: Long,
     val visibleSinceMs: Long?,
+    /** Start of the current continuous away period (elapsed realtime), or null while visible. */
+    val awayStartMs: Long? = null,
 )
 
 data class ChallengeView(
@@ -77,7 +81,12 @@ sealed interface ChallengeEffect {
         val hostPackage: String? = null,
     ) : ChallengeEffect
 
-    data class TurnOffAbandoned(val blockId: Long, val progressPct: Int) : ChallengeEffect
+    /**
+     * The turn-off challenge ended without disabling the block. [auto] marks
+     * the 15 s-away auto-nope (P7-F3), which lands on the phone's home screen
+     * (P7-F16); the button escape returns to the block in Toki.
+     */
+    data class TurnOffAbandoned(val blockId: Long, val progressPct: Int, val auto: Boolean = false) : ChallengeEffect
     data class PersistCompletion(val request: CompletionRequest) : ChallengeEffect
 }
 
@@ -116,6 +125,7 @@ class ChallengeRuntime(
     private var attempts = restored?.attempts ?: 0
     private var accruedVisibleMs = restored?.accruedVisibleMs ?: 0L
     private var visibleSinceMs = restored?.visibleSinceMs
+    private var awayStartMs = restored?.awayStartMs
 
     fun snapshot(): ChallengeSnapshot = ChallengeSnapshot(
         phase = phase,
@@ -127,6 +137,7 @@ class ChallengeRuntime(
         attempts = attempts,
         accruedVisibleMs = accruedVisibleMs,
         visibleSinceMs = visibleSinceMs,
+        awayStartMs = awayStartMs,
     )
 
     fun view(nowMs: Long): ChallengeView = ChallengeView(
@@ -181,8 +192,16 @@ class ChallengeRuntime(
         }
     }
 
+    /**
+     * Starts a visible waiting segment. Ignored while an away period is open
+     * (P7-F-A1): a late callback such as a delayed `recordStarted` completion
+     * between SCREEN_OFF and `onStop` must not count offscreen time. Only
+     * [onReturned] closes the away period and makes the screen visible again.
+     */
     fun onVisible(nowMs: Long) {
-        if (phase == ChallengePhase.ACTIVE && config.method == FrictionType.DELAY && visibleSinceMs == null) {
+        if (awayStartMs == null && phase == ChallengePhase.ACTIVE &&
+            config.method == FrictionType.DELAY && visibleSinceMs == null
+        ) {
             visibleSinceMs = nowMs
         }
     }
@@ -193,13 +212,16 @@ class ChallengeRuntime(
     }
 
     /**
-     * Ordinary app-switch/lock is nonterminal. Typing text stays in memory;
-     * waiting progress resets and its generation changes so a late tick from
-     * the previous visible segment cannot complete the challenge.
+     * App switch, Home, lock or screen-off while the gate or challenge is
+     * live starts (or keeps) the away clock (8 October §17 addendum). Waiting
+     * progress resets and its generation changes so a late tick from the
+     * previous visible segment cannot complete the challenge. Repeated
+     * signals keep the earliest away-start.
      */
-    fun onBackgrounded() {
-        if (phase != ChallengePhase.ACTIVE) return
-        if (config.method == FrictionType.DELAY) {
+    fun onBackgrounded(nowMs: Long) {
+        if (phase != ChallengePhase.GATE && phase != ChallengePhase.ACTIVE) return
+        if (awayStartMs == null) awayStartMs = nowMs
+        if (phase == ChallengePhase.ACTIVE && config.method == FrictionType.DELAY) {
             val hadProgress = accruedVisibleMs != 0L || visibleSinceMs != null
             accruedVisibleMs = 0L
             visibleSinceMs = null
@@ -207,8 +229,61 @@ class ChallengeRuntime(
         }
     }
 
+    /**
+     * The gate or challenge is visible again. After [AUTO_NOPE_AWAY_MS] away
+     * this is the auto-nope; sooner, the same challenge resumes with typed
+     * text cleared (the wait already restarted when it was hidden).
+     */
+    fun onReturned(nowMs: Long): ChallengeEffect? {
+        if (awayStartMs == null) return null
+        expireAway(nowMs)?.let { return it }
+        awayStartMs = null
+        if (phase == ChallengePhase.ACTIVE && config.method == FrictionType.TYPING) {
+            typedText = ""
+            showTypingMismatches = false
+        }
+        return null
+    }
+
+    /**
+     * Auto-nope once the away period reaches [AUTO_NOPE_AWAY_MS]: a pause
+     * gate/challenge walks away with source `auto_away`; a turn-off challenge
+     * ends exactly like Never Mind. A clock that went backwards (reboot)
+     * counts as expired. Returns null while still in time, when not away, or
+     * once a commit has started (the commit wins).
+     */
+    fun expireAway(nowMs: Long): ChallengeEffect? {
+        val since = awayStartMs ?: return null
+        if (phase != ChallengePhase.GATE && phase != ChallengePhase.ACTIVE) return null
+        if (nowMs >= since && nowMs - since < AUTO_NOPE_AWAY_MS) return null
+        if (phase == ChallengePhase.GATE) {
+            terminalize(ChallengePhase.WALK_AWAY)
+            return walkAway(EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY)
+        }
+        val progress = progressPct(nowMs)
+        terminalize()
+        return if (config.purpose == ChallengePurpose.TURN_OFF) {
+            ChallengeEffect.TurnOffAbandoned(config.blockId, progress, auto = true)
+        } else {
+            walkAway(EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY)
+        }
+    }
+
+    /** True between leaving the screen and [onReturned]/expiry. */
+    fun isAway(): Boolean = awayStartMs != null
+
+    /** Milliseconds until the away period expires; null when not away or no longer live. */
+    fun awayRemainingMs(nowMs: Long): Long? {
+        val since = awayStartMs ?: return null
+        if (phase != ChallengePhase.GATE && phase != ChallengePhase.ACTIVE) return null
+        if (nowMs < since) return 0L
+        return (AUTO_NOPE_AWAY_MS - (nowMs - since)).coerceAtLeast(0L)
+    }
+
     fun tick(nowMs: Long, callbackGeneration: Int = generation): ChallengeEffect? {
-        if (callbackGeneration != generation || phase != ChallengePhase.ACTIVE || config.method != FrictionType.DELAY) {
+        if (callbackGeneration != generation || phase != ChallengePhase.ACTIVE ||
+            config.method != FrictionType.DELAY || awayStartMs != null
+        ) {
             return null
         }
         if (elapsedVisibleMs(nowMs) < config.totalSeconds * 1_000L) return null
@@ -230,18 +305,22 @@ class ChallengeRuntime(
         }
     }
 
-    // challenge_abandoned is retired (Phase 7): ordinary app-switch/lock/Back
-    // stay nonterminal via onBackgrounded above, and the only intentional
-    // escapes are escape()/gateWalkAway(). No abandon() surface remains.
+    // challenge_abandoned is retired (Phase 7). Back no longer suspends, and
+    // a short absence is nonterminal; 15 s away ends via expireAway(). The
+    // intentional escapes are escape()/gateWalkAway(). No abandon() surface.
 
     fun gateWalkAway(): ChallengeEffect? {
         if (phase != ChallengePhase.GATE) return null
         terminalize(ChallengePhase.WALK_AWAY)
-        return walkAway("block_screen")
+        return walkAway(EventRepository.WALK_AWAY_SOURCE_BLOCK_SCREEN)
     }
 
     private fun challengeWalkAway(): ChallengeEffect = walkAway(
-        if (config.method == FrictionType.TYPING) "typing" else "countdown",
+        if (config.method == FrictionType.TYPING) {
+            EventRepository.WALK_AWAY_SOURCE_TYPING
+        } else {
+            EventRepository.WALK_AWAY_SOURCE_COUNTDOWN
+        },
     )
 
     private fun walkAway(source: String): ChallengeEffect.WalkAway {
@@ -259,6 +338,7 @@ class ChallengeRuntime(
     private fun beginCompletion(nowMs: Long): ChallengeEffect.PersistCompletion {
         accrueVisible(nowMs)
         phase = ChallengePhase.COMMITTING
+        awayStartMs = null
         val token = ++generation
         return ChallengeEffect.PersistCompletion(completionRequest(token, nowMs))
     }
@@ -298,6 +378,21 @@ class ChallengeRuntime(
         }
     }
 
+    /**
+     * A completion save threw. Owner rule (8 October, P7-F-A2): a failed save
+     * never costs a completed challenge, and never starts the away clock.
+     * On screen it behaves as [commitFailed] (back to ACTIVE: a wait
+     * re-completes on the next tick, typing keeps its text for Submit).
+     * Hidden or screen off, it stays COMMITTING with the same token, so no
+     * away clock, wait reset or text clearing applies; the caller reissues
+     * [resumePendingCompletion] when the user is next on screen. Returns true
+     * only when the challenge went back to ACTIVE.
+     */
+    fun saveFailed(token: Int, nowMs: Long, onScreen: Boolean): Boolean {
+        if (phase != ChallengePhase.COMMITTING || token != generation || !onScreen) return false
+        return commitFailed(token, nowMs)
+    }
+
     fun commitFailed(token: Int, nowMs: Long): Boolean {
         if (phase != ChallengePhase.COMMITTING || token != generation) return false
         phase = ChallengePhase.ACTIVE
@@ -309,6 +404,7 @@ class ChallengeRuntime(
     private fun terminalize(next: ChallengePhase = ChallengePhase.TERMINAL) {
         phase = next
         visibleSinceMs = null
+        awayStartMs = null
         generation++
     }
 
@@ -340,5 +436,14 @@ class ChallengeRuntime(
         config.passage.length
     } else {
         config.totalSeconds
+    }
+
+    companion object {
+        /**
+         * Continuous time away before a live gate/challenge auto-nopes
+         * (8 October §17 addendum). The editable seconds live in AppConfig
+         * (P7-F11); this derived millisecond form is what the runtime reads.
+         */
+        const val AUTO_NOPE_AWAY_MS = AppConfig.AUTO_NOPE_AWAY_SECONDS * 1000L
     }
 }
