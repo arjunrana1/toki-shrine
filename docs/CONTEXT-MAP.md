@@ -21,7 +21,7 @@ Do not read every linked document. TASK gives starting references; use this map 
 
 - Phase 5 delivery: closed ([owner-correction closure](../coordination/tasks/TS-P5-owner-corrections/OWNER-CHECKS.md)). RV2-N1's unused `Abandoned` handler was removed in Phase 7; do not revive it. RV2-N2/RV2-N3 describe the historical coverage limits, not new blockers or executed coverage.
 - Phase 6 pause/access/re-arm, bubble and notification: closed in [TS-P6-pause-lifecycle](../coordination/tasks/TS-P6-pause-lifecycle/TASK.md). Preserve P6C-N1's accepted theoretical edge and P6C-O4/P6-O13's explicit do-not-fix decisions, including platform-permitted notification dismissal/re-post.
-- Phase 7: [TS-P7-stats-feedback-final](../coordination/tasks/TS-P7-stats-feedback-final/TASK.md) is reopened for the approved Stats redesign; GLM UI implementation follows Codex data work, then scoped review and owner acceptance. See CURRENT for the next actor.
+- Phase 7: closed 11 October 2026 in [TS-P7-stats-feedback-final](../coordination/tasks/TS-P7-stats-feedback-final/TASK.md); launch-gate obligations (P7-D3/D4, Android test execution, debug values/P7-O14) are in [Phase 7 closure](phases/phase-07.md#closure--11-october-2026-owner-decision).
 
 - Phase 3 owner results and executed nonvisual evidence are closed in the [Phase 3 checklist](../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md).
 - Create-flow draft restoration/shared accessibility semantics: blocks/targets and theme/UI contracts; do not mislabel the repaired Phase 3 route stack as still broken.
