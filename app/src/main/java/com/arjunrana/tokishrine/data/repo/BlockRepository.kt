@@ -2,12 +2,10 @@ package com.arjunrana.tokishrine.data.repo
 
 import androidx.room.withTransaction
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MIN
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_STEP
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_DEFAULT
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MAX
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MIN
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_STEP
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MIN
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.data.db.BlockDao
 import com.arjunrana.tokishrine.data.db.BlockWithContents
@@ -37,19 +35,20 @@ class TargetRemovalException(
     val isApp: Boolean,
 ) : IllegalStateException("Add more cannot remove '$target' from its block")
 
-// Pause ranges and steps shared by every build variant live in AppConfig
-// (PRD §17 "Config" / P7-F11). The typing/waiting floors, their fresh-draft
-// defaults and the fixed disable ladders live in the per-variant
-// ChallengeValues.kt: release keeps the production values; debug carries
-// Arjun's temporary 7 October 2026 owner-testing values. Both are enforced
-// at this persistence boundary.
+// Pause typing/waiting ranges, steps and defaults are the same in every
+// build and live in AppConfig (11 October §17 unlock-minutes addendum). The
+// fixed disable ladders live in the per-variant ChallengeValues.kt: release
+// keeps the production values; debug carries Arjun's temporary 7 October
+// 2026 first rung. Both are enforced at this persistence boundary on create
+// and update. A block no longer stores a pause length (schema v6); stored
+// values outside the current ranges stay readable and are used as stored
+// until the block is re-saved.
 
 data class BlockDraft(
     val name: String,
     val appPackageNames: List<String>,
     val siteDomains: List<String>,
     val frictionType: FrictionType,
-    val pauseMinutes: Int,
     val pauseChars: Int,
     val turnoffChars: Int,
     val countdownSeconds: Int,
@@ -70,9 +69,6 @@ open class BlockRepository(
     // hold ladder/range values even when inactive, so no write path can persist
     // a half-configured row.
     private fun requireValidConfiguration(draft: BlockDraft) {
-        require(draft.pauseMinutes in PAUSE_MINUTES_MIN..PAUSE_MINUTES_MAX && draft.pauseMinutes % PAUSE_MINUTES_STEP == 0) {
-            "Pause must be between $PAUSE_MINUTES_MIN and $PAUSE_MINUTES_MAX minutes in steps of $PAUSE_MINUTES_STEP"
-        }
         require(draft.pauseChars in PAUSE_CHARS_MIN..PAUSE_CHARS_MAX && draft.pauseChars % PAUSE_CHARS_STEP == 0) {
             "Passage length must be between $PAUSE_CHARS_MIN and $PAUSE_CHARS_MAX characters in steps of $PAUSE_CHARS_STEP"
         }
@@ -109,7 +105,6 @@ open class BlockRepository(
             Block(
                 name = draft.name,
                 frictionType = draft.frictionType,
-                pauseMinutes = draft.pauseMinutes,
                 pauseChars = draft.pauseChars,
                 turnoffChars = draft.turnoffChars,
                 countdownSeconds = draft.countdownSeconds,
@@ -150,7 +145,6 @@ open class BlockRepository(
             current.block.copy(
                 name = draft.name,
                 frictionType = draft.frictionType,
-                pauseMinutes = draft.pauseMinutes,
                 pauseChars = draft.pauseChars,
                 turnoffChars = draft.turnoffChars,
                 countdownSeconds = draft.countdownSeconds,

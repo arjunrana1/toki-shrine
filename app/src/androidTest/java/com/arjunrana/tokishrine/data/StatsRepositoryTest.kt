@@ -86,7 +86,7 @@ class StatsRepositoryTest {
 
     @Test fun overrideRevaluesTheWeekSurvivesRecalibrateAndClearingRestoresFrozenValues() = runBlocking {
         BlockRepository(db, clock = { now }).let { blocks ->
-            blocks.setEnabled(blocks.createBlock(BlockDraft("B", listOf("app"), emptyList(), FrictionType.TYPING, 15, 150, 350, 60, 360)), true)
+            blocks.setEnabled(blocks.createBlock(BlockDraft("B", listOf("app"), emptyList(), FrictionType.TYPING, 150, 350, 60, 360)), true)
         }
         raw = visits(40_000)
         repo.refresh()
@@ -173,7 +173,7 @@ class StatsRepositoryTest {
             siteHostPackages = { setOf("browser", "uninstalled.browser") })
         val blocks = BlockRepository(db, clock = { now })
         fun draft(apps: List<String>, domains: List<String>) =
-            BlockDraft("B", apps, domains, FrictionType.TYPING, 15, 150, 350, 60, 360)
+            BlockDraft("B", apps, domains, FrictionType.TYPING, 150, 350, 60, 360)
         val siteBlock = blocks.createBlock(draft(emptyList(), listOf("example.com")))
         blocks.setEnabled(siteBlock, true)
         blocks.setEnabled(blocks.createBlock(draft(listOf("app"), emptyList())), true)

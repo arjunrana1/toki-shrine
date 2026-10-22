@@ -2,7 +2,6 @@ package com.arjunrana.tokishrine
 
 import android.app.Application
 import android.content.Intent
-import androidx.room.Room
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.repo.BlockRepository
@@ -24,9 +23,7 @@ class TokiApplication : Application() {
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: TokiDatabase by lazy {
-        Room.databaseBuilder(this, TokiDatabase::class.java, TokiDatabase.NAME)
-            .addMigrations(TokiDatabase.MIGRATION_3_4, TokiDatabase.MIGRATION_4_5)
-            .build()
+        TokiDatabase.build(this)
     }
 
     val blockRepository: BlockRepository by lazy { BlockRepository(database) }

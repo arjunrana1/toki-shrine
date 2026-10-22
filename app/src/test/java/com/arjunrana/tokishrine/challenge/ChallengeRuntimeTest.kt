@@ -21,7 +21,7 @@ class ChallengeRuntimeTest {
     @Test
     fun mismatchKeepsPassageAndTextAndAllowsUnlimitedRetries() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         repeat(20) { attempt ->
             val wrong = "wrong ${attempt.toString().padStart(4, '0')}"
             runtime.updateTypedText(wrong)
@@ -40,7 +40,7 @@ class ChallengeRuntimeTest {
     @Test
     fun exactTypingIsTheOnlyCompletionPath() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(10)
+        runtime.enterChallenge(10, 15)
         runtime.updateTypedText("alpha bet")
         assertNull(runtime.submitTyping(20))
         runtime.updateTypedText("alpha betx")
@@ -89,7 +89,7 @@ class ChallengeRuntimeTest {
     @Test
     fun returnWithinLimitKeepsSessionAndPassageButClearsTypedText() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha betx")
         assertTrue(runtime.submitTyping(500) is ChallengeEffect.TypingMismatch)
 
@@ -112,7 +112,7 @@ class ChallengeRuntimeTest {
     @Test
     fun pauseEscapeIsWalkAwayButTurnOffEscapeIsSeparate() {
         val pause = typingRuntime()
-        pause.enterChallenge(0)
+        pause.enterChallenge(0, 15)
         val walkAway = pause.escape(1) as ChallengeEffect.WalkAway
         assertEquals("typing", walkAway.source)
 
@@ -135,7 +135,7 @@ class ChallengeRuntimeTest {
         assertEquals("com.android.chrome", walkAway.hostPackage)
 
         val pass = siteRuntime()
-        pass.enterChallenge(0)
+        pass.enterChallenge(0, 15)
         pass.updateTypedText("alpha beta")
         val request = (pass.submitTyping(10) as ChallengeEffect.PersistCompletion).request
         assertEquals("site", request.targetType)
@@ -157,7 +157,7 @@ class ChallengeRuntimeTest {
     @Test
     fun completionFirstOwnsRaceAndIgnoresBackgrounding() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha beta")
         val completion = runtime.submitTyping(10) as ChallengeEffect.PersistCompletion
         runtime.onBackgrounded(11)
@@ -170,7 +170,7 @@ class ChallengeRuntimeTest {
     @Test
     fun failedWriteReturnsToActiveAndRetryGetsFreshToken() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha beta")
         val first = runtime.submitTyping(10) as ChallengeEffect.PersistCompletion
         assertTrue(runtime.commitFailed(first.request.token, 11))
@@ -183,20 +183,20 @@ class ChallengeRuntimeTest {
     @Test
     fun recreationRestoresLiveStateWithoutAnotherStartedEffect() {
         val original = typingRuntime()
-        original.enterChallenge(0)
+        original.enterChallenge(0, 15)
         original.updateTypedText("alpha")
 
         val restored = ChallengeRuntime(original.config, original.snapshot())
 
         assertEquals(ChallengePhase.ACTIVE, restored.view(10).phase)
         assertEquals("alpha", restored.view(10).typedText)
-        assertNull(restored.enterChallenge(10))
+        assertNull(restored.enterChallenge(10, 15))
     }
 
     @Test
     fun mismatchMarksAppearOnlyAfterSubmitAndHideOnNextEdit() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha betx")
         assertEquals(false, runtime.view(1).showTypingMismatches)
 
@@ -210,7 +210,7 @@ class ChallengeRuntimeTest {
     @Test
     fun duplicateCompletionCallbackIsAtMostOnce() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha beta")
         val completion = runtime.submitTyping(10) as ChallengeEffect.PersistCompletion
         assertNotNull(runtime.commitSucceeded(completion.request.token))
@@ -220,7 +220,7 @@ class ChallengeRuntimeTest {
     @Test
     fun recreationDuringCommitReissuesSameStableCompletion() {
         val original = typingRuntime()
-        original.enterChallenge(0)
+        original.enterChallenge(0, 15)
         original.updateTypedText("alpha beta")
         val first = original.submitTyping(10) as ChallengeEffect.PersistCompletion
 
@@ -243,13 +243,13 @@ class ChallengeRuntimeTest {
         assertNull(runtime.onReturned(14_999))
         assertEquals(ChallengePhase.GATE, runtime.view(15_000).phase)
         assertNull(runtime.expireAway(60_000)) // the clock stopped on return
-        assertTrue(runtime.enterChallenge(60_000) is ChallengeEffect.Started)
+        assertTrue(runtime.enterChallenge(60_000, 15) is ChallengeEffect.Started)
     }
 
     @Test
     fun waitingReturnWithinLimitRestartsTheWait() {
         val runtime = pauseWaitingRuntime(seconds = 10)
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.onVisible(0)
         runtime.onBackgrounded(8_000)
         assertNull(runtime.onReturned(20_000))
@@ -262,14 +262,14 @@ class ChallengeRuntimeTest {
     @Test
     fun screenOffThenStopKeepsTheEarliestAwayStart() {
         val unlockedInTime = typingRuntime()
-        unlockedInTime.enterChallenge(0)
+        unlockedInTime.enterChallenge(0, 15)
         unlockedInTime.onBackgrounded(1_000) // SCREEN_OFF
         unlockedInTime.onBackgrounded(1_200) // onStop
         assertNull(unlockedInTime.onReturned(15_999))
         assertEquals(ChallengePhase.ACTIVE, unlockedInTime.view(16_000).phase)
 
         val unlockedLate = typingRuntime()
-        unlockedLate.enterChallenge(0)
+        unlockedLate.enterChallenge(0, 15)
         unlockedLate.onBackgrounded(1_000)
         unlockedLate.onBackgrounded(10_000)
         assertEquals(6_000L, unlockedLate.awayRemainingMs(10_000))
@@ -288,14 +288,14 @@ class ChallengeRuntimeTest {
         assertEquals(ChallengePhase.WALK_AWAY, gate.view(15_000).phase)
 
         val typing = typingRuntime()
-        typing.enterChallenge(0)
+        typing.enterChallenge(0, 15)
         typing.updateTypedText("alpha")
         typing.onBackgrounded(1_000)
         assertEquals(EventRepository.WALK_AWAY_SOURCE_AUTO_AWAY, (typing.expireAway(16_000) as ChallengeEffect.WalkAway).source)
         assertEquals(ChallengePhase.TERMINAL, typing.view(16_000).phase)
 
         val waiting = pauseWaitingRuntime(seconds = 10)
-        waiting.enterChallenge(0)
+        waiting.enterChallenge(0, 15)
         waiting.onVisible(0)
         waiting.onBackgrounded(5_000)
         // Evaluated on a late return instead of the timer: same outcome.
@@ -326,7 +326,7 @@ class ChallengeRuntimeTest {
     @Test
     fun visibleWaitStillCompletesAsPushThroughAndOnScreenTimeNeverExpires() {
         val runtime = pauseWaitingRuntime(seconds = 30)
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.onVisible(0)
         assertNull(runtime.expireAway(29_000))
         assertNull(runtime.awayRemainingMs(29_000))
@@ -336,7 +336,7 @@ class ChallengeRuntimeTest {
     @Test
     fun configurationChangeIsNotAwayAndKeepsTypedText() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha")
         runtime.onConfigurationHidden(1_000)
         val recreated = ChallengeRuntime(runtime.config, runtime.snapshot())
@@ -349,7 +349,7 @@ class ChallengeRuntimeTest {
     @Test
     fun processDeathRestoresTheAwayStartAndEvaluatesItOnRecreate() {
         val saved = typingRuntime().apply {
-            enterChallenge(0)
+            enterChallenge(0, 15)
             updateTypedText("alpha")
             onBackgrounded(1_000)
         }.snapshot()
@@ -365,7 +365,7 @@ class ChallengeRuntimeTest {
         val back = ChallengeRuntime(typingRuntime().config, saved)
         assertNull(back.onReturned(12_000))
         assertEquals("", back.view(12_000).typedText)
-        assertNull(back.enterChallenge(12_000))
+        assertNull(back.enterChallenge(12_000, 15))
 
         // Recreated late: quiet auto-nope.
         assertTrue(ChallengeRuntime(typingRuntime().config, saved).onReturned(30_000) is ChallengeEffect.WalkAway)
@@ -381,7 +381,7 @@ class ChallengeRuntimeTest {
         // onNewIntent asks expireAway first: an expired session yields its
         // outcome exactly once, so the replacement launch cannot double-count.
         val expired = typingRuntime()
-        expired.enterChallenge(0)
+        expired.enterChallenge(0, 15)
         expired.onBackgrounded(1_000)
         assertTrue(expired.expireAway(20_000) is ChallengeEffect.WalkAway)
         assertNull(expired.expireAway(20_001))
@@ -390,7 +390,7 @@ class ChallengeRuntimeTest {
 
         // In time: no effect, the challenge stays and the return clears text.
         val live = typingRuntime()
-        live.enterChallenge(0)
+        live.enterChallenge(0, 15)
         live.updateTypedText("alpha")
         live.onBackgrounded(1_000)
         assertNull(live.expireAway(10_000))
@@ -402,7 +402,7 @@ class ChallengeRuntimeTest {
     @Test
     fun lateAwayTimerAfterCommitStartedLetsTheCommitWin() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha beta")
         runtime.onBackgrounded(1_000)
         val completion = runtime.submitTyping(2_000) as ChallengeEffect.PersistCompletion
@@ -412,7 +412,7 @@ class ChallengeRuntimeTest {
 
         // A failed commit returns to ACTIVE with no stale away-start.
         val retry = typingRuntime()
-        retry.enterChallenge(0)
+        retry.enterChallenge(0, 15)
         retry.updateTypedText("alpha beta")
         retry.onBackgrounded(1_000)
         val first = retry.submitTyping(2_000) as ChallengeEffect.PersistCompletion
@@ -429,7 +429,7 @@ class ChallengeRuntimeTest {
     @Test
     fun screenOffThenDelayedStartCompletionCountsNoOffscreenTimeAndReturnRestartsTheWait() {
         val runtime = pauseWaitingRuntime(seconds = 10)
-        assertTrue(runtime.enterChallenge(0) is ChallengeEffect.Started)
+        assertTrue(runtime.enterChallenge(0, 15) is ChallengeEffect.Started)
         runtime.onVisible(0)
 
         runtime.onBackgrounded(3_000) // SCREEN_OFF, resumed still true
@@ -467,7 +467,7 @@ class ChallengeRuntimeTest {
     @Test
     fun screenOffDuringCommitThenFailedSaveBeforeStopKeepsTheEarnedWaitForTheReturn() {
         val runtime = pauseWaitingRuntime(seconds = 10)
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.onVisible(0)
         val first = runtime.tick(10_000) as ChallengeEffect.PersistCompletion
 
@@ -495,7 +495,7 @@ class ChallengeRuntimeTest {
     @Test
     fun hiddenFailedSaveKeepsCompletedTypingWithoutClearingOrRecounting() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.updateTypedText("alpha beta")
         val first = runtime.submitTyping(5_000) as ChallengeEffect.PersistCompletion
         assertEquals(false, runtime.saveFailed(first.request.token, 5_100, onScreen = false))
@@ -510,7 +510,7 @@ class ChallengeRuntimeTest {
     @Test
     fun onScreenFailedSaveKeepsThePhaseFiveRetryAndStaleTokensAreIgnored() {
         val runtime = pauseWaitingRuntime(seconds = 10)
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.onVisible(0)
         val first = runtime.tick(10_000) as ChallengeEffect.PersistCompletion
         assertEquals(false, runtime.saveFailed(first.request.token + 1, 10_100, onScreen = true))
@@ -524,11 +524,128 @@ class ChallengeRuntimeTest {
     @Test
     fun explicitEscapeStopsTheAwayClock() {
         val runtime = typingRuntime()
-        runtime.enterChallenge(0)
+        runtime.enterChallenge(0, 15)
         runtime.onBackgrounded(1_000)
         assertEquals("typing", (runtime.escape(2_000) as ChallengeEffect.WalkAway).source)
         assertNull(runtime.expireAway(60_000))
         assertNull(runtime.awayRemainingMs(60_000))
+    }
+
+    // ---- TS-unlock-minutes UM-4: the gate's chosen pause length ----
+
+    @Test
+    fun enterChallengeAcceptsOnlyAFixedChoiceAtThePauseGate() {
+        val runtime = typingRuntime()
+        assertNull(runtime.snapshot().unlockMinutes) // nothing preselected
+        listOf(0, -5, 7, 25, 30).forEach { invalid ->
+            assertNull(runtime.enterChallenge(0, invalid))
+            assertEquals(ChallengePhase.GATE, runtime.view(0).phase)
+            assertNull(runtime.snapshot().unlockMinutes)
+        }
+        assertTrue(runtime.enterChallenge(0, 5) is ChallengeEffect.Started)
+        assertEquals(5, runtime.snapshot().unlockMinutes)
+        // Past the gate a second pick changes nothing.
+        assertNull(runtime.enterChallenge(1, 20))
+        assertEquals(5, runtime.snapshot().unlockMinutes)
+
+        // Turn-off challenges have no length and no gate.
+        val turnOff = waitingRuntime(1)
+        assertNull(turnOff.enterChallenge(0, 10))
+        turnOff.beginTurnOff(0)
+        turnOff.onVisible(0)
+        val request = (turnOff.tick(1_000) as ChallengeEffect.PersistCompletion).request
+        assertNull(request.unlockMinutes)
+        assertNull(turnOff.snapshot().unlockMinutes)
+        assertTrue(turnOff.commitSucceeded(request.token) is ChallengeTerminalResult.BlockDisabled)
+    }
+
+    @Test
+    fun everyChoiceReachesTheCompletionRequestAndThePauseSeam() {
+        assertEquals(listOf(5, 10, 15, 20), AppConfig.UNLOCK_MINUTE_CHOICES)
+        AppConfig.UNLOCK_MINUTE_CHOICES.forEach { minutes ->
+            val runtime = typingRuntime()
+            runtime.enterChallenge(0, minutes)
+            runtime.updateTypedText("alpha beta")
+            val completion = runtime.submitTyping(10) as ChallengeEffect.PersistCompletion
+            assertEquals(minutes, completion.request.unlockMinutes)
+            val result = runtime.commitSucceeded(completion.request.token) as ChallengeTerminalResult.PauseRequested
+            assertEquals(minutes, result.unlockMinutes)
+            assertEquals("session", result.sessionId)
+        }
+    }
+
+    @Test
+    fun chosenLengthSurvivesRecreationShortAbsenceAndEveryRetryPath() {
+        // Rotation / process death mid-challenge.
+        val original = pauseWaitingRuntime(seconds = 10)
+        original.enterChallenge(0, 5)
+        original.onVisible(0)
+        val recreated = ChallengeRuntime(original.config, original.snapshot())
+        assertEquals(ChallengePhase.ACTIVE, recreated.view(0).phase)
+        assertEquals(5, recreated.snapshot().unlockMinutes)
+
+        // Away under 15 s and back: the wait restarts, the length stays.
+        recreated.onBackgrounded(1_000)
+        assertNull(recreated.onReturned(10_000))
+        recreated.onVisible(10_000)
+        val first = recreated.tick(20_000) as ChallengeEffect.PersistCompletion
+        assertEquals(5, first.request.unlockMinutes)
+
+        // On-screen failed save, then a fresh completion.
+        assertTrue(recreated.saveFailed(first.request.token, 20_100, onScreen = true))
+        val second = recreated.tick(20_300) as ChallengeEffect.PersistCompletion
+        assertEquals(5, second.request.unlockMinutes)
+
+        // Hidden failed save + process death: resumePendingCompletion keeps it.
+        assertEquals(false, recreated.saveFailed(second.request.token, 20_400, onScreen = false))
+        val restored = ChallengeRuntime(recreated.config, recreated.snapshot())
+        val resumed = restored.resumePendingCompletion(30_000)!!
+        assertEquals(second.request.token, resumed.request.token)
+        assertEquals(5, resumed.request.unlockMinutes)
+        val result = restored.commitSucceeded(resumed.request.token) as ChallengeTerminalResult.PauseRequested
+        assertEquals(5, result.unlockMinutes)
+
+        // commitFailed (the repository refused) keeps it for the next attempt.
+        val typing = typingRuntime()
+        typing.enterChallenge(0, 10)
+        typing.updateTypedText("alpha beta")
+        val refused = typing.submitTyping(10) as ChallengeEffect.PersistCompletion
+        assertTrue(typing.commitFailed(refused.request.token, 11))
+        assertEquals(10, (typing.submitTyping(12) as ChallengeEffect.PersistCompletion).request.unlockMinutes)
+    }
+
+    @Test
+    fun restoredPauseWithoutAValidLengthReturnsToTheGateToPickAgain() {
+        val active = typingRuntime().apply {
+            enterChallenge(0, 15)
+            updateTypedText("alpha")
+        }.snapshot()
+        listOf(null, 0, 7, 25).forEach { stale ->
+            val restored = ChallengeRuntime(typingRuntime().config, active.copy(unlockMinutes = stale))
+            assertEquals(ChallengePhase.GATE, restored.view(0).phase)
+            assertNull(restored.snapshot().unlockMinutes)
+            assertNull(restored.submitTyping(0)) // no completion without a length
+            // The pick still leads into the same, already started, challenge.
+            assertNull(restored.enterChallenge(1, 10))
+            assertEquals(ChallengePhase.ACTIVE, restored.view(1).phase)
+            restored.updateTypedText("alpha beta")
+            assertEquals(10, (restored.submitTyping(2) as ChallengeEffect.PersistCompletion).request.unlockMinutes)
+        }
+
+        val committing = typingRuntime().apply {
+            enterChallenge(0, 15)
+            updateTypedText("alpha beta")
+            submitTyping(1)
+        }.snapshot()
+        val restored = ChallengeRuntime(typingRuntime().config, committing.copy(unlockMinutes = null))
+        assertEquals(ChallengePhase.GATE, restored.view(2).phase)
+        assertNull(restored.resumePendingCompletion(2))
+
+        // A turn-off session ignores any stored length.
+        val turnOff = waitingRuntime(10).apply { beginTurnOff(0) }.snapshot()
+        val restoredTurnOff = ChallengeRuntime(waitingRuntime(10).config, turnOff.copy(unlockMinutes = 10))
+        assertEquals(ChallengePhase.ACTIVE, restoredTurnOff.view(0).phase)
+        assertNull(restoredTurnOff.snapshot().unlockMinutes)
     }
 
     @Test
@@ -559,7 +676,6 @@ class ChallengeRuntimeTest {
                 id = 7,
                 name = "Social",
                 frictionType = FrictionType.TYPING,
-                pauseMinutes = 15,
                 pauseChars = 150,
                 turnoffChars = 350,
                 countdownSeconds = 60,
@@ -584,7 +700,6 @@ class ChallengeRuntimeTest {
             purpose = ChallengePurpose.PAUSE,
             method = FrictionType.TYPING,
             passage = "alpha beta",
-            pauseMinutes = 15,
             target = "com.example.target",
             targetType = "app",
         ),
@@ -597,7 +712,6 @@ class ChallengeRuntimeTest {
             purpose = ChallengePurpose.PAUSE,
             method = FrictionType.DELAY,
             totalSeconds = seconds,
-            pauseMinutes = 15,
             target = "com.example.target",
             targetType = "app",
         ),

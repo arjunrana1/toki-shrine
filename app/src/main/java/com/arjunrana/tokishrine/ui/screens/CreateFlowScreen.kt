@@ -4,6 +4,15 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,6 +20,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,11 +34,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,18 +52,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_DEFAULT
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_MIN
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_STEP
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_DEFAULT
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MAX
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_MIN
-import com.arjunrana.tokishrine.config.AppConfig.PAUSE_MINUTES_STEP
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MAX
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_MIN
 import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_STEP
 import com.arjunrana.tokishrine.data.apps.AppEntry
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
@@ -67,10 +78,6 @@ import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_CHOICES
 import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.EventRepository
-import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_MIN
-import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_MIN
 import com.arjunrana.tokishrine.ui.components.ButtonVariant
 import com.arjunrana.tokishrine.ui.components.BoundedTargetList
 import com.arjunrana.tokishrine.ui.components.NocturneAppbar
@@ -87,7 +94,6 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.formatCountdown
 import com.arjunrana.tokishrine.ui.util.isValidFullDomain
 import com.arjunrana.tokishrine.ui.util.toImageBitmap
-import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
@@ -105,8 +111,8 @@ import kotlinx.coroutines.launch
 private const val NAME_MAX_CHARS = 30
 
 // Five screens with progress segments (contents, name, method, disable,
-// review). The details sheet is an optional refinement inside step 3, never
-// a sixth step (PRD §17, 19 September).
+// review). Step 3 tunes the chosen method inline on its card (09 v3, 11 October
+// unlock-minutes addendum); there is no details sheet and no sixth step.
 private const val STEP_CONTENTS = 1
 private const val STEP_NAME = 2
 private const val STEP_METHOD = 3
@@ -131,7 +137,6 @@ class CreateFlowState(
     var step by mutableStateOf(entryStep)
     val entryStep = entryStep.coerceIn(STEP_CONTENTS, STEP_REVIEW)
     var showSearch by mutableStateOf(false)
-    var showDetails by mutableStateOf(false)
     var appsTab by mutableStateOf(true)
 
     val apps = mutableStateListOf<AppEntry>()
@@ -139,8 +144,12 @@ class CreateFlowState(
 
     var name by mutableStateOf("")
 
+    // frictionType always holds a valid method for the draft; methodChosen says
+    // whether the user has picked one (09 v3). A new block starts with neither
+    // card selected and cannot leave step 3 until one is; an edit opens with
+    // the stored method chosen once its prefill lands.
     var frictionType by mutableStateOf(FrictionType.TYPING)
-    var pauseMinutes by mutableStateOf(PAUSE_MINUTES_DEFAULT)
+    var methodChosen by mutableStateOf(false)
     var typingPauseChars by mutableStateOf(PAUSE_CHARS_DEFAULT)
     var waitPauseSeconds by mutableStateOf(PAUSE_WAIT_SECONDS_DEFAULT)
     var typingTurnoffChars by mutableStateOf(DISABLE_CHARS_DEFAULT)
@@ -161,7 +170,6 @@ class CreateFlowState(
         appPackageNames = apps.map { it.packageName },
         siteDomains = sites.toList(),
         frictionType = frictionType,
-        pauseMinutes = pauseMinutes,
         pauseChars = typingPauseChars,
         turnoffChars = typingTurnoffChars,
         countdownSeconds = waitPauseSeconds,
@@ -169,10 +177,6 @@ class CreateFlowState(
     )
 
     // — step 3 adjustments; deltas arrive in the approved step sizes —
-    fun adjustPauseMinutes(delta: Int) {
-        pauseMinutes = (pauseMinutes + delta).coerceIn(PAUSE_MINUTES_MIN, PAUSE_MINUTES_MAX)
-    }
-
     fun adjustTypingPause(delta: Int) {
         typingPauseChars = (typingPauseChars + delta).coerceIn(PAUSE_CHARS_MIN, PAUSE_CHARS_MAX)
     }
@@ -181,15 +185,34 @@ class CreateFlowState(
         waitPauseSeconds = (waitPauseSeconds + delta).coerceIn(PAUSE_WAIT_SECONDS_MIN, PAUSE_WAIT_SECONDS_MAX)
     }
 
-    // The sheet's Reset restores only the displayed method's own field and
-    // the shared pause duration; per-method drafts and the step-4 disable
-    // choices are untouched (PRD §17, 19 September).
-    fun resetDetails() {
-        when (frictionType) {
-            FrictionType.TYPING -> typingPauseChars = PAUSE_CHARS_DEFAULT
-            FrictionType.DELAY -> waitPauseSeconds = PAUSE_WAIT_SECONDS_DEFAULT
-        }
-        pauseMinutes = PAUSE_MINUTES_DEFAULT
+    // Tapping a card selects it and opens its stepper (09 v3). Each method
+    // keeps its own draft value, so switching never resets either.
+    fun chooseMethod(type: FrictionType) {
+        frictionType = type
+        methodChosen = true
+    }
+
+    // Step 3's Next: a method must be picked, and the targets from step 1 must
+    // still be there (PRD §17 R8).
+    val methodStepComplete: Boolean
+        get() = methodChosen && (apps.isNotEmpty() || sites.isNotEmpty())
+
+    /**
+     * Edit prefill (11 October unlock-minutes addendum): a stored block from
+     * older ranges is clamped into the current ones and onto their step grid,
+     * so the edited draft always saves. Both methods' values are clamped
+     * because the saved row keeps both.
+     */
+    fun prefillPause(storedChars: Int, storedWaitSeconds: Int) {
+        typingPauseChars = clampToStep(storedChars, PAUSE_CHARS_MIN, PAUSE_CHARS_MAX, PAUSE_CHARS_STEP)
+        waitPauseSeconds = clampToStep(
+            storedWaitSeconds, PAUSE_WAIT_SECONDS_MIN, PAUSE_WAIT_SECONDS_MAX, PAUSE_WAIT_SECONDS_STEP,
+        )
+    }
+
+    private fun clampToStep(value: Int, min: Int, max: Int, step: Int): Int {
+        val inRange = value.coerceIn(min, max)
+        return min + (inRange - min) / step * step
     }
 
     // — step 4: fixed ladder choices for the inherited method —
@@ -223,11 +246,10 @@ val CreateFlowStateSaver: Saver<CreateFlowState, ArrayList<Any>> = Saver(
             s.step,
             s.entryStep,
             s.showSearch,
-            s.showDetails,
             s.appsTab,
             s.name,
             s.frictionType.name,
-            s.pauseMinutes,
+            s.methodChosen,
             s.typingPauseChars,
             s.waitPauseSeconds,
             s.typingTurnoffChars,
@@ -244,26 +266,25 @@ val CreateFlowStateSaver: Saver<CreateFlowState, ArrayList<Any>> = Saver(
             val state = CreateFlowState(
                 editBlockId = (saved[0] as Long).takeIf { it != -1L },
                 entryStep = saved[2] as Int,
-                flowId = saved[17] as String,
+                flowId = saved[16] as String,
             )
             state.step = (saved[1] as Int).coerceIn(STEP_CONTENTS, STEP_REVIEW)
             state.showSearch = saved[3] as Boolean
-            state.showDetails = saved[4] as Boolean
-            state.appsTab = saved[5] as Boolean
-            state.name = saved[6] as String
-            state.frictionType = FrictionType.valueOf(saved[7] as String)
-            state.pauseMinutes = saved[8] as Int
-            state.typingPauseChars = saved[9] as Int
-            state.waitPauseSeconds = saved[10] as Int
-            state.typingTurnoffChars = saved[11] as Int
-            state.waitTurnoffSeconds = saved[12] as Int
-            state.prefilled = saved[13] as Boolean
-            state.saveRejected = saved[14] as Boolean
-            (saved[15] as ArrayList<*>).forEach {
+            state.appsTab = saved[4] as Boolean
+            state.name = saved[5] as String
+            state.frictionType = FrictionType.valueOf(saved[6] as String)
+            state.methodChosen = saved[7] as Boolean
+            state.typingPauseChars = saved[8] as Int
+            state.waitPauseSeconds = saved[9] as Int
+            state.typingTurnoffChars = saved[10] as Int
+            state.waitTurnoffSeconds = saved[11] as Int
+            state.prefilled = saved[12] as Boolean
+            state.saveRejected = saved[13] as Boolean
+            (saved[14] as ArrayList<*>).forEach {
                 val (pkg, label) = (it as String).split("\u0000", limit = 2)
                 state.apps.add(AppEntry(pkg, label, null))
             }
-            (saved[16] as ArrayList<*>).forEach { state.sites.add(it as String) }
+            (saved[15] as ArrayList<*>).forEach { state.sites.add(it as String) }
             state
         }.getOrNull()
     },
@@ -435,7 +456,6 @@ fun CreateFlowScreen(
                                 "app_count" to draft.appPackageNames.size,
                                 "site_count" to draft.siteDomains.size,
                                 "friction_type" to draft.frictionType.name.lowercase(),
-                                "pause_minutes" to draft.pauseMinutes,
                                 "pause_chars" to draft.pauseChars,
                                 "turnoff_chars" to draft.turnoffChars,
                                 "countdown_seconds" to draft.countdownSeconds,
@@ -490,11 +510,10 @@ fun CreateFlowScreen(
         if (editBlockId != null && !state.prefilled) {
             blockRepo.getBlockWithContents(editBlockId)?.let { stored ->
                 state.name = stored.block.name
-                state.frictionType = stored.block.frictionType
-                state.pauseMinutes = stored.block.pauseMinutes
-                state.typingPauseChars = stored.block.pauseChars
+                // The stored method opens chosen (09 v3).
+                state.chooseMethod(stored.block.frictionType)
+                state.prefillPause(stored.block.pauseChars, stored.block.countdownSeconds)
                 state.typingTurnoffChars = stored.block.turnoffChars
-                state.waitPauseSeconds = stored.block.countdownSeconds
                 state.waitTurnoffSeconds = stored.block.turnoffSeconds
                 state.apps.addAll(
                     stored.apps.map { AppEntry(it.packageName, appsRepo.labelFor(it.packageName), null) },
@@ -523,14 +542,11 @@ fun CreateFlowScreen(
     }
 
     // Android Back mirrors the appbar: app-search closes first, then the
-    // details sheet (a sheet Back dismisses the sheet before any wizard
-    // navigation), then the flow steps backwards down to the entry step, and
-    // a Back there exits — routed through the abandonment logger exactly once
-    // (create mode; edits close silently). Direct method entry unwinds only
-    // to step 3 before exiting. With the keyboard open the system consumes
-    // Back to dismiss it, so this handler runs only once the keyboard is
-    // down. The open sheet's own back handling wins over this handler while
-    // it is visible; this branch is the fallback.
+    // flow steps backwards down to the entry step, and a Back there exits —
+    // routed through the abandonment logger exactly once (create mode; edits
+    // close silently). Direct method entry unwinds only to step 3 before
+    // exiting. With the keyboard open the system consumes Back to dismiss it,
+    // so this handler runs only once the keyboard is down.
     fun stepBack(): Boolean {
         if (session.terminalInFlight) return true
         if (state.step > state.entryStep) {
@@ -543,7 +559,6 @@ fun CreateFlowScreen(
     BackHandler {
         when {
             state.showSearch -> state.showSearch = false
-            state.showDetails -> state.showDetails = false
             !stepBack() -> abandonAndClose()
         }
     }
@@ -618,7 +633,6 @@ private suspend fun changedFields(
         if (current.apps.map { it.packageName }.toSet() != draft.appPackageNames.toSet()) add("apps")
         if (current.sites.map { it.domain }.toSet() != draft.siteDomains.map { it.lowercase() }.toSet()) add("sites")
         if (current.block.frictionType != draft.frictionType) add("friction_type")
-        if (current.block.pauseMinutes != draft.pauseMinutes) add("pause_minutes")
         if (current.block.pauseChars != draft.pauseChars) add("pause_chars")
         if (current.block.turnoffChars != draft.turnoffChars) add("turnoff_chars")
         if (current.block.countdownSeconds != draft.countdownSeconds) add("countdown_seconds")
@@ -1060,11 +1074,14 @@ private fun StepName(state: CreateFlowState, onBack: () -> Unit, onNext: () -> U
 
 // — Step 3: method —
 
-// Two tappable method cards with live plain-words summaries; selecting a
-// card changes nothing else on the screen (PRD §17, 19 September). The
-// details live in an optional sheet, not a sixth step.
+// 09 v3 (11 October unlock-minutes addendum). Two cards; tapping one selects
+// it and unfolds its single stepper, tapping the other folds that one away
+// and opens this one, so only one is ever open. A new block starts with
+// neither selected and Next stays dimmed until one is. How long each pause
+// lasts is chosen later, on the block screen.
 @Composable
 private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () -> Unit) {
+    val colors = NocturneTheme.colors
     Column(Modifier.fillMaxSize()) {
         NocturneAppbar(
             title = if (state.editBlockId == null) "New block" else "Edit block",
@@ -1074,21 +1091,14 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
         ProgressDots(total = 5, current = STEP_METHOD)
         Spacer(Modifier.height(16.dp))
         Text(
-            "What should getting in cost?",
+            "How do you want to pause the block?",
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             lineHeight = 23.sp,
             letterSpacing = (-0.2).sp,
-            color = NocturneTheme.colors.text,
+            color = colors.text,
         )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            "Pick whichever you'll actually respect.",
-            fontSize = 11.sp,
-            lineHeight = 17.sp,
-            color = NocturneTheme.colors.neutral.step500,
-        )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         Column(
             Modifier
@@ -1096,35 +1106,59 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
                 .verticalScroll(rememberScrollState()),
         ) {
             MethodCard(
-                selected = state.frictionType == FrictionType.TYPING,
+                selected = state.methodChosen && state.frictionType == FrictionType.TYPING,
                 glyph = Ph.Keyboard,
                 title = "Type a passage",
-                summary = "${state.typingPauseChars} characters. Random words. " +
-                    "Then ${state.pauseMinutes} minutes before the block comes back.",
-                onClick = { state.frictionType = FrictionType.TYPING },
-            )
-            Spacer(Modifier.height(10.dp))
+                onClick = { state.chooseMethod(FrictionType.TYPING) },
+            ) {
+                Text("Passage length", fontSize = 12.sp, color = colors.neutral.step400)
+                Spacer(Modifier.height(8.dp))
+                NocturneStepper(
+                    value = "${state.typingPauseChars} characters",
+                    onDecrement = { state.adjustTypingPause(-PAUSE_CHARS_STEP) },
+                    onIncrement = { state.adjustTypingPause(PAUSE_CHARS_STEP) },
+                    canDecrement = state.typingPauseChars > PAUSE_CHARS_MIN,
+                    canIncrement = state.typingPauseChars < PAUSE_CHARS_MAX,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text("Random words.", fontSize = 11.5.sp, color = colors.neutral.step500)
+            }
+            Spacer(Modifier.height(12.dp))
             MethodCard(
-                selected = state.frictionType == FrictionType.DELAY,
+                selected = state.methodChosen && state.frictionType == FrictionType.DELAY,
                 glyph = Ph.Hourglass,
                 title = "Wait it out",
-                summary = "A ${formatCountdown(state.waitPauseSeconds)} wait to pause the block. " +
-                    "Then ${state.pauseMinutes} minutes before the block comes back.",
-                onClick = { state.frictionType = FrictionType.DELAY },
-            )
-            Spacer(Modifier.height(14.dp))
-            // Outlined secondary button in normal layout space under the
-            // cards — not a floating overlay (PRD §17, 19 September).
-            NocturneButton(
-                "Adjust the details",
-                variant = ButtonVariant.SECONDARY,
-                block = true,
-                height = 44.dp,
-                leading = {
-                    PhosphorIcon(Ph.SlidersHorizontal, tint = NocturneTheme.colors.text, size = 16)
-                },
-                onClick = { state.showDetails = true },
-            )
+                onClick = { state.chooseMethod(FrictionType.DELAY) },
+            ) {
+                Text("Wait before you're in", fontSize = 12.sp, color = colors.neutral.step400)
+                Spacer(Modifier.height(8.dp))
+                NocturneStepper(
+                    value = formatCountdown(state.waitPauseSeconds),
+                    onDecrement = { state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP) },
+                    onIncrement = { state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP) },
+                    canDecrement = state.waitPauseSeconds > PAUSE_WAIT_SECONDS_MIN,
+                    canIncrement = state.waitPauseSeconds < PAUSE_WAIT_SECONDS_MAX,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text("A countdown you can't skip.", fontSize = 11.5.sp, color = colors.neutral.step500)
+            }
+            Row(
+                Modifier.padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PhosphorIcon(
+                    Ph.ClockCountdown,
+                    tint = colors.neutral.step400,
+                    size = 14,
+                    modifier = Modifier.padding(top = 1.dp),
+                )
+                Text(
+                    "You'll pick how long each pause lasts when you unlock.",
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = colors.neutral.step500,
+                )
+            }
         }
 
         Spacer(Modifier.height(12.dp))
@@ -1132,178 +1166,138 @@ private fun StepFriction(state: CreateFlowState, onBack: () -> Unit, onNext: () 
             "Next",
             block = true,
             height = 46.dp,
-            enabled = state.apps.isNotEmpty() || state.sites.isNotEmpty(),
+            enabled = state.methodStepComplete,
             onClick = onNext,
         )
     }
-
-    if (state.showDetails) {
-        DetailsSheet(state)
-    }
 }
 
+// Card motion, 09 v3: the height eases open over 0.38 s; the controls fade in
+// over 0.25 s and slide down 12 dp over 0.38 s with a slight overshoot, both
+// after 80 ms; colours change over 0.2 s. CSS `ease` is cubic-bezier(.25,.1,.25,1).
+private val MethodCardHeightEasing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
+private val MethodCardFadeEasing = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
+private val MethodCardSlideEasing = CubicBezierEasing(0.2f, 0.9f, 0.25f, 1.15f)
+private const val METHOD_CARD_HEIGHT_MS = 380
+private const val METHOD_CARD_FADE_MS = 250
+private const val METHOD_CARD_SLIDE_MS = 380
+private const val METHOD_CARD_REVEAL_DELAY_MS = 80
+private const val METHOD_CARD_COLOR_MS = 200
+private val METHOD_CARD_SLIDE_FROM = 12.dp
+
+// One method card: a tappable header (icon, title, tick circle) and, only on
+// the selected card, its single control unfolding beneath. The tick circle is
+// the owner's 19 September mark: filled and checked when selected, an empty
+// ring otherwise. The unfolded area is outside the header's tap target, so the
+// stepper buttons inside it stay independent.
 @Composable
 private fun MethodCard(
     selected: Boolean,
     glyph: Int,
     title: String,
-    summary: String,
     onClick: () -> Unit,
+    controls: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = NocturneTheme.colors
-    Row(
+    val shape = RoundedCornerShape(14.dp)
+    val colorSpec = tween<Color>(METHOD_CARD_COLOR_MS)
+    val background by animateColorAsState(
+        targetValue = if (selected) colors.accentRamp.step900 else colors.surface,
+        animationSpec = colorSpec,
+        label = "methodCardBackground",
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) colors.accent else colors.divider,
+        animationSpec = colorSpec,
+        label = "methodCardBorder",
+    )
+    val iconTint by animateColorAsState(
+        targetValue = if (selected) colors.accentRamp.step200 else colors.neutral.step400,
+        animationSpec = colorSpec,
+        label = "methodCardIcon",
+    )
+    val borderWidth by animateDpAsState(
+        targetValue = if (selected) 1.5.dp else 1.dp,
+        animationSpec = tween(METHOD_CARD_COLOR_MS),
+        label = "methodCardBorderWidth",
+    )
+    val controlsFade by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(
+            METHOD_CARD_FADE_MS,
+            delayMillis = METHOD_CARD_REVEAL_DELAY_MS,
+            easing = MethodCardFadeEasing,
+        ),
+        label = "methodCardControlsFade",
+    )
+    // 0 → 1 is -12 dp → 0; the easing overshoots 1 and settles back.
+    val controlsSlide by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(
+            METHOD_CARD_SLIDE_MS,
+            delayMillis = METHOD_CARD_REVEAL_DELAY_MS,
+            easing = MethodCardSlideEasing,
+        ),
+        label = "methodCardControlsSlide",
+    )
+    // Starting from the current state means a card that is already open (an
+    // edit, or a recreated screen) shows open at once instead of replaying.
+    val visibleState = remember { MutableTransitionState(selected) }.apply { targetState = selected }
+
+    Column(
         Modifier
             .fillMaxWidth()
-            .background(if (selected) colors.accentRamp.step900 else colors.surface, RoundedCornerShape(12.dp))
-            .border(1.dp, if (selected) colors.accent else colors.divider, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.Top,
+            .background(background, shape)
+            .border(borderWidth, borderColor, shape),
     ) {
-        PhosphorIcon(
-            glyph,
-            tint = if (selected) colors.accentRamp.step300 else colors.neutral.step400,
-            size = 18,
-            modifier = Modifier.padding(top = 1.dp),
-        )
-        Spacer(Modifier.width(11.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                fontSize = 14.5.sp,
-                fontWeight = FontWeight.Medium,
-                color = colors.text,
-            )
-            Spacer(Modifier.height(3.dp))
-            Text(
-                summary,
-                fontSize = 12.5.sp,
-                lineHeight = 18.sp,
-                color = colors.neutral.step500,
-            )
-        }
-        // Owner correction, 19 September: both cards carry the tick circle —
-        // filled and checked on the selected card, empty ring on the other.
-        Spacer(Modifier.width(10.dp))
-        if (selected) {
-            Box(
-                Modifier
-                    .size(20.dp)
-                    .background(colors.accent, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                PhosphorIcon(Ph.Check, tint = colors.bg, size = 11)
-            }
-        } else {
-            Box(
-                Modifier
-                    .size(20.dp)
-                    .border(1.dp, colors.neutral.step500, CircleShape),
-            )
-        }
-    }
-}
-
-// The details sheet (PRD §17, 19 September): only the selected method's own
-// field plus the shared pause duration. Adjustments update the draft and the
-// card summaries immediately; no save happens here. Done, Back, swipe and
-// outside dismissal all just close the sheet — the draft keeps the changes.
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun DetailsSheet(state: CreateFlowState) {
-    val colors = NocturneTheme.colors
-    ModalBottomSheet(
-        onDismissRequest = { state.showDetails = false },
-        // DC-06: the reference sheet is the darker Nocturne background, not
-        // the lighter card surface. Keeping elevation at zero prevents M3
-        // from compositing a lavender surface tint over that exact token.
-        containerColor = colors.bg,
-        scrimColor = MaterialTheme.colorScheme.scrim,
-        tonalElevation = 0.dp,
-    ) {
-        Column(
+        Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.height(14.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "The details",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.text,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    "Reset",
-                    fontSize = 13.sp,
-                    color = colors.accentRamp.step300,
-                    modifier = Modifier.clickable { state.resetDetails() },
+            PhosphorIcon(glyph, tint = iconTint, size = 20)
+            Spacer(Modifier.width(10.dp))
+            Text(
+                title,
+                fontSize = 15.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.text,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(10.dp))
+            if (selected) {
+                Box(
+                    Modifier
+                        .size(20.dp)
+                        .background(colors.accent, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PhosphorIcon(Ph.Check, tint = colors.bg, size = 11)
+                }
+            } else {
+                Box(
+                    Modifier
+                        .size(20.dp)
+                        .border(1.dp, colors.neutral.step500, CircleShape),
                 )
             }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                when (state.frictionType) {
-                    FrictionType.TYPING -> "Typing a passage to get in."
-                    FrictionType.DELAY -> "Waiting it out to get in."
-                },
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
-                color = colors.neutral.step500,
-            )
-            Spacer(Modifier.height(16.dp))
-
-            when (state.frictionType) {
-                FrictionType.TYPING -> {
-                    Text("Passage length", fontSize = 12.sp, color = colors.neutral.step400)
-                    Spacer(Modifier.height(8.dp))
-                    NocturneStepper(
-                        value = "${state.typingPauseChars} characters",
-                        onDecrement = { state.adjustTypingPause(-PAUSE_CHARS_STEP) },
-                        onIncrement = { state.adjustTypingPause(PAUSE_CHARS_STEP) },
-                        canDecrement = state.typingPauseChars > PAUSE_CHARS_MIN,
-                        canIncrement = state.typingPauseChars < PAUSE_CHARS_MAX,
-                    )
-                }
-                FrictionType.DELAY -> {
-                    Text("Wait before you're in", fontSize = 12.sp, color = colors.neutral.step400)
-                    Spacer(Modifier.height(8.dp))
-                    NocturneStepper(
-                        value = formatCountdown(state.waitPauseSeconds),
-                        onDecrement = { state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP) },
-                        onIncrement = { state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP) },
-                        canDecrement = state.waitPauseSeconds > PAUSE_WAIT_SECONDS_MIN,
-                        canIncrement = state.waitPauseSeconds < PAUSE_WAIT_SECONDS_MAX,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            Text("Block stays off for", fontSize = 12.sp, color = colors.neutral.step400)
-            Spacer(Modifier.height(8.dp))
-            NocturneStepper(
-                value = "${state.pauseMinutes} min",
-                onDecrement = { state.adjustPauseMinutes(-PAUSE_MINUTES_STEP) },
-                onIncrement = { state.adjustPauseMinutes(PAUSE_MINUTES_STEP) },
-                canDecrement = state.pauseMinutes > PAUSE_MINUTES_MIN,
-                canIncrement = state.pauseMinutes < PAUSE_MINUTES_MAX,
-            )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                // Written spec prevails over the mock's stale 10-minute note.
-                "Then it comes back on its own. Minimum 5 minutes.",
-                fontSize = 10.5.sp,
-                color = colors.neutral.step600,
-            )
-
-            Spacer(Modifier.height(18.dp))
-            NocturneButton(
-                "Done",
-                block = true,
-                height = 46.dp,
-                onClick = { state.showDetails = false },
+        }
+        AnimatedVisibility(
+            visibleState = visibleState,
+            enter = expandVertically(tween(METHOD_CARD_HEIGHT_MS, easing = MethodCardHeightEasing)),
+            exit = shrinkVertically(tween(METHOD_CARD_HEIGHT_MS, easing = MethodCardHeightEasing)),
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .graphicsLayer {
+                        alpha = controlsFade.coerceIn(0f, 1f)
+                        translationY = (controlsSlide - 1f) * METHOD_CARD_SLIDE_FROM.toPx()
+                    },
+                content = controls,
             )
         }
     }
@@ -1488,7 +1482,7 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
                     tint = NocturneTheme.colors.accentRamp.step300,
                     title = "To pause it",
                     subtitle = if (typing) {
-                        "Type ${state.typingPauseChars} characters · ~${typingEstimateSeconds(state.typingPauseChars)} sec"
+                        "Type ${state.typingPauseChars} characters"
                     } else {
                         "Wait ${formatCountdown(state.waitPauseSeconds)}"
                     },
@@ -1498,17 +1492,11 @@ private fun StepReview(state: CreateFlowState, onBack: () -> Unit, onSave: () ->
                     tint = NocturneTheme.colors.neutral.step400,
                     title = "To turn this block off",
                     subtitle = if (typing) {
-                        "Type ${state.typingTurnoffChars} characters · ~${typingEstimateSeconds(state.typingTurnoffChars)} sec"
+                        "Type ${state.typingTurnoffChars} characters"
                     } else {
                         "Wait ${formatCountdown(state.waitTurnoffSeconds)}"
                     },
                     background = NocturneTheme.colors.neutral.step900,
-                )
-                CostRow(
-                    glyph = Ph.ClockCountdown,
-                    tint = NocturneTheme.colors.accentRamp.step300,
-                    title = "Each pause lasts",
-                    subtitle = "${state.pauseMinutes} minutes, then re-arms",
                 )
             }
             Spacer(Modifier.height(16.dp))

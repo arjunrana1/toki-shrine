@@ -58,13 +58,11 @@ class BlockRepositoryTest {
         turnoffSeconds: Int = 360,
         turnoffChars: Int = 350,
         pauseChars: Int = 120,
-        pauseMinutes: Int = 25,
     ) = BlockDraft(
         name = name,
         appPackageNames = apps,
         siteDomains = sites,
         frictionType = frictionType,
-        pauseMinutes = pauseMinutes,
         pauseChars = pauseChars,
         turnoffChars = turnoffChars,
         countdownSeconds = countdownSeconds,
@@ -89,7 +87,6 @@ class BlockRepositoryTest {
         read!!
         assertEquals("Social", read.block.name)
         assertEquals(FrictionType.DELAY, read.block.frictionType)
-        assertEquals(25, read.block.pauseMinutes)
         assertEquals(120, read.block.pauseChars)
         assertEquals(350, read.block.turnoffChars)
         assertEquals(90, read.block.countdownSeconds)
@@ -207,7 +204,6 @@ class BlockRepositoryTest {
                 appPackageNames = listOf("com.reddit.frontpage"),
                 siteDomains = listOf("news.siteexample.com"),
                 frictionType = FrictionType.DELAY,
-                pauseMinutes = 30,
                 pauseChars = 120,
                 turnoffChars = 350,
                 countdownSeconds = 90,
@@ -218,7 +214,6 @@ class BlockRepositoryTest {
         val updated = repo.getBlockWithContents(social)!!
         assertEquals("Social renamed", updated.block.name)
         assertEquals(FrictionType.DELAY, updated.block.frictionType)
-        assertEquals(30, updated.block.pauseMinutes)
         assertEquals(720, updated.block.turnoffSeconds)
         assertEquals(false, updated.block.enabled)
         assertEquals(listOf("com.reddit.frontpage"), updated.apps.map { it.packageName })
@@ -244,8 +239,7 @@ class BlockRepositoryTest {
                         appPackageNames = listOf("com.apple.news"),
                         siteDomains = emptyList(),
                         frictionType = FrictionType.TYPING,
-                        pauseMinutes = 60,
-                        pauseChars = 200,
+                        pauseChars = 150,
                         turnoffChars = 350,
                         countdownSeconds = 90,
                         turnoffSeconds = 360,
@@ -308,8 +302,7 @@ class BlockRepositoryTest {
                         // The edited block's own site plus one held by News.
                         siteDomains = listOf("reddit.com", "news.siteexample.com"),
                         frictionType = FrictionType.DELAY,
-                        pauseMinutes = 60,
-                        pauseChars = 200,
+                        pauseChars = 150,
                         turnoffChars = 350,
                         countdownSeconds = 90,
                         turnoffSeconds = 360,
@@ -382,7 +375,7 @@ class BlockRepositoryTest {
         val on = repo.getBlockWithContents(id)!!
         assertEquals(true, on.block.enabled)
         assertEquals("Social", on.block.name)
-        assertEquals(25, on.block.pauseMinutes)
+        assertEquals(120, on.block.pauseChars)
     }
 
     @Test
@@ -444,12 +437,12 @@ class BlockRepositoryTest {
         assertEquals(listOf("reddit.com"), unchanged.sites.map { it.domain })
     }
 
-    // Wizard redesign (19 September): the old 1..1200-second allowance is
-    // superseded. Debug owner testing temporarily lowers the pause-wait floor
-    // to 20 seconds; out-of-range writes persist nothing.
+    // Unlock-minutes addendum (11 October, UM-3) supersedes the 60..300 / 5
+    // range (and the older 1..1200 allowance): 20..240 s in steps of 10 in
+    // every build. Out-of-range or off-step writes persist nothing.
     @Test
     fun createBlockRejectsPauseWaitOutsideApprovedRange() = runBlocking {
-        listOf(15, 305).forEach { seconds ->
+        listOf(10, 250, 65).forEach { seconds ->
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad wait", apps = listOf("com.instagram.android"), countdownSeconds = seconds))
@@ -466,31 +459,35 @@ class BlockRepositoryTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
-                repo.updateBlock(social, draft("Social", apps = listOf("com.instagram.android"), countdownSeconds = 310))
+                repo.updateBlock(social, draft("Social", apps = listOf("com.instagram.android"), countdownSeconds = 250))
             }
         }
 
         assertEquals(90, repo.getBlockWithContents(social)!!.block.countdownSeconds)
     }
 
-    // Pause minutes: 5..100 in steps of 5.
+    // Supersedes the 5..100-minute pause-length range test (UM-3): a block
+    // stores no pause length, so the new ranges' edges must save and
+    // read back, both methods' columns at once.
     @Test
-    fun createBlockRejectsPauseMinutesOutsideApprovedRange() = runBlocking {
-        listOf(0, 105).forEach { minutes ->
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking {
-                    repo.createBlock(draft("Bad pause", apps = listOf("com.instagram.android"), pauseMinutes = minutes))
-                }
-            }
+    fun pauseRangeEdgesSaveAndReadBack() = runBlocking {
+        listOf(20 to 20, 150 to 240).forEach { (chars, seconds) ->
+            val id = repo.createBlock(
+                draft("Edge $chars", apps = listOf("com.instagram.android"), pauseChars = chars, countdownSeconds = seconds),
+            )
+            val read = repo.getBlockWithContents(id)!!.block
+            assertEquals(chars, read.pauseChars)
+            assertEquals(seconds, read.countdownSeconds)
+            repo.deleteBlock(id)
         }
-
         assertTrue(repo.getBlocksWithContents().isEmpty())
     }
 
-    // Debug owner testing temporarily lowers typing to 20..200 chars step 10.
+    // Supersedes the 100..200 (debug 20..200) range: 20..150 in steps of 10
+    // in every build (UM-3).
     @Test
     fun createBlockRejectsPassageLengthOutsideApprovedRange() = runBlocking {
-        listOf(10, 205, 155).forEach { chars ->
+        listOf(10, 160, 125).forEach { chars ->
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad passage", apps = listOf("com.instagram.android"), pauseChars = chars))

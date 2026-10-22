@@ -40,8 +40,6 @@ import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.BlockHaptics
 import com.arjunrana.tokishrine.ui.util.TerminalAction
 import com.arjunrana.tokishrine.ui.util.formatCountdown
-import com.arjunrana.tokishrine.ui.util.formatEstimate
-import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 
 // The commitment moment (screen 13). States both costs in plain language
 // under a Block Summary heading (PRD §17 R12). Activation is gated on
@@ -143,14 +141,6 @@ fun TurnOnScreen(
                         lineHeight = 20.sp,
                         color = NocturneTheme.colors.text,
                     )
-                    if (loaded.block.frictionType == FrictionType.TYPING) {
-                        Text(
-                            "${formatEstimate(typingEstimateSeconds(loaded.block.pauseChars))}, every time.",
-                            fontSize = 12.5.sp,
-                            lineHeight = 18.sp,
-                            color = NocturneTheme.colors.neutral.step500,
-                        )
-                    }
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -169,12 +159,6 @@ fun TurnOnScreen(
                             fontSize = 14.5.sp,
                             lineHeight = 20.sp,
                             color = NocturneTheme.colors.text,
-                        )
-                        Text(
-                            "${formatEstimate(typingEstimateSeconds(loaded.block.turnoffChars))}.",
-                            fontSize = 12.5.sp,
-                            lineHeight = 18.sp,
-                            color = NocturneTheme.colors.neutral.step500,
                         )
                     } else {
                         Text(

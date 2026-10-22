@@ -243,10 +243,11 @@ class EventRepositoryTest {
         }
     }
 
-    // Phase 7 migration posture: with fallbackToDestructiveMigration removed,
+    // Phase 7 migration posture: there is no global destructive fallback, so
     // reopening an existing database file must carry every prior row —
-    // active and retired — into the new process untouched. This is the
-    // non-destructive open the shipped TokiApplication now performs.
+    // active and retired — into the new process untouched. Since UM-1 this
+    // uses the shipped builder (TokiDatabase.build), whose reset is scoped
+    // to upgrades from v3–v5 and never touches a same-version reopen.
     @Test
     fun existingRowsSurviveReopenWithoutDestructiveFallback() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -254,7 +255,7 @@ class EventRepositoryTest {
         context.getDatabasePath(dbName).parentFile?.mkdirs()
         context.getDatabasePath(dbName).delete()
 
-        val first = Room.databaseBuilder(context, TokiDatabase::class.java, dbName).build()
+        val first = TokiDatabase.build(context, dbName)
         first.eventDao().insert(
             Event(
                 name = EventRepository.EVENT_WALK_AWAY,
@@ -267,7 +268,7 @@ class EventRepositoryTest {
         first.appMetaDao().putIfAbsent(AppMeta(AppMeta.KEY_FIRST_LAUNCH_AT, (now - 86_400_000L).toString()))
         first.close()
 
-        val second = Room.databaseBuilder(context, TokiDatabase::class.java, dbName).build()
+        val second = TokiDatabase.build(context, dbName)
         val reopened = EventRepository(second, clock = { now })
         val stats = reopened.getStats(now, ZoneId.systemDefault())
 

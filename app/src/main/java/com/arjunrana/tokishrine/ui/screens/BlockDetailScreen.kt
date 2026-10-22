@@ -53,7 +53,6 @@ import com.arjunrana.tokishrine.ui.icons.Ph
 import com.arjunrana.tokishrine.ui.icons.PhosphorIcon
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.formatCountdown
-import com.arjunrana.tokishrine.ui.util.typingEstimateSeconds
 import kotlinx.coroutines.launch
 
 // Block detail & edit (screen 14). Editing is reachable only while the block
@@ -256,7 +255,7 @@ fun BlockDetailScreen(
                     FrictionLine(
                         label = "To pause",
                         value = if (loaded.block.frictionType == FrictionType.TYPING) {
-                            "Type ${loaded.block.pauseChars} · ~${typingEstimateSeconds(loaded.block.pauseChars)}s"
+                            "Type ${loaded.block.pauseChars}"
                         } else {
                             "Wait ${formatCountdown(loaded.block.countdownSeconds)}"
                         },
@@ -267,14 +266,10 @@ fun BlockDetailScreen(
                     FrictionLine(
                         label = "To turn off",
                         value = if (loaded.block.frictionType == FrictionType.TYPING) {
-                            "Type ${loaded.block.turnoffChars} · ~${typingEstimateSeconds(loaded.block.turnoffChars)}s"
+                            "Type ${loaded.block.turnoffChars}"
                         } else {
                             "Wait ${formatCountdown(loaded.block.turnoffSeconds)}"
                         },
-                    )
-                    FrictionLine(
-                        label = "Pause lasts",
-                        value = "${loaded.block.pauseMinutes} minutes",
                     )
                 }
             }

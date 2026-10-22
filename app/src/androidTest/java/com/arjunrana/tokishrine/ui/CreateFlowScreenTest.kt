@@ -15,6 +15,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_CHARS_DEFAULT
+import com.arjunrana.tokishrine.config.AppConfig.PAUSE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.apps.AppEntry
 import com.arjunrana.tokishrine.data.apps.InstalledAppsRepository
 import com.arjunrana.tokishrine.data.db.BlockDao
@@ -29,8 +31,6 @@ import com.arjunrana.tokishrine.data.repo.BlockRepository
 import com.arjunrana.tokishrine.data.repo.DISABLE_CHARS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.DISABLE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.data.repo.EventRepository
-import com.arjunrana.tokishrine.data.repo.PAUSE_CHARS_DEFAULT
-import com.arjunrana.tokishrine.data.repo.PAUSE_WAIT_SECONDS_DEFAULT
 import com.arjunrana.tokishrine.ui.screens.CreateFlowScreen
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import com.arjunrana.tokishrine.ui.util.formatCountdown
@@ -53,8 +53,9 @@ import org.junit.runner.RunWith
 // Regressions for the Phase 2 code-review blockers: the terminal transition
 // (save/abandon) must happen exactly once, and no target may be selected or
 // saved before ownership is known — a rejected save keeps the draft. Also
-// the wizard redesign (19 September): five steps, the details sheet inside
-// step 3, per-method drafts and the fixed disable ladders. Drives the real
+// the wizard redesign (19 September): five steps, inline method cards on
+// step 3 (09 v3, 11 October: no details sheet), per-method drafts and the
+// fixed disable ladders. Drives the real
 // CreateFlowScreen against an in-memory Room database.
 @RunWith(AndroidJUnit4::class)
 class CreateFlowScreenTest {
@@ -64,6 +65,7 @@ class CreateFlowScreenTest {
         // glyph characters are the nodes' text content.
         private const val BACK_GLYPH = "\ue058"
         private const val REMOVE_GLYPH = "\ue4f6"
+        private const val PLUS_GLYPH = "\ue3d4"
 
         // Conflict shown/resolved telemetry is retired with the removed
         // conflict flow; no flow may ever write these again.
@@ -171,7 +173,6 @@ class CreateFlowScreenTest {
         appPackageNames = apps,
         siteDomains = sites,
         frictionType = FrictionType.TYPING,
-        pauseMinutes = 25,
         pauseChars = 120,
         turnoffChars = 350,
         countdownSeconds = 90,
@@ -233,6 +234,13 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Next").performClick()
     }
 
+    // Step 3 (09 v3): a new block starts with no card selected and Next
+    // dimmed, so a create walk picks a method before continuing. An edit opens
+    // with its stored method chosen and needs no pick.
+    private fun pickMethod(title: String = "Type a passage") {
+        compose.onNodeWithText(title).performClick()
+    }
+
     // System-back route through the activity's dispatcher — the same path a
     // hardware/gesture Back takes, including any callbacks registered by
     // composed surfaces such as the modal sheet.
@@ -290,9 +298,10 @@ class CreateFlowScreenTest {
     // finds the guard taken and does nothing. Exactly one block, exactly one
     // block_created, exactly one navigation — and no abandonment after it.
     // The five-step wizard logs steps 1..5; the created payload carries the
-    // variant's fresh-draft defaults (release: 150 chars / 60 s wait, middle
-    // ladder rungs 350 chars and 360 s; debug owner testing: 20 / 20 s and
-    // the 20 first rungs) and the 15 min pause.
+    // fresh-draft defaults (every build: 20 chars / 60 s wait; release middle
+    // ladder rungs 350 chars and 360 s, debug owner testing the 20 first
+    // rungs). Since the unlock-minutes addendum (UM-6) it carries no pause
+    // length: the exact key set is pinned.
     @Test
     fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
         eventRepo.gatedNames.add(EventRepository.EVENT_BLOCK_CREATED)
@@ -307,6 +316,7 @@ class CreateFlowScreenTest {
         next()
         typeBlockName("Evening lockout")
         next()
+        pickMethod()
         next()
         next()
         awaitText("5 / 5")
@@ -346,7 +356,13 @@ class CreateFlowScreenTest {
         assertEquals(1, params.getInt("app_count"))
         assertEquals(0, params.getInt("site_count"))
         assertEquals("typing", params.getString("friction_type"))
-        assertEquals(15, params.getInt("pause_minutes"))
+        assertEquals(
+            setOf(
+                "app_count", "site_count", "friction_type", "pause_chars",
+                "turnoff_chars", "countdown_seconds", "turnoff_seconds",
+            ),
+            params.keys().asSequence().toSet(),
+        )
         assertEquals(PAUSE_CHARS_DEFAULT, params.getInt("pause_chars"))
         assertEquals(DISABLE_CHARS_DEFAULT, params.getInt("turnoff_chars"))
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, params.getInt("countdown_seconds"))
@@ -377,6 +393,7 @@ class CreateFlowScreenTest {
         next()
         typeBlockName("Evening lockout")
         next()
+        pickMethod()
         next()
         next()
         awaitText("5 / 5")
@@ -644,11 +661,12 @@ class CreateFlowScreenTest {
         next() // step_completed(1)
         typeBlockName("Evening lockout")
         next() // step_completed(2)
+        pickMethod() // 09 v3: Next stays dimmed until a card is picked
         next() // step_completed(3)
         awaitText("Type a bit more") // disable step 4/5 with the typing ladder
         compose.onNodeWithText(BACK_GLYPH).performClick() // 4 → 3, nothing logged
         awaitText("Type a passage")
-        next() // step_completed(3) again
+        next() // step_completed(3) again: the pick was kept
         awaitText("Type a bit more")
         next() // step_completed(4)
         awaitText("5 / 5")
@@ -694,6 +712,7 @@ class CreateFlowScreenTest {
         eventRepo.gate.awaitEntered()
         typeBlockName("Evening lockout")
         next()
+        pickMethod()
         next()
         next()
         awaitText("5 / 5")
@@ -827,10 +846,13 @@ class CreateFlowScreenTest {
 
         awaitText("3 / 5")
         awaitText("Type a passage")
-        // Stored pauseChars (120, not the 150 default) proves the prefill
-        // landed in the card summary; the nonempty draft may proceed from
-        // the method step.
-        awaitText("120 characters. Random words. Then 25 minutes before the block comes back.")
+        // Stored pauseChars (120, not the 20 default) proves the prefill
+        // landed in the open card's stepper (09 v3: the stored method opens
+        // chosen, with no pick needed); the nonempty draft may proceed from
+        // the method step. The card names no pause length (UM-A).
+        awaitText("120 characters")
+        awaitText("Random words.")
+        compose.onNodeWithText("Wait before you're in").assertDoesNotExist() // other card folded
         compose.onNodeWithText("Next").assertIsEnabled()
 
         compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits, not step 2
@@ -849,7 +871,6 @@ class CreateFlowScreenTest {
                 Block(
                     name = "Legacy empty",
                     frictionType = FrictionType.TYPING,
-                    pauseMinutes = 25,
                     pauseChars = 120,
                     turnoffChars = 350,
                     countdownSeconds = 90,
@@ -871,14 +892,96 @@ class CreateFlowScreenTest {
         assertTrue(events().isEmpty())
     }
 
-    // — wizard redesign: sheet, disable step, per-method drafts —
+    // — wizard redesign: inline method cards, disable step, per-method drafts —
 
-    // The waiting path end to end: switching the method card, the details
-    // sheet showing only the waiting field plus pause, the inherited disable
-    // ladder with the middle rung preselected (Next alone is valid), and a
-    // round-trip of every per-method column through the save.
+    // 09 v3 (11 October unlock-minutes addendum): a new block's step 3 shows
+    // the new title and the pause-length hint, no subtitle, no "Adjust the
+    // details" button and no unfolded stepper; Next is dimmed and does nothing
+    // until a card is picked.
     @Test
-    fun waitingMethodRoundTripsThroughSheetDisableAndSave() {
+    fun stepThreeStartsWithFoldedCardsAndNextWaitsForAPick() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        awaitText("3 / 5")
+
+        awaitText("How do you want to pause the block?")
+        awaitText("Type a passage")
+        awaitText("Wait it out")
+        awaitText("You'll pick how long each pause lasts when you unlock.")
+        compose.onNodeWithText("What should getting in cost?").assertDoesNotExist()
+        compose.onNodeWithText("Pick whichever you'll actually respect.").assertDoesNotExist()
+        compose.onNodeWithText("Adjust the details").assertDoesNotExist()
+        compose.onNodeWithText("Passage length").assertDoesNotExist()
+        compose.onNodeWithText("Wait before you're in").assertDoesNotExist()
+
+        compose.onNodeWithText("Next").assert(isNotEnabled())
+        compose.onNodeWithText("Next").performTouchInput { click() }
+        compose.onNodeWithText("4 / 5").assertDoesNotExist()
+
+        pickMethod("Type a passage")
+        awaitText("Passage length")
+        compose.onNodeWithText("Next").assertIsEnabled()
+    }
+
+    // Tapping a card unfolds its one stepper at the draft value; tapping the
+    // other folds it and opens that one. Each method keeps its own value.
+    @Test
+    fun onlyOneMethodCardIsOpenAndEachKeepsItsOwnValue() {
+        val freeApp = appEntry("com.sleeper.app", "Sleeper")
+        showFlow(
+            editBlockId = null,
+            apps = stubApps(appEntry("com.apple.news", "Apple News"), freeApp),
+        )
+
+        awaitText("What should this cover?")
+        seedHolderAndPickFreeApp(freeApp)
+        next()
+        typeBlockName("Evening lockout")
+        next()
+        awaitText("3 / 5")
+
+        pickMethod("Type a passage")
+        awaitText("Passage length")
+        awaitText("$PAUSE_CHARS_DEFAULT characters")
+        awaitText("Random words.")
+        compose.onNodeWithText("Wait before you're in").assertDoesNotExist()
+        // Nothing about a time estimate on the card (UM-8, UM-9).
+        compose.onAllNodesWithText("about", substring = true).assertCountEquals(0)
+
+        // One step up on the typing stepper: 20 + 10 characters.
+        compose.onAllNodesWithText(PLUS_GLYPH)[0].performClick()
+        awaitText("${PAUSE_CHARS_DEFAULT + 10} characters")
+
+        pickMethod("Wait it out")
+        awaitText("Wait before you're in")
+        awaitText(formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT))
+        awaitText("A countdown you can't skip.")
+        compose.onNodeWithText("Passage length").assertDoesNotExist()
+        compose.onAllNodesWithText(PLUS_GLYPH)[0].performClick()
+        awaitText(formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT + 10))
+
+        pickMethod("Type a passage")
+        awaitText("${PAUSE_CHARS_DEFAULT + 10} characters") // typing kept its own value
+        compose.onNodeWithText("Wait before you're in").assertDoesNotExist()
+        pickMethod("Wait it out")
+        awaitText(formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT + 10)) // and so did waiting
+    }
+
+    // The waiting path end to end: picking the waiting card, its stepper being
+    // the only field (no passage length and no pause length), the inherited
+    // disable ladder with the middle rung preselected (Next alone is valid),
+    // and a round-trip of every per-method column through the save.
+    @Test
+    fun waitingMethodRoundTripsThroughCardDisableAndSave() {
         val freeApp = appEntry("com.sleeper.app", "Sleeper")
         val closeCount = showFlow(
             editBlockId = null,
@@ -892,18 +995,14 @@ class CreateFlowScreenTest {
         next()
         awaitText("3 / 5")
 
-        // Switch to the waiting card, then refine it in the sheet.
-        compose.onNodeWithText("Wait it out").performClick()
-        compose.onNodeWithText("Adjust the details").performClick()
-        awaitText("The details")
-        compose.onNodeWithText("Passage length").assertDoesNotExist() // typing field hidden
+        // Pick the waiting card: its stepper unfolds at the default.
+        pickMethod("Wait it out")
         awaitText("Wait before you're in")
         awaitText(formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT))
-        awaitText("Block stays off for")
-        awaitText("15 min")
-        awaitText("Then it comes back on its own. Minimum 5 minutes.")
-        compose.onNodeWithText("Done").performClick()
-        awaitText("Adjust the details") // sheet dismissed, still step 3
+        compose.onNodeWithText("Passage length").assertDoesNotExist() // typing field folded
+        // Supersedes the pause-length stepper checks (UM-A): absence check only.
+        compose.onNodeWithText("Block stays off for").assertDoesNotExist()
+        compose.onNodeWithText("Next").assertIsEnabled()
 
         next() // step_completed(3)
         awaitText("4 / 5")
@@ -927,7 +1026,6 @@ class CreateFlowScreenTest {
             .first { it.block.name == "Evening wind-down" }
         assertEquals(FrictionType.DELAY, saved.block.frictionType)
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, saved.block.countdownSeconds)
-        assertEquals(15, saved.block.pauseMinutes)
         assertEquals(360, saved.block.turnoffSeconds)
         // The typing method's columns keep their untouched drafts.
         assertEquals(PAUSE_CHARS_DEFAULT, saved.block.pauseChars)
@@ -942,10 +1040,11 @@ class CreateFlowScreenTest {
         assertEquals(360, params.getInt("turnoff_seconds"))
     }
 
-    // Sheet Back dismisses only the sheet; the next Back navigates the
-    // wizard. Dismissal keeps the draft changes and logs nothing.
+    // Supersedes sheetBackDismissesTheSheetBeforeWizardBack (UM-B): the
+    // details sheet is gone, so system Back on step 3 goes straight to step 2
+    // whether or not a card is open, and logs nothing.
     @Test
-    fun sheetBackDismissesTheSheetBeforeWizardBack() {
+    fun systemBackOnStepThreeGoesStraightToStepTwo() {
         val freeApp = appEntry("com.sleeper.app", "Sleeper")
         showFlow(
             editBlockId = null,
@@ -959,13 +1058,9 @@ class CreateFlowScreenTest {
         next()
         awaitText("3 / 5")
 
-        compose.onNodeWithText("Adjust the details").performClick()
-        awaitText("The details")
-        pressSystemBack()
-        awaitText("Adjust the details") // sheet closed, wizard unmoved
-        awaitText("3 / 5")
-
-        pressSystemBack() // now wizard Back: 3 → 2
+        pickMethod("Type a passage")
+        awaitText("Passage length")
+        pressSystemBack() // wizard Back: 3 → 2, no sheet to close first
         awaitText("Give it a name")
         awaitText("2 / 5")
     }
@@ -985,16 +1080,17 @@ class CreateFlowScreenTest {
         typeBlockName("Evening lockout")
         next()
         awaitText("3 / 5")
-        compose.onNodeWithText("Wait it out").performClick()
+        compose.onNodeWithText("Next").assert(isNotEnabled()) // nothing picked yet
+        pickMethod("Wait it out")
 
         compose.activityRule.scenario.recreate()
 
         awaitText("3 / 5")
-        // The method switch survived: the sheet shows the waiting field.
-        compose.onNodeWithText("Adjust the details").performClick()
+        // The pick survived: the waiting card is still open, the typing card
+        // folded, and Next is enabled without picking again.
         awaitText("Wait before you're in")
-        pressSystemBack()
-        awaitText("Adjust the details")
+        compose.onNodeWithText("Passage length").assertDoesNotExist()
+        compose.onNodeWithText("Next").assertIsEnabled()
 
         // Backtracking keeps the unwound draft: the typed name is intact.
         compose.onNodeWithText(BACK_GLYPH).performClick()
@@ -1018,15 +1114,15 @@ class CreateFlowScreenTest {
         next()
         next()
         awaitText("3 / 5")
-        compose.onNodeWithText("Wait it out").performClick() // diverges from stored TYPING
+        awaitText("Passage length") // the stored typing method opened chosen
+        pickMethod("Wait it out") // diverges from stored TYPING
 
         compose.activityRule.scenario.recreate()
 
         awaitText("3 / 5")
-        compose.onNodeWithText("Adjust the details").performClick()
         // The restored draft still says waiting — prefill did not overwrite it.
         awaitText("Wait before you're in")
-        pressSystemBack()
+        compose.onNodeWithText("Passage length").assertDoesNotExist()
 
         compose.onNodeWithText(BACK_GLYPH).performClick() // 3 → 2, then exit
         awaitText("2 / 5")

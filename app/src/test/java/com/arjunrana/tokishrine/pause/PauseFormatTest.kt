@@ -24,7 +24,7 @@ class PauseFormatTest {
         assertEquals("12:04", PauseFormat.clockText(12 * 60_000L + 4_000L))
         assertEquals("0:47", PauseFormat.clockText(47_000L))
         assertEquals("0:00", PauseFormat.clockText(0L))
-        // Pause durations run up to 100 minutes (PRD §7).
+        // Long durations keep the M:SS form (the gate offers up to 20 minutes since the 11 October unlock-minutes addendum).
         assertEquals("100:00", PauseFormat.clockText(100 * 60_000L))
         // Sub-second leftovers round up, never down: 0:01 still shows.
         assertEquals("0:01", PauseFormat.clockText(1L))

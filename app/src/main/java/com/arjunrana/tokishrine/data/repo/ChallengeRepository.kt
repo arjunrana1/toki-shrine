@@ -2,6 +2,7 @@ package com.arjunrana.tokishrine.data.repo
 
 import androidx.room.withTransaction
 import com.arjunrana.tokishrine.challenge.CompletionRequest
+import com.arjunrana.tokishrine.config.AppConfig
 import com.arjunrana.tokishrine.data.db.TokiDatabase
 import com.arjunrana.tokishrine.data.stats.StatsLedger
 import com.arjunrana.tokishrine.data.entity.AppMeta
@@ -139,9 +140,13 @@ class ChallengeRepository(
     /**
      * Persists a pause challenge outcome before the Phase 6 seam is emitted.
      * The countdown outcome, when present, cannot be split from completion.
+     * A request without a valid chosen length writes nothing.
      */
     suspend fun completePause(request: CompletionRequest): Boolean = db.withTransaction {
         require(request.purpose == ChallengePurpose.PAUSE)
+        // The gate's chosen length (11 October §17 addendum) must be one of
+        // the fixed choices; anything else starts no pause.
+        if (request.unlockMinutes !in AppConfig.UNLOCK_MINUTE_CHOICES) return@withTransaction false
         if (completionExists(request.sessionId)) return@withTransaction true
         val block = blocks.getBlock(request.blockId)
             ?: return@withTransaction false

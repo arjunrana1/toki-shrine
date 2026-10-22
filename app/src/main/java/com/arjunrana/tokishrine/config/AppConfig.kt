@@ -121,17 +121,21 @@ object AppConfig {
         "wool", "wren", "yarn"
     )
 
-    // — Shared pause ranges/steps (moved from BlockRepository.kt, values
-    //    unchanged; enforced at the persistence boundary) —
+    // — Pause challenge values, the same in every build (11 October §17
+    //    unlock-minutes addendum; enforced at the persistence boundary). The
+    //    pause length is no longer a block setting: the user picks one of
+    //    UNLOCK_MINUTE_CHOICES at the gate for each session. —
 
-    const val PAUSE_MINUTES_MIN = 5
-    const val PAUSE_MINUTES_MAX = 100
-    const val PAUSE_MINUTES_STEP = 5
-    const val PAUSE_CHARS_MAX = 200
+    const val PAUSE_CHARS_MIN = 20
+    const val PAUSE_CHARS_MAX = 150
     const val PAUSE_CHARS_STEP = 10
-    const val PAUSE_WAIT_SECONDS_MAX = 300
-    const val PAUSE_WAIT_SECONDS_STEP = 5
-    const val PAUSE_MINUTES_DEFAULT = 15
+    const val PAUSE_CHARS_DEFAULT = 20
+    const val PAUSE_WAIT_SECONDS_MIN = 20
+    const val PAUSE_WAIT_SECONDS_MAX = 240
+    const val PAUSE_WAIT_SECONDS_STEP = 10
+    const val PAUSE_WAIT_SECONDS_DEFAULT = 60
+
+    val UNLOCK_MINUTE_CHOICES = listOf(5, 10, 15, 20)
 
     // — Auto-nope (8 October §17 addendum / P7-F3): continuous seconds away
     //    before a live gate/challenge auto-nopes. ChallengeRuntime derives

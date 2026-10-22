@@ -86,7 +86,6 @@ class AddMoreScreenTest {
         appPackageNames = apps,
         siteDomains = sites,
         frictionType = FrictionType.TYPING,
-        pauseMinutes = 15,
         pauseChars = 120,
         turnoffChars = 350,
         countdownSeconds = 60,

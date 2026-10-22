@@ -38,7 +38,7 @@ class StatsRedesignTest {
 
     @Test fun enabledSiteBlocksAddHostingBrowsersToTheLeaderboard() {
         fun block(id: Long, apps: List<String>, sites: List<String>) = BlockWithContents(
-            Block(id, "B$id", FrictionType.TYPING, 15, 150, 350, 60, 360, enabled = true),
+            Block(id, "B$id", FrictionType.TYPING, 150, 350, 60, 360, enabled = true),
             apps.map { BlockedApp(blockId = id, packageName = it) },
             sites.map { BlockedSite(blockId = id, domain = it) },
         )

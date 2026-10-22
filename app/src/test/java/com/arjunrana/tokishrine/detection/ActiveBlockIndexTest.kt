@@ -18,7 +18,6 @@ class ActiveBlockIndexTest {
         id = id,
         name = name,
         frictionType = FrictionType.TYPING,
-        pauseMinutes = 15,
         pauseChars = 150,
         turnoffChars = 350,
         countdownSeconds = 60,

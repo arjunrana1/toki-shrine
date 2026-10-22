@@ -14,7 +14,6 @@ data class ChallengeConfig(
     val method: FrictionType,
     val passage: String = "",
     val totalSeconds: Int = 0,
-    val pauseMinutes: Int = 0,
     val target: String? = null,
     val targetType: String? = null,
     /** Foreground package that fired: the app, or the hosting browser of a site. */
@@ -35,6 +34,11 @@ data class ChallengeSnapshot(
     val visibleSinceMs: Long?,
     /** Start of the current continuous away period (elapsed realtime), or null while visible. */
     val awayStartMs: Long? = null,
+    /**
+     * The pause length picked at the gate (11 October §17 unlock-minutes
+     * addendum), or null at the gate and for turn-off sessions.
+     */
+    val unlockMinutes: Int? = null,
 )
 
 data class ChallengeView(
@@ -55,7 +59,8 @@ data class CompletionRequest(
     val attempts: Int,
     val countdownElapsedMs: Long,
     val configuredAmount: Int,
-    val pauseMinutes: Int,
+    /** The pause length chosen at the gate; null for a turn-off completion. */
+    val unlockMinutes: Int?,
     val target: String? = null,
     val targetType: String? = null,
     val hostPackage: String? = null,
@@ -93,7 +98,7 @@ sealed interface ChallengeEffect {
 sealed interface ChallengeTerminalResult {
     data class PauseRequested(
         val blockId: Long,
-        val pauseMinutes: Int,
+        val unlockMinutes: Int,
         val sessionId: String,
     ) : ChallengeTerminalResult
 
@@ -112,10 +117,25 @@ class ChallengeRuntime(
     val config: ChallengeConfig,
     restored: ChallengeSnapshot? = null,
 ) {
-    private var phase = restored?.phase ?: if (config.purpose == ChallengePurpose.PAUSE) {
+    private var unlockMinutes = restored?.unlockMinutes
+        ?.takeIf { config.purpose == ChallengePurpose.PAUSE && it in AppConfig.UNLOCK_MINUTE_CHOICES }
+
+    // A pause past the gate always carries its chosen length. A restored
+    // pause challenge without a valid one (state saved by an older build)
+    // goes back to the gate to pick again; the challenge itself still has
+    // to be passed, so this is never a way in.
+    private var phase = (restored?.phase ?: if (config.purpose == ChallengePurpose.PAUSE) {
         ChallengePhase.GATE
     } else {
         ChallengePhase.ACTIVE
+    }).let { restoredPhase ->
+        if (config.purpose == ChallengePurpose.PAUSE && unlockMinutes == null &&
+            (restoredPhase == ChallengePhase.ACTIVE || restoredPhase == ChallengePhase.COMMITTING)
+        ) {
+            ChallengePhase.GATE
+        } else {
+            restoredPhase
+        }
     }
     private var generation = restored?.generation ?: 0
     private var started = restored?.started ?: false
@@ -138,6 +158,7 @@ class ChallengeRuntime(
         accruedVisibleMs = accruedVisibleMs,
         visibleSinceMs = visibleSinceMs,
         awayStartMs = awayStartMs,
+        unlockMinutes = unlockMinutes,
     )
 
     fun view(nowMs: Long): ChallengeView = ChallengeView(
@@ -153,8 +174,16 @@ class ChallengeRuntime(
         return startOnce(nowMs)
     }
 
-    fun enterChallenge(nowMs: Long): ChallengeEffect? {
+    /**
+     * The gate's minutes chip (11 October §17 unlock-minutes addendum): only
+     * at the gate, only for a pause, and only one of
+     * [AppConfig.UNLOCK_MINUTE_CHOICES]. The length belongs to this session
+     * and is kept through recreation, a short away period and save retries.
+     */
+    fun enterChallenge(nowMs: Long, minutes: Int): ChallengeEffect? {
         if (phase != ChallengePhase.GATE || config.purpose != ChallengePurpose.PAUSE) return null
+        if (minutes !in AppConfig.UNLOCK_MINUTE_CHOICES) return null
+        unlockMinutes = minutes
         phase = ChallengePhase.ACTIVE
         generation++
         return startOnce(nowMs)
@@ -361,7 +390,7 @@ class ChallengeRuntime(
             attempts = if (config.method == FrictionType.TYPING) attempts else 1,
             countdownElapsedMs = accruedVisibleMs,
             configuredAmount = configuredAmount(),
-            pauseMinutes = config.pauseMinutes,
+            unlockMinutes = unlockMinutes,
             target = config.target,
             targetType = config.targetType,
             hostPackage = config.hostPackage,
@@ -372,7 +401,9 @@ class ChallengeRuntime(
         if (phase != ChallengePhase.COMMITTING || token != generation) return null
         terminalize()
         return if (config.purpose == ChallengePurpose.PAUSE) {
-            ChallengeTerminalResult.PauseRequested(config.blockId, config.pauseMinutes, config.sessionId)
+            // Set by enterChallenge or restored valid; a pause never leaves
+            // the gate without it (see the phase initialiser).
+            ChallengeTerminalResult.PauseRequested(config.blockId, checkNotNull(unlockMinutes), config.sessionId)
         } else {
             ChallengeTerminalResult.BlockDisabled(config.blockId)
         }

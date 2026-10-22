@@ -1,5 +1,7 @@
 package com.arjunrana.tokishrine.data.db
 
+import android.content.Context
+import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.arjunrana.tokishrine.data.stats.*
@@ -16,7 +18,9 @@ import com.arjunrana.tokishrine.data.entity.Event
         StatsBaseline::class, StatsState::class, StatsOutcome::class, StatsUsageEvent::class, StatsCoverage::class, StatsVisitOverride::class],
     // v4 adds Stats storage only. v3 blocks, events and markers are untouched.
     // v5 adds the per-app visit-length override table only (P7-F6).
-    version = 5,
+    // v6 drops blocks.pause_minutes: the pause length is picked at the gate
+    // (11 October §17 unlock-minutes addendum). See [build] for the upgrade.
+    version = 6,
     exportSchema = true,
 )
 abstract class TokiDatabase : RoomDatabase() {
@@ -26,6 +30,25 @@ abstract class TokiDatabase : RoomDatabase() {
     abstract fun appMetaDao(): AppMetaDao
 
     companion object {
+        /**
+         * The shipped database configuration. Upgrading from v3, v4 or v5 to
+         * v6 is an owner-accepted data reset (11 October §17 addendum: no
+         * users yet), scoped to exactly those start versions. Room rejects
+         * migrations that start or end at a destructive start version, so
+         * [MIGRATION_3_4] and [MIGRATION_4_5] are no longer registered; they
+         * stay below, with schemas 3–5, as history. There is deliberately no
+         * global fallbackToDestructiveMigration(): a same-version reopen
+         * keeps every row, and any later version needs an explicit migration.
+         */
+        fun build(context: Context, name: String = NAME): TokiDatabase =
+            Room.databaseBuilder(context, TokiDatabase::class.java, name)
+                .fallbackToDestructiveMigrationFrom(*DESTRUCTIVE_FROM)
+                .build()
+
+        /** Start versions whose upgrade to v6 resets the database. */
+        val DESTRUCTIVE_FROM = intArrayOf(3, 4, 5)
+
+        // History: the v3 → v4 → v5 chain, no longer registered (see [build]).
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS stats_baseline (packageName TEXT NOT NULL PRIMARY KEY, visitMs INTEGER NOT NULL, samples INTEGER NOT NULL)")

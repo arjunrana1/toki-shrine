@@ -139,8 +139,8 @@ class BlockActivity : ComponentActivity() {
                         humourLine = session.humour,
                         backgroundRes = session.backgroundRes,
                         onWalkAway = { handle(engine.gateWalkAway()) },
-                        onEnterChallenge = {
-                            handle(engine.enterChallenge(now()))
+                        onEnterChallenge = { minutes ->
+                            handle(engine.enterChallenge(now(), minutes))
                             engine.onVisible(now())
                             refreshRuntimeUi()
                         },
@@ -226,7 +226,6 @@ class BlockActivity : ComponentActivity() {
                     method = block.block.frictionType,
                     passage = passage,
                     totalSeconds = if (block.block.frictionType == FrictionType.DELAY) configuredAmount else 0,
-                    pauseMinutes = block.block.pauseMinutes,
                     target = target,
                     targetType = triggerType,
                     hostPackage = hostPackage,
@@ -504,12 +503,12 @@ class BlockActivity : ComponentActivity() {
                             // update, before the user returns to the
                             // triggering app. The activity result stays as
                             // the recording seam (Phase 5).
-                            app.pauseCoordinator.startPause(result.blockId, result.pauseMinutes)
+                            app.pauseCoordinator.startPause(result.blockId, result.unlockMinutes)
                             setResult(
                                 RESULT_OK,
                                 Intent().putExtra(EXTRA_RESULT, RESULT_PAUSE_REQUESTED)
                                     .putExtra(EXTRA_BLOCK_ID, result.blockId)
-                                    .putExtra(EXTRA_PAUSE_MINUTES, result.pauseMinutes)
+                                    .putExtra(EXTRA_UNLOCK_MINUTES, result.unlockMinutes)
                                     .putExtra(EXTRA_SESSION_ID, result.sessionId),
                             )
                         }
@@ -743,6 +742,7 @@ class BlockActivity : ComponentActivity() {
         out.putLong(STATE_ACCRUED, snapshot.accruedVisibleMs)
         out.putLong(STATE_VISIBLE_SINCE, snapshot.visibleSinceMs ?: -1L)
         out.putLong(STATE_AWAY_START, snapshot.awayStartMs ?: -1L)
+        out.putInt(STATE_UNLOCK_MINUTES, snapshot.unlockMinutes ?: -1)
     }
 
     private fun readSnapshot(saved: Bundle): ChallengeSnapshot? {
@@ -760,6 +760,8 @@ class BlockActivity : ComponentActivity() {
             accruedVisibleMs = saved.getLong(STATE_ACCRUED),
             visibleSinceMs = null,
             awayStartMs = saved.getLong(STATE_AWAY_START, -1L).takeIf { it >= 0 },
+            // The runtime keeps it only when it is one of the fixed choices.
+            unlockMinutes = saved.getInt(STATE_UNLOCK_MINUTES, -1).takeIf { it > 0 },
         )
     }
 
@@ -787,7 +789,7 @@ class BlockActivity : ComponentActivity() {
         const val EXTRA_STARTED_AT_ELAPSED_MS = "started_at_elapsed_ms"
         const val EXTRA_PURPOSE = "challenge_purpose"
         const val EXTRA_RESULT = "challenge_result"
-        const val EXTRA_PAUSE_MINUTES = "pause_minutes"
+        const val EXTRA_UNLOCK_MINUTES = "unlock_minutes"
         const val EXTRA_SESSION_ID = "session_id"
         const val RESULT_PAUSE_REQUESTED = "pause_requested"
         const val RESULT_BLOCK_DISABLED = "block_disabled"
@@ -810,6 +812,7 @@ class BlockActivity : ComponentActivity() {
         private const val STATE_ACCRUED = "challenge_accrued"
         private const val STATE_VISIBLE_SINCE = "challenge_visible_since"
         private const val STATE_AWAY_START = "challenge_away_start"
+        private const val STATE_UNLOCK_MINUTES = "challenge_unlock_minutes"
         private const val STATE_DAILY_COUNT = "daily_walk_away_count"
         private const val STATE_WALK_AWAY_SOURCE = "walk_away_source"
         private const val TICK_MS = 200L

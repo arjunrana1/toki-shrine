@@ -147,7 +147,7 @@ class ChallengeRepositoryTest {
             attempts = 1,
             countdownElapsedMs = 360_000,
             configuredAmount = 360,
-            pauseMinutes = 15,
+            unlockMinutes = null,
         )
 
         assertTrue(challenges.completeTurnOff(completion))
@@ -214,7 +214,7 @@ class ChallengeRepositoryTest {
         val request = typingCompletion(blockId, "pause-session").copy(
             purpose = ChallengePurpose.PAUSE,
             configuredAmount = 150,
-            pauseMinutes = 15,
+            unlockMinutes = 15,
         )
         assertTrue(challenges.completePause(request))
         assertTrue(challenges.completePause(request))
@@ -222,6 +222,27 @@ class ChallengeRepositoryTest {
         assertEquals(1, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_STARTED))
         assertEquals(1, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_COMPLETED))
         assertTrue(blocks.getBlockWithContents(blockId)!!.block.enabled)
+    }
+
+    // TS-unlock-minutes UM-4: a pause completion must carry one of the gate's
+    // fixed choices; anything else writes nothing and starts no pause.
+    @Test
+    fun pauseCompletionWithoutAValidChosenLengthWritesNothing() = runBlocking {
+        val blockId = createEnabledBlock()
+        val base = typingCompletion(blockId, "unlock-minutes").copy(
+            purpose = ChallengePurpose.PAUSE,
+            configuredAmount = 150,
+        )
+        listOf(null, 0, 7, 25, 30).forEach { invalid ->
+            assertFalse(challenges.completePause(base.copy(unlockMinutes = invalid)))
+        }
+        assertEquals(0, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_COMPLETED))
+        assertNull(db.statsDao().outcome("unlock-minutes"))
+
+        listOf(5, 10, 15, 20).forEachIndexed { index, minutes ->
+            assertTrue(challenges.completePause(base.copy(sessionId = "unlock-$index", unlockMinutes = minutes)))
+        }
+        assertEquals(4, db.eventDao().countByName(EventRepository.EVENT_CHALLENGE_COMPLETED))
     }
 
     @Test
@@ -232,7 +253,7 @@ class ChallengeRepositoryTest {
         now += 1_000
         challenges.recordWalkAwayAndCount("ignored", blockId, pkg, "app", "typing")
         val request = typingCompletion(blockId, "pass-with-target").copy(
-            purpose = ChallengePurpose.PAUSE, configuredAmount = 150, target = pkg, targetType = "app")
+            purpose = ChallengePurpose.PAUSE, configuredAmount = 150, unlockMinutes = 15, target = pkg, targetType = "app")
         db.openHelper.writableDatabase.execSQL(
             "CREATE TRIGGER fail_stats BEFORE INSERT ON stats_outcome WHEN NEW.kind = 'pass' BEGIN SELECT RAISE(ABORT, 'forced'); END")
         assertThrows(android.database.sqlite.SQLiteException::class.java) { runBlocking { challenges.completePause(request) } }
@@ -274,7 +295,7 @@ class ChallengeRepositoryTest {
         assertEquals(2, challenges.recordWalkAwayAndCount("app-nope", blockId, browser, "app", "typing"))
         assertEquals(3, challenges.recordWalkAwayAndCount("no-host", blockId, "reddit.com", "site", "typing"))
         val request = typingCompletion(blockId, "site-pass").copy(
-            purpose = ChallengePurpose.PAUSE, configuredAmount = 150,
+            purpose = ChallengePurpose.PAUSE, configuredAmount = 150, unlockMinutes = 15,
             target = "reddit.com", targetType = "site", hostPackage = browser)
         assertTrue(challenges.completePause(request))
         assertTrue(challenges.completePause(request))
@@ -327,7 +348,6 @@ class ChallengeRepositoryTest {
                 appPackageNames = listOf("com.example.target.${System.nanoTime()}"),
                 siteDomains = emptyList(),
                 frictionType = method,
-                pauseMinutes = 15,
                 pauseChars = 150,
                 turnoffChars = 350,
                 countdownSeconds = 60,
@@ -348,6 +368,6 @@ class ChallengeRepositoryTest {
         attempts = 2,
         countdownElapsedMs = 0,
         configuredAmount = 350,
-        pauseMinutes = 15,
+        unlockMinutes = null,
     )
 }
