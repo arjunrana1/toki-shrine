@@ -61,11 +61,11 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **Onboarding** → Welcome → permission checklist (4 items) → per-permission explainers as needed → block list.
 
-**Create a block** → add apps and sites → name it → choose friction (optional details sheet) → choose disable difficulty → review and save → lands in the list, OFF.
+**Create a block** → add apps and sites → name it → choose friction (optional details sheet) → choose disable difficulty → review and save → lands in the list, OFF. *(From the unlock-minutes build, the friction step has no details sheet and no pause length: §17 "Unlock minutes addendum — 11 October 2026".)*
 
 **Turn a block on** → confirmation stating exactly what pausing and turning off will cost → ON. If permissions are missing, this is where the app gates and points at the checklist. The user is never gated before this point.
 
-**Hit a block** → block screen → *Not now* (walk away) or *I'll do the challenge* → challenge → pass → pause begins → bubble and notification count down → automatic re-arm.
+**Hit a block** → block screen → *Not now* (walk away) or *I'll do the challenge* → challenge → pass → pause begins → bubble and notification count down → automatic re-arm. *(From the unlock-minutes build: *I'll do the challenge* opens a 5 / 10 / 15 / 20 minutes row, and picking one starts the challenge and sets that pause's length; §17 11 October addendum.)*
 
 **Turn a block off** → complete the selected typing or waiting disable challenge → OFF until manually re-enabled. Challenge execution is Phase 5 work.
 
@@ -119,9 +119,9 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **9 Create · name it.** Free text. The suggested-name chips in the mock are **removed**.
 
-**10 Create · configure friction.** Two method cards and an optional details bottom sheet, followed by a separate disable-difficulty screen. See §7 and the 19 September wizard amendment in §17; older configuration mockups are superseded.
+**10 Create · configure friction.** Two method cards and an optional details bottom sheet, followed by a separate disable-difficulty screen. See §7 and the 19 September wizard amendment in §17; older configuration mockups are superseded. *(From the unlock-minutes build: inline cards with no details sheet; §17 11 October addendum.)*
 
-**11 Create · review & save.** Reads back the deal: contents, cost to pause, cost to turn off, pause duration. Saves switched off, without the removed explanatory sentence (§17).
+**11 Create · review & save.** Reads back the deal: contents, cost to pause, cost to turn off, pause duration (the pause-duration row and typing time estimates are removed from the unlock-minutes build, §17 11 October addendum). Saves switched off, without the removed explanatory sentence (§17).
 
 **12 Conflict dialog — superseded (owner decision, 9 September 2026).** Do not implement this screen for app selection. Show **Already added to a block** on an unselectable app row instead, without naming the other block. The old render is historical. Websites use the same inline unavailable message and cannot be added while owned by another block.
 
@@ -129,7 +129,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 
 **14 Block detail & edit.** Shows on/off state, contents, and friction summary. Editing is only reachable while OFF, and the screen says so.
 
-**15 Block screen.** Appears over the offending app. Block name, one randomly selected target-aware headline from §11, then *Not now* as the prominent filled action and *I'll do the challenge. Let me in 🚩🤨* as the quieter outlined one. Both actions have equal dimensions. Installed apps use their user-visible label, never a raw package identifier; sites use their domain. Carries the independently selected humour line and two-layer background treatment from §11. Must be comprehensible in under two seconds — no scrolling.
+**15 Block screen.** Appears over the offending app. Block name, one randomly selected target-aware headline from §11, then *Not now* as the prominent filled action and *I'll do the challenge. Let me in 🚩🤨* as the quieter outlined one. Both actions have equal dimensions. Installed apps use their user-visible label, never a raw package identifier; sites use their domain. Carries the independently selected humour line and two-layer background treatment from §11. Must be comprehensible in under two seconds — no scrolling. *(From the unlock-minutes build, the two actions no longer have equal dimensions, and the way-in action opens the "Minutes to unlock" row: §17 11 October addendum.)*
 
 **16 Walk-away moment.** Confirmation, the running count ("That's the 4th time today 🎉"), then **auto-dismiss after 10 seconds** to the Android home screen. Tapping anywhere continues to the Android home screen immediately.
 
@@ -163,6 +163,8 @@ A fresh passage of random words is displayed; the user types it correctly. Lengt
 | Passage length to pause | 150 chars | 100–200 chars | 10 chars |
 | Passage length to disable | 350 chars (recommended) | 220 / 350 / 700 chars | Fixed choices |
 
+*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting (the user picks 5 / 10 / 15 / 20 minutes at the gate), and passage length to pause is 20–150 characters in steps of 10, default 20, in every build. Typing time estimates are no longer shown anywhere.*
+
 Typo positions are highlighted only after a failed explicit Submit; there is no setting. Where other surfaces display typing estimates, use 0.4 seconds per character. The method cards state actual characters and pause duration in plain words, replacing the old configuration estimate paragraph.
 
 Hard requirements:
@@ -181,6 +183,8 @@ A countdown runs; the user waits.
 | Block stays off for (temporary pause) | 15 min | 5–100 min | 5 min |
 | Wait to pause | 60 sec | 60–300 sec | 5 sec |
 | Wait to disable | 6 min (recommended) | 3 / 6 / 12 min | Fixed choices |
+
+*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting, and wait to pause is 20–240 seconds in steps of 10, default 60, in every build.*
 
 A waiting challenge counts down only while the Toki Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app or locking the device retains the in-process challenge but resets progress to zero; returning restarts the full configured countdown. Choosing the explicit escape action terminates the challenge. These rules apply to both pause and disable waits; process-death/reboot restoration is not required.
 
@@ -280,7 +284,7 @@ Rows explicitly marked **retired** are historical compatibility only: they are n
 | `block_create_started` | — |
 | `block_create_step_completed` | `step` (1–5; details sheet is not a step) |
 | `block_create_abandoned` | `step` |
-| `block_created` | `app_count`, `site_count`, `friction_type`, `pause_minutes`, `pause_chars`, `turnoff_chars`, `countdown_seconds`, `turnoff_seconds` |
+| `block_created` | `app_count`, `site_count`, `friction_type`, `pause_minutes` (dropped from the unlock-minutes build; `block_edited.fields_changed` no longer lists it either), `pause_chars`, `turnoff_chars`, `countdown_seconds`, `turnoff_seconds` |
 | `block_edited` | `block_id`, `fields_changed` |
 | `block_deleted` | `block_id` |
 | `block_conflict_shown` (retired; no longer emitted) | Historical: `target`, `existing_block_id` |
@@ -741,3 +745,46 @@ This covers Add more, the visit-length sheet, the Stats info sheets and the Reca
 - **The friction (block) screen's main button reads "Nope, not now"**, matching the challenge escape.
 - **Seven supported browsers.** DuckDuckGo (`com.duckduckgo.mobile.android`) and Vivaldi (`com.vivaldi.browser`) are dropped from website blocking and the bundled detection config; the Settings subtitle and Supported browsers screen show the remaining seven. Supersedes "nine browsers" in §2 and the Supported browsers table.
 - **The waiting challenge's escape matches the typing escape:** 50 dp tall, 15 sp label.
+
+### Unlock minutes addendum — 11 October 2026
+
+Arjun's change request, with his answers to the architect's clarifying questions in the same session. Design reference: [design/screens/unlock-minutes](design/screens/unlock-minutes/README.md) ("Proposed changes": 14 v2 and 09 v3; 09b v2 is an interim step, not built). Where the handoff README's values or copy differ from this addendum, **this addendum wins**. **Recorded, not yet implemented.** From the build that implements it, it supersedes conflicting text above: §5's create and hit flows; §6 screens 10, 11 and 15 (including "Both actions have equal dimensions"); the pause rows of §7.1/§7.2 and §7.1's 0.4 s/char estimate rule; the 19 September wizard amendment's details sheet, "Block stays off for", Reset and 15-minute card copy; the 23 September debug pause values; and §10's `block_created.pause_minutes`. Task rows UM-1–UM-14 in [TS-unlock-minutes](coordination/tasks/TS-unlock-minutes/TASK.md) carry ownership.
+
+**Why.** Wanting to get in is a deliberate act, so the next question is simply "for how long?". The user knows in the moment whether they need a 5-minute check or 20 minutes of real use. Naming the time is a small commitment that makes it likelier to be kept.
+
+**Block (gate) screen, 14 v2**
+- Tapping **"I'll do the challenge. Let me in 🚩🤨"** drops a **"Minutes to unlock"** row out from under that button: **5 / 10 / 15 / 20**. The chips fall in left to right with a slight bounce. Tapping the button again folds the row back up in reverse and clears it. While the row is closed it doesn't respond to taps.
+- **Tapping a chip goes straight into the challenge** with that length, after the chip's brief selected state; there is no separate confirm. The pause starts at that length once the challenge passes. No chip is preselected.
+- The chosen length belongs to that challenge session. It survives rotation, recreation, a return within the 15 s auto-nope window and a retried save. A walk-away, auto-nope or new gate session discards it. Turn-off challenges have no length.
+- The main button stays **"Nope, not now"** (10 October; the mock's "Not now" is out of date) and remains the prominent filled default, now in **accent-400**. The challenge button is **50 dp** high. Both buttons sit about 76 dp higher (bottom padding about 100 dp), so the row drops into the space below without moving anything.
+- **The central meme image (the clear, uncropped copy) moves up by the same amount**, so it stays fully visible above the buttons. The full-screen cropped background and the overall dimming are unchanged.
+- Motion, chip sizes and colours follow the handoff README §1.
+
+**Creating and editing a block, step 3 (09 v3)**
+- Title **"How do you want to pause the block?"**, with no subtitle ("Pick whichever you'll actually respect." is removed).
+- Two cards, **Type a passage** and **Wait it out**, with no "Adjust the details" button, no details sheet and no Reset. Tapping a card selects it and unfolds its one stepper underneath, already at the current draft value. Tapping the other card folds the first away; only one is open at a time.
+- **Create starts with no card selected, and Next is dimmed and disabled until one is picked.** Editing opens with the stored method selected and expanded. Each method keeps its own draft value when the user switches.
+- Typing card: **"Passage length"** stepper with the sub-line **"Random words."** (no time estimate). Wait card: **"Wait before you're in"** stepper with the sub-line "A countdown you can't skip."
+- Under the cards, a clock-countdown icon and the line **"You'll pick how long each pause lasts when you unlock."**
+- The disable step (4/5) is unchanged.
+
+**Pause challenge values (every build; these replace the separate release and debug pause values)**
+
+| Control | Default | Range | Step |
+|---|---|---|---|
+| Passage length to pause | 20 chars | 20–150 chars | 10 chars |
+| Wait to pause | 60 sec | 20–240 sec | 10 sec |
+| Pause length | chosen at the gate | 5 / 10 / 15 / 20 min | fixed choices |
+
+- The disable ladders are unchanged, including debug's temporary 20 rung (delta 5, launch gate).
+- These values join the pre-launch config review.
+- Stored blocks outside the new ranges keep working as stored until re-saved. Editing clamps the draft into range.
+
+**Removed elsewhere**
+- Review (5/5): the "Each pause lasts" row is removed entirely.
+- Block detail: the "Pause lasts" row is removed entirely.
+- Typing time estimates ("~Ns", "about N seconds") are removed **everywhere**: review, block detail and turn-on confirmation. Surfaces show the character count only.
+
+**Data and events**
+- A block no longer stores a pause length; the `pause_minutes` column is dropped (schema v6). There are no users, so Arjun accepts that this upgrade may reset the app's data, and he will reinstall from scratch if needed. This is not a general destructive-migration policy, and later schema versions still need explicit migrations.
+- The chosen length is recorded in the existing `pause_started.minutes`. `pause_minutes` leaves `block_created` and `block_edited.fields_changed`. No other event changes.

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<style>
+  body{margin:0;background:#0d0e16;color:var(--color-text);font-family:var(--font-body)}
+  a{cursor:pointer}
+  .wrap{padding:52px 60px 90px;max-width:1160px;margin:0 auto}
+  .top{margin:0 0 6px;font-size:30px;letter-spacing:-.02em}
+  .top-sub{margin:0 0 4px;color:var(--color-neutral-400);font-size:14px;max-width:640px;line-height:1.6}
+  .top-meta{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 34px}
+  .app{display:flex;gap:44px;align-items:flex-start;justify-content:center}
+  .rail{width:236px;flex:none;position:sticky;top:24px}
+  .rail-count{font:600 11px/1 ui-monospace,Menlo,monospace;color:var(--color-neutral-500);letter-spacing:.06em;margin:0 0 18px;display:flex;align-items:center;gap:8px}
+  .rail-count b{color:var(--color-accent-200);font-size:13px}
+  .rail-g{margin-bottom:16px}
+  .rail-gh{display:flex;align-items:center;gap:8px;margin:0 0 7px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--color-neutral-600)}
+  .rail-gn{font-weight:600;color:var(--color-accent-300)}
+  .rail-item{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:12.5px;color:var(--color-neutral-300);text-decoration:none;transition:background .12s}
+  .rail-item:hover{background:color-mix(in srgb,var(--color-text) 6%,transparent)}
+  .rail-no{font:600 9.5px/1 ui-monospace,Menlo,monospace;color:var(--color-neutral-600);width:16px;flex:none}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .crumb{display:flex;align-items:center;gap:14px}
+  .navbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--color-neutral-800);display:grid;place-items:center;color:var(--color-neutral-300);font-size:17px;cursor:pointer;background:transparent}
+  .navbtn:hover{background:color-mix(in srgb,var(--color-text) 7%,transparent);border-color:var(--color-neutral-700)}
+  .crumb-mid{text-align:center;min-width:230px}
+  .crumb-no{font:600 10px/1 ui-monospace,Menlo,monospace;color:var(--color-neutral-500);letter-spacing:.08em}
+  .crumb-name{font-size:16px;font-weight:500;margin-top:3px}
+  .screen{width:340px;height:740px;background:var(--color-bg);border-radius:34px;overflow:hidden;box-shadow:0 0 0 1px var(--color-neutral-800),0 30px 70px rgba(0,0,0,.5);position:relative;display:flex;flex-direction:column;padding:5px;background-clip:padding-box}
+  .screen>.inner{flex:1;display:flex;flex-direction:column;border-radius:29px;overflow:hidden;background:var(--scr-bg,var(--color-bg));min-height:0}
+  .sb{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:12px;color:var(--color-neutral-300)}
+  .sb b{font-weight:600;color:var(--color-text);letter-spacing:.02em}
+  .sb .ico{display:flex;gap:6px;align-items:center;font-size:13px}
+  .scr{flex:1;overflow:hidden;padding:6px 20px 16px;display:flex;flex-direction:column;min-height:0}
+  .navbar{height:22px;flex:none;display:grid;place-items:center}
+  .navbar span{width:118px;height:4px;border-radius:2px;background:var(--color-neutral-700)}
+  .appbar{display:flex;align-items:center;gap:12px;padding:4px 0 16px}
+  .appbar i{font-size:20px;color:var(--color-neutral-300);cursor:pointer}
+  .appbar .t{font-size:15px;font-weight:500;flex:1}
+  .appbar .s{color:var(--color-neutral-500);font-size:12px}
+  .dots{display:flex;gap:6px}
+  .dots span{width:22px;height:3px;border-radius:2px;background:var(--color-neutral-800)}
+  .dots span.on{background:var(--color-accent)}
+  .muted{color:var(--color-neutral-500)}
+  .prow{display:flex;align-items:flex-start;gap:13px;padding:13px;background:var(--color-surface);border-radius:12px}
+  .prow .pi{width:36px;height:36px;flex:none;border-radius:9px;background:var(--color-accent-900);display:grid;place-items:center;color:var(--color-accent-300);font-size:18px}
+  .prow .pt{font-size:14px;font-weight:500}
+  .prow .pd{font-size:11.5px;color:var(--color-neutral-500);line-height:1.45;margin-top:2px}
+  .state-ok{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--color-accent-200);background:var(--color-accent-800);padding:4px 9px;border-radius:20px;flex:none}
+  .state-pend{display:inline-flex;align-items:center;font-size:11px;color:var(--color-neutral-300);border:1px solid var(--color-neutral-700);padding:4px 10px;border-radius:20px;flex:none;cursor:pointer}
+  .brow{display:flex;align-items:center;gap:12px;padding:14px;background:var(--color-surface);border-radius:12px;cursor:pointer}
+  .brow .bi{width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center;font-size:18px}
+  .brow .bn{font-size:14.5px;font-weight:500}
+  .brow .bd{font-size:11.5px;color:var(--color-neutral-500);margin-top:1px}
+  .tgl{width:42px;height:25px;border-radius:13px;flex:none;display:inline-flex;align-items:center;padding:2px}
+  .tgl .k{width:21px;height:21px;border-radius:50%;background:var(--color-bg)}
+  .tgl.on{background:var(--color-accent);justify-content:flex-end}
+  .tgl.off{background:var(--color-neutral-800);justify-content:flex-start}
+  .tgl.off .k{background:var(--color-neutral-500)}
+  .pausepill{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--color-accent-200);background:var(--color-accent-800);padding:5px 10px;border-radius:20px;flex:none;font-variant-numeric:tabular-nums}
+  .fab{position:absolute;right:18px;bottom:20px;width:54px;height:54px;border-radius:50%;background:var(--color-accent);color:var(--color-bg);display:grid;place-items:center;font-size:26px;box-shadow:0 8px 24px rgba(145,132,217,.35);cursor:pointer;z-index:3}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 11px;border-radius:8px;background:var(--color-neutral-900);color:var(--color-neutral-200)}
+  .field-lg{font-size:12px;color:var(--color-neutral-400);margin-bottom:6px}
+  .num{font-variant-numeric:tabular-nums}
+  .stepper{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;padding:8px 10px}
+  .stepper .b{width:30px;height:30px;border-radius:8px;border:1px solid var(--color-neutral-700);display:grid;place-items:center;color:var(--color-neutral-200);font-size:16px}
+  .est{background:var(--color-accent-900);border:1px solid var(--color-accent-800);border-radius:12px;padding:14px;display:flex;gap:11px;align-items:center}
+  .est i{font-size:22px;color:var(--color-accent-300)}
+  h4.sh{font-size:23px;margin:8px 0 4px;letter-spacing:-.01em;line-height:1.15}
+  .tap-hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:10.5px;color:var(--color-neutral-600);pointer-events:none;z-index:2}
+  .foot{margin:70px auto 0;max-width:900px;border-top:1px solid var(--color-neutral-900);padding-top:34px}
+  .foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .foot h5{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--color-neutral-500);margin:0 0 14px}
+  .leg{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--color-neutral-300);margin-bottom:10px}
+  .tone-l{font-size:13.5px;line-height:1.7;color:var(--color-neutral-300);margin:0 0 4px}
+  .ref{margin-top:48px}
+  .ref-row{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-top:18px}
+  .ref-item{display:flex;flex-direction:column;gap:10px;width:300px}
+  .ref-cap{font-size:12px;color:var(--color-neutral-300);font-weight:500}
+  .ref-cap span{color:var(--color-neutral-600);font-weight:400}
+  .tile{background:var(--color-bg);border-radius:14px;padding:14px;box-shadow:0 0 0 1px var(--color-neutral-800)}
+</style>
+</helmet>
+
+<div class="wrap" onClick="{{ onNav }}">
+  <h1 class="top">Toki Shrine — clickable UI walkthrough</h1>
+  <p class="top-sub">Interactive Phase&nbsp;1 mock. Pick a screen from the index, or tap the real buttons to walk the flows. Android · portrait · dark theme. Principle: <b style="color:var(--color-neutral-200)">backing out is the easier path</b>.</p>
+  <div class="top-meta">
+    <span class="tag tag-outline">Tap-through prototype</span>
+    <span class="tag tag-neutral">29 screens · 6 flows</span>
+    <span class="tag tag-neutral">Nocturne · dark only</span>
+  </div>
+
+  <div class="app">
+
+    <!-- INDEX RAIL -->
+    <nav class="rail">
+      <div class="rail-count"><i class="ph ph-squares-four" style="font-size:14px;color:var(--color-neutral-500)"></i>Screen <b class="num">{{ curNo }}</b> of {{ total }}</div>
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+        <div class="rail-g">
+          <div class="rail-gh"><span class="rail-gn">{{ g.id }}</span>{{ g.t }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <a class="rail-item" data-go="{{ it.id }}" style="{{ it.style }}"><span class="rail-no num">{{ it.no }}</span>{{ it.name }}</a>
+          </sc-for>
+        </div>
+      </sc-for>
+    </nav>
+
+    <!-- STAGE -->
+    <div class="stage">
+      <div class="crumb">
+        <button class="navbtn" onClick="{{ prev }}"><i class="ph ph-arrow-left"></i></button>
+        <div class="crumb-mid"><div class="crumb-no num">{{ curTag }}</div><div class="crumb-name">{{ curName }}</div></div>
+        <button class="navbtn" onClick="{{ next }}"><i class="ph ph-arrow-right"></i></button>
+      </div>
+
+      <div class="screen"><div class="inner">
+
+        <!-- 01 Welcome -->
+        <sc-if value="{{ vis.s01 }}" hint-placeholder-val="{{ true }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="justify-content:center;text-align:center;padding:22px 30px 24px">
+            <div style="width:76px;height:76px;border-radius:20px;background:var(--color-accent-900);display:grid;place-items:center;color:var(--color-accent-300);font-size:38px;margin:0 auto 26px"><i class="ph ph-hourglass-medium"></i></div>
+            <h2 style="font-size:30px;margin:0 0 14px">Toki Shrine</h2>
+            <div style="font-size:15px;line-height:1.6;color:var(--color-neutral-300);margin:0"><div><b>Your time, your rules</b></div></div>
+            <div style="font-size:14px;line-height:1.6;color:var(--color-neutral-500);margin:16px 0 0"><div>Doomscrolling? Time-blindness? Yeah, we got you</div></div><div style="font-size:14px;line-height:1.6;color:var(--color-neutral-500);margin:16px 0 0"><div><div>We don't block you! We just do a vibe check before you fall in.</div></div></div>
+            <div style="flex: 1; width: 271px; height: 161px"></div>
+            <a class="btn btn-primary btn-block" style="height:46px;font-size:15px" data-go="02">Get started</a>
+            <a class="btn btn-ghost btn-block" style="margin-top:10px" data-go="02">How it works</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 02 Permission checklist -->
+        <sc-if value="{{ vis.s02 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <h4 class="sh" style="margin-top:6px">A few permissions</h4>
+            <p class="muted" style="font-size:13px;margin:0 0 14px">Two are essential. The rest just make Toki Shrine nicer to live with.</p>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="width:25%;height:100%;background:var(--color-accent)"></div></div>
+              <span class="muted num" style="font-size:12px">1 of 4</span>
+            </div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:8px">Essential permissions</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+              <div class="prow"><div class="pi"><i class="ph ph-eye"></i></div><div style="flex:1"><div class="pt">Accessibility</div><div class="pd">Tells us which app or site is open</div></div><span class="state-ok"><i class="ph-bold ph-check"></i>Granted</span></div>
+              <div class="prow"><div class="pi"><i class="ph ph-battery-charging"></i></div><div style="flex:1"><div class="pt">Battery exemption</div><div class="pd">Stops the phone shutting us down in the background</div></div><span class="state-pend" data-go="04">Grant</span></div>
+            </div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:8px">For a better experience</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="prow"><div class="pi"><i class="ph ph-square-half"></i></div><div style="flex:1"><div class="pt">Display over other apps</div><div class="pd">Shows the pause screen and the timer bubble</div></div><span class="state-pend" data-go="03">Grant</span></div>
+              <div class="prow"><div class="pi"><i class="ph ph-bell"></i></div><div style="flex:1"><div class="pt">Notifications</div><div class="pd">Shows the pause countdown</div></div><span class="state-pend">Grant</span></div>
+            </div>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="05">Continue</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 03 Accessibility explainer -->
+        <sc-if value="{{ vis.s03 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="02"></i><span class="t">Accessibility</span></div>
+            <h4 class="sh">About the accessibility screen</h4>
+            <p class="muted" style="font-size:13.5px;line-height:1.6;margin:2px 0 18px">Android calls this "full control of your device" and warns we can "view everything you do." That's its standard wording for accessibility access — here's what we actually do with it.</p>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:8px">What we do</div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px"><i class="ph-bold ph-check" style="color:var(--color-accent-300);margin-top:2px"></i><span>See which app or site is open</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px"><i class="ph-bold ph-check" style="color:var(--color-accent-300);margin-top:2px"></i><span>Show the pause screen over it</span></div>
+            </div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:8px">What we never do</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--color-neutral-400)"><i class="ph ph-x" style="margin-top:2px"></i><span>Read the contents of any page</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--color-neutral-400)"><i class="ph ph-x" style="margin-top:2px"></i><span>Tap, type, or act for you</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--color-neutral-400)"><i class="ph ph-x" style="margin-top:2px"></i><span>Log, store, or send your activity anywhere</span></div>
+            </div>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="02">Continue to settings</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 04 Battery instructions -->
+        <sc-if value="{{ vis.s04 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="02"></i><span class="t">Keep us awake</span></div>
+            <p class="muted" style="font-size:13.5px;line-height:1.6;margin:4px 0 16px">Android is aggressive about closing background apps. Three quick taps stop it from killing Toki Shrine.</p>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:12px"><span class="num" style="width:24px;height:24px;flex:none;border-radius:50%;background:var(--color-accent-900);color:var(--color-accent-200);display:grid;place-items:center;font-size:12px;font-weight:600">1</span><span style="font-size:13.5px;line-height:1.5">On the next screen, tap <b>Battery</b></span></div>
+              <div style="display:flex;gap:12px"><span class="num" style="width:24px;height:24px;flex:none;border-radius:50%;background:var(--color-accent-900);color:var(--color-accent-200);display:grid;place-items:center;font-size:12px;font-weight:600">2</span><span style="font-size:13.5px;line-height:1.5">Choose <b>Unrestricted</b> for Toki Shrine</span></div>
+              <div style="display:flex;gap:12px"><span class="num" style="width:24px;height:24px;flex:none;border-radius:50%;background:var(--color-accent-900);color:var(--color-accent-200);display:grid;place-items:center;font-size:12px;font-weight:600">3</span><span style="font-size:13.5px;line-height:1.5">Turn off <b>Put app to sleep</b> if it's on</span></div>
+            </div>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="02">Open battery settings</a>
+            
+            
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 05 Block list empty -->
+        <sc-if value="{{ vis.s05 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div style="display:flex;align-items:center;padding:4px 0 8px"><h4 style="font-size:24px;margin:0;flex:1">Blocks</h4><i class="ph ph-chart-bar" style="font-size:21px;color:var(--color-neutral-300);margin-right:16px;cursor:pointer" data-go="21"></i><i class="ph ph-gear-six" style="font-size:21px;color:var(--color-neutral-300);cursor:pointer" data-go="22"></i></div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:0 20px 40px">
+              <div style="width:64px;height:64px;border-radius:16px;background:var(--color-neutral-900);display:grid;place-items:center;color:var(--color-neutral-500);font-size:30px;margin:0 auto 20px"><i class="ph ph-stack"></i></div>
+              <div style="font-size:17px;font-weight:500;margin-bottom:8px">No blocks yet</div>
+              <p class="muted" style="font-size:13.5px;line-height:1.6;margin:0">A block is a group of apps or sites with one pause in front of them. Make your first one whenever you're ready.</p>
+              <a class="btn btn-primary" style="height:44px;margin-top:22px;align-self:center;padding-inline:22px" data-go="07">Create your first block</a>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 06 Block list populated -->
+        <sc-if value="{{ vis.s06 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div style="display:flex;align-items:center;padding:4px 0 16px"><h4 style="font-size:24px;margin:0;flex:1">Blocks</h4><i class="ph ph-chart-bar" style="font-size:21px;color:var(--color-neutral-300);margin-right:16px;cursor:pointer" data-go="21"></i><i class="ph ph-gear-six" style="font-size:21px;color:var(--color-neutral-300);cursor:pointer" data-go="22"></i></div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div class="brow" data-go="14"><div style="flex:1;min-width:0"><div class="bn">The scroll pit</div><div class="bd">Instagram, TikTok, Reddit · Type 150</div></div><span class="tgl on"><span class="k"></span></span></div>
+              <div class="brow" data-go="13"><div style="flex:1;min-width:0"><div class="bn">Video rabbit holes</div><div class="bd">YouTube · Wait 30s</div></div><span class="tgl on"><span class="k"></span></span></div>
+              <div class="brow" data-go="13"><div style="flex:1;min-width:0"><div class="bn">News spiral</div><div class="bd">2 sites · Type 150</div></div><span class="tgl off"><span class="k"></span></span></div>
+            </div>
+            
+            <div style="flex:1"></div>
+            <a class="btn btn-secondary btn-block" style="height:42px;font-size:13.5px;gap:8px;color:var(--color-neutral-300)" data-go="23"><i class="ph ph-chat-circle-text"></i>Share feedback</a>
+            <div class="fab" data-go="07"><i class="ph ph-plus"></i></div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 07 Create step 1 -->
+        <sc-if value="{{ vis.s07 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="06"></i><span class="t">New block</span><span class="s num">1 / 5</span></div>
+            <div class="dots" style="margin-bottom:16px"><span class="on"></span><span></span><span></span><span></span><span></span></div>
+            <h4 class="sh" style="font-size:20px">What should this cover?</h4>
+            <div style="display:flex;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;padding:3px;margin:12px 0 14px">
+              <div style="{{ segBApps }}" onClick="{{ setBApps }}"><i class="ph ph-squares-four"></i> Apps</div>
+              <div style="{{ segBSites }}" onClick="{{ setBSites }}"><i class="ph ph-globe"></i> Websites</div>
+            </div>
+
+            <sc-if value="{{ bApps }}" hint-placeholder-val="{{ true }}">
+              <div data-go="07b" style="display:flex;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;padding:9px 11px;margin-bottom:16px;cursor:pointer"><i class="ph ph-magnifying-glass muted"></i><span class="muted" style="font-size:13.5px">Search your installed apps…</span></div>
+            </sc-if>
+            <sc-if value="{{ bSites }}">
+              <div style="display:flex;gap:8px;margin-bottom:6px">
+                <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;padding:9px 11px"><i class="ph ph-globe muted"></i><span class="muted" style="font-size:13.5px">reddit.com</span></div>
+                <a class="btn btn-secondary" style="height:auto;padding-inline:18px">Add</a>
+              </div>
+              <div class="muted" style="font-size:11.5px;line-height:1.5;margin-bottom:14px">Type a full domain. Works in Chrome and other supported browsers.</div>
+            </sc-if>
+
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:8px">SELECTED APPS AND SITES&nbsp;</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:11px"><i class="ph ph-squares-four" style="color:var(--color-neutral-500);font-size:15px"></i><span style="flex:1;font-size:14px">Instagram</span><i class="ph ph-x" style="color:var(--color-neutral-500);font-size:14px;cursor:pointer"></i></div>
+              <div style="display:flex;align-items:center;gap:11px"><i class="ph ph-squares-four" style="color:var(--color-neutral-500);font-size:15px"></i><span style="flex:1;font-size:14px">TikTok</span><i class="ph ph-x" style="color:var(--color-neutral-500);font-size:14px;cursor:pointer"></i></div>
+              <div style="display:flex;align-items:center;gap:11px"><i class="ph ph-globe" style="color:var(--color-neutral-500);font-size:15px"></i><span style="flex:1;font-size:14px">reddit.com</span><i class="ph ph-x" style="color:var(--color-neutral-500);font-size:14px;cursor:pointer"></i></div>
+              <div style="display:flex;align-items:center;gap:11px"><i class="ph ph-squares-four" style="color:var(--color-neutral-500);font-size:15px"></i><span style="flex:1;font-size:14px">YouTube</span><i class="ph ph-x" style="color:var(--color-neutral-500);font-size:14px;cursor:pointer"></i></div>
+            </div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:12px"><span class="muted num" style="font-size:12.5px;flex:1">4 selected</span><a class="btn btn-primary" style="height:44px;padding-inline:26px" data-go="08">Next</a></div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 07b App search — active -->
+        <sc-if value="{{ vis.s07b }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="07"></i><span class="t">Add apps</span></div>
+            <div style="display:flex;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-accent) 18%,transparent);border-radius:10px;padding:10px 11px;margin-bottom:8px"><i class="ph ph-magnifying-glass" style="color:var(--color-accent-300)"></i><span style="font-size:14px">you<span style="display:inline-block;width:1.5px;height:16px;background:var(--color-accent-300);margin-left:1px;vertical-align:-3px"></span></span><i class="ph ph-x-circle" style="color:var(--color-neutral-500);margin-left:auto"></i></div>
+            <div class="muted" style="font-size:11.5px;margin:0 0 14px">3 apps match “you”</div>
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-youtube-logo" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;font-size:14.5px">YouTube</span><span class="state-ok" style="cursor:default"><i class="ph-bold ph-check"></i>Added</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--color-divider);cursor:pointer" data-go="07"><i class="ph ph-music-notes" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;font-size:14.5px">YouTube Music</span><i class="ph ph-plus-circle" style="font-size:22px;color:var(--color-accent-300)"></i></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 2px;cursor:pointer" data-go="07"><i class="ph ph-book-open" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;font-size:14.5px">YouVersion Bible</span><i class="ph ph-plus-circle" style="font-size:22px;color:var(--color-accent-300)"></i></div>
+            </div>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="07">Done</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 08 Create step 2 -->
+        <sc-if value="{{ vis.s08 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="07"></i><span class="t">New block</span><span class="s num">2 / 5</span></div>
+            <div class="dots" style="margin-bottom:22px"><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div>
+            <h4 class="sh">Give it a name</h4>
+            <p class="muted" style="font-size:13px;margin:0 0 18px">You'll see this on the block screen list. Name it something which allows you to remember what all it blocks!!</p>
+            <input class="input" style="height:48px;font-size:17px" value="The scroll pit">
+            
+            
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="09">Next</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 09 Create step 3 friction -->
+        <sc-if value="{{ vis.s09 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="08"></i><span class="t">New block</span><span class="s num">3 / 5</span></div>
+            <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+            <h4 class="sh">What should getting in cost?</h4>
+            <p class="muted" style="font-size:13px;line-height:1.6;margin:6px 0 18px">Pick whichever you'll actually respect.</p>
+            <div style="{{ cardType }}" onClick="{{ setType }}">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-keyboard" style="{{ cardTypeIcon }}"></i><b style="font-size:15.5px;flex:1">Type a passage</b><i class="{{ cardTypeMark }}" style="{{ cardTypeIcon }}"></i></div>
+              <div style="{{ cardTypeBody }}">150 characters. Random words. Then 15 minutes before the block comes back.</div>
+            </div>
+            <div style="{{ cardWait }}" onClick="{{ setWait }}">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-hourglass" style="{{ cardWaitIcon }}"></i><b style="font-size:15.5px;flex:1">Wait it out</b><i class="{{ cardWaitMark }}" style="{{ cardWaitIcon }}"></i></div>
+              <div style="{{ cardWaitBody }}">A 60 second wait to pause the block. Then 15 minutes before the block comes back.</div>
+            </div>
+            <a class="btn btn-block" style="height:44px;margin-top:14px;font-size:13.5px;font-weight:500;background:transparent;border:1px solid var(--color-neutral-700);color:var(--color-neutral-200);display:flex;align-items:center;justify-content:center;gap:8px" data-go="09b"><i class="ph ph-sliders-horizontal" style="font-size:15px"></i>Adjust the details</a>
+            <div style="flex:1;min-height:14px"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="09c">Next</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 09b Adjust the details sheet -->
+        <sc-if value="{{ vis.s09b }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column">
+            <div class="scr" style="opacity:.32;pointer-events:none">
+              <div class="appbar"><i class="ph ph-arrow-left"></i><span class="t">New block</span><span class="s num">3 / 5</span></div>
+              <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+              <h4 class="sh">What should getting in cost?</h4>
+              <p class="muted" style="font-size:13px;line-height:1.6;margin:6px 0 18px">Pick whichever you'll actually respect.</p>
+              <div style="{{ cardType }}">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-keyboard" style="{{ cardTypeIcon }}"></i><b style="font-size:15.5px;flex:1">Type a passage</b><i class="{{ cardTypeMark }}" style="{{ cardTypeIcon }}"></i></div>
+                <div style="{{ cardTypeBody }}">150 characters. Random words.</div>
+              </div>
+              <div style="{{ cardWait }}">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-hourglass" style="{{ cardWaitIcon }}"></i><b style="font-size:15.5px;flex:1">Wait it out</b><i class="{{ cardWaitMark }}" style="{{ cardWaitIcon }}"></i></div>
+                <div style="{{ cardWaitBody }}">A 60 second wait to pause the block.</div>
+              </div>
+            </div>
+            <div style="position:absolute;inset:0;background:rgba(6,6,10,.55)" data-go="09"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--color-bg);border-top:1px solid var(--color-divider);border-radius:20px 20px 0 0;padding:8px 20px 22px;box-shadow:0 -18px 44px rgba(0,0,0,.5)">
+              <div style="width:38px;height:4px;border-radius:2px;background:var(--color-neutral-700);margin:0 auto 16px"></div>
+              <div style="display:flex;align-items:baseline;margin-bottom:4px"><h4 class="sh" style="font-size:19px;margin:0;flex:1">The details</h4><span style="font-size:12.5px;color:var(--color-accent-300);cursor:pointer">Reset</span></div>
+              <p class="muted" style="font-size:12px;line-height:1.5;margin:0 0 18px">{{ sheetSub }}</p>
+              <div style="display:flex;flex-direction:column;gap:15px">
+                <sc-if value="{{ fType }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <div class="field-lg">Passage length</div>
+                    <div class="stepper"><span class="b">–</span><span class="num" style="font-size:14px">150 characters</span><span class="b">+</span></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ fWait }}">
+                  <div>
+                    <div class="field-lg">Wait before you're in</div>
+                    <div class="stepper"><span class="b">–</span><span class="num" style="font-size:14px">60 sec</span><span class="b">+</span></div>
+                  </div>
+                </sc-if>
+                <div>
+                  <div class="field-lg">Block stays off for</div>
+                  <div class="stepper"><span class="b">–</span><span class="num" style="font-size:14px">15 min</span><span class="b">+</span></div>
+                  <div style="font-size:10.5px;color:var(--color-neutral-600);margin-top:5px">Then it comes back on its own. Minimum 10 minutes</div>
+                </div>
+              </div>
+              <a class="btn btn-primary btn-block" style="height:46px;margin-top:20px" data-go="09">Done</a>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 09c Create step 4 disabling -->
+        <sc-if value="{{ vis.s09c }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="09"></i><span class="t">New block</span><span class="s num">4 / 5</span></div>
+            <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+            <h4 class="sh">Disabling the block</h4>
+            <p class="muted" style="font-size:13px;line-height:1.6;margin:6px 0 18px">Tell us how you prefer to disable the block. It needs to be a little inconvenient!</p>
+
+            <sc-if value="{{ fType }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="border:1px solid var(--color-divider);background:var(--color-surface);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Type a bit</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-neutral-400);margin-top:4px">Type 220 characters. Random words</div>
+                </div>
+                <div style="border:1.5px solid var(--color-accent);background:var(--color-accent-900);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Type a bit more</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-accent-100);margin-top:4px">Type 350 characters. Random words. Not easy but not impossible either.</div>
+                  <div style="font-size:11.5px;color:var(--color-accent-200);margin-top:8px;display:flex;align-items:center;gap:5px"><i class="ph-bold ph-check"></i>Recommended</div>
+                </div>
+                <div style="border:1px solid var(--color-divider);background:var(--color-surface);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Make it hurt</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-neutral-400);margin-top:4px">Type 700 characters. For blocks you don't trust yourself with.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ fWait }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="border:1px solid var(--color-divider);background:var(--color-surface);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Wait a bit</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-neutral-400);margin-top:4px">Wait for 3 minutes</div>
+                </div>
+                <div style="border:1.5px solid var(--color-accent);background:var(--color-accent-900);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Wait a bit more</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-accent-100);margin-top:4px">Wait for 6 minutes</div>
+                  <div style="font-size:11.5px;color:var(--color-accent-200);margin-top:8px;display:flex;align-items:center;gap:5px"><i class="ph-bold ph-check"></i>Recommended</div>
+                </div>
+                <div style="border:1px solid var(--color-divider);background:var(--color-surface);border-radius:12px;padding:14px;cursor:pointer">
+                  <b style="font-size:15px">Make it hurt</b>
+                  <div style="font-size:12.5px;line-height:1.5;color:var(--color-neutral-400);margin-top:4px">Wait for 12 minutes. For blocks you don't trust yourself with.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="flex:1;min-height:14px"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="10">Next</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 10 Create step 4 review -->
+        <sc-if value="{{ vis.s10 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="09c"></i><span class="t">New block</span><span class="s num">5 / 5</span></div>
+            <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+            <h4 class="sh">The scroll pit</h4>
+            <div style="max-height:132px;overflow-y:auto;display:flex;flex-direction:column;margin:10px 0 18px">
+              <div style="display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-squares-four" style="font-size:14px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:13.5px">Instagram</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-squares-four" style="font-size:14px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:13.5px">TikTok</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:8px 2px"><i class="ph ph-globe" style="font-size:14px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:13.5px">reddit.com</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;background:var(--color-surface);border-radius:12px;overflow:hidden">
+              <div style="display:flex;gap:12px;padding:14px;align-items:center"><i class="{{ revIcon }}" style="font-size:20px;color:var(--color-accent-300)"></i><div style="flex:1"><div style="font-size:13.5px">To pause it</div><div class="muted" style="font-size:12px">{{ revPause }}</div></div></div>
+              <div style="display:flex;gap:12px;padding:14px;align-items:center;background:var(--color-neutral-900)"><i class="ph ph-lock-key-open" style="font-size:20px;color:var(--color-neutral-400)"></i><div style="flex:1"><div style="font-size:13.5px">To turn this block off</div><div class="muted" style="font-size:12px">{{ revOff }}</div></div></div>
+              <div style="display:flex;gap:12px;padding:14px;align-items:center"><i class="ph ph-clock-countdown" style="font-size:20px;color:var(--color-accent-300)"></i><div style="flex:1"><div style="font-size:13.5px">Each pause lasts</div><div class="muted" style="font-size:12px">15 minutes, then re-arms</div></div></div>
+            </div>
+            <p class="muted" style="font-size:12px;line-height:1.5;margin:14px 0 0">It'll be saved switched <b style="color:var(--color-neutral-300)">off</b>. Nothing happens until you turn it on.</p>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="06">Save block</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 11 Conflict dialog -->
+        <sc-if value="{{ vis.s11 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column">
+            <div class="scr" style="filter:brightness(.5);pointer-events:none">
+              <div class="appbar"><i class="ph ph-arrow-left"></i><span class="t">New block</span><span class="s num">1 / 4</span></div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                <div style="display:flex;align-items:center;gap:11px"><div style="width:32px;height:32px;border-radius:8px;background:var(--color-neutral-900)"></div><span style="flex:1;font-size:14px">Instagram</span><i class="ph-fill ph-check-square" style="font-size:22px;color:var(--color-accent)"></i></div>
+                <div style="display:flex;align-items:center;gap:11px"><div style="width:32px;height:32px;border-radius:8px;background:var(--color-neutral-900)"></div><span style="flex:1;font-size:14px">TikTok</span><i class="ph ph-square" style="font-size:22px;color:var(--color-neutral-700)"></i></div>
+              </div>
+            </div>
+            <div style="position:absolute;inset:0;display:flex;align-items:flex-end;background:color-mix(in srgb,#0d0e16 55%,transparent)">
+              <div style="width:100%;background:var(--color-surface);border-radius:20px 20px 0 0;padding:24px 22px 26px;box-shadow:0 -8px 30px rgba(0,0,0,.5)">
+                <div style="width:40px;height:4px;border-radius:2px;background:var(--color-neutral-700);margin:0 auto 18px"></div>
+                <div style="font-size:19px;font-weight:500;margin-bottom:8px">Instagram is already in a block</div>
+                <p class="muted" style="font-size:13.5px;line-height:1.6;margin:0 0 20px">It lives in <b style="color:var(--color-neutral-200)">The scroll pit</b>. An app can only be in one block at a time. Move it over here?</p>
+                <a class="btn btn-primary btn-block" style="height:46px" data-go="07">Move it here</a>
+                <a class="btn btn-secondary btn-block" style="height:44px;margin-top:9px" data-go="07">Leave it where it is</a>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 12 Turn-on confirmation -->
+        <sc-if value="{{ vis.s12 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="padding:22px 26px 24px">
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+              <div style="width:56px;height:56px;border-radius:14px;background:var(--color-accent-900);display:grid;place-items:center;color:var(--color-accent-300);font-size:26px;margin-bottom:22px"><i class="ph ph-scribble-loop"></i></div>
+              <h4 style="font-size:25px;margin:0 0 6px;line-height:1.2">Turning on<br>The scroll pit</h4>
+              <p class="muted" style="font-size:13.5px;line-height:1.6;margin:0 0 24px">From now on, getting in will cost you something. Here's the deal you're making:</p>
+              <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><i class="ph ph-keyboard" style="font-size:22px;color:var(--color-accent-300);margin-top:2px"></i><div><div style="font-size:14.5px">To pause it, you'll type <b>150 characters</b>.</div><div class="muted" style="font-size:12.5px">About 40 seconds, every time.</div></div></div>
+              <div style="display:flex;gap:13px;align-items:flex-start"><i class="ph ph-lock-key-open" style="font-size:22px;color:var(--color-accent-300);margin-top:2px"></i><div><div style="font-size:14.5px">To turn this whole block off, you'll type <b>300 characters!</b></div><div class="muted" style="font-size:12.5px">About two and a half minutes.</div></div></div>
+              <p style="font-size:13px;line-height:1.6;margin:26px 0 0;color:var(--color-neutral-300)">This is the last easy moment. Take it if you want it.</p>
+            </div>
+            <a class="btn btn-primary btn-block" style="height:48px;font-size:15px" data-go="06">Turn it on</a>
+            <a class="btn btn-ghost btn-block" style="margin-top:8px" data-go="13">Not yet</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 13 Block detail & edit -->
+        <sc-if value="{{ vis.s13 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="06"></i><span class="t">The scroll pit</span><i class="ph ph-trash" style="font-size:19px;color:var(--color-neutral-500)" data-go="06"></i></div>
+            <div style="display:flex;align-items:center;gap:12px;background:var(--color-surface);border-radius:12px;padding:14px;margin-bottom:16px"><span class="tgl off"><span class="k"></span></span><div style="flex:1"><div style="font-size:14px;font-weight:500">Off</div><div class="muted" style="font-size:11.5px">Not enforcing right now</div></div><a class="btn btn-primary" style="height:38px;padding-inline:18px" data-go="12">Turn on</a></div>
+            <div style="display:flex;gap:8px;font-size:11.5px;color:var(--color-neutral-500);background:var(--color-neutral-900);border-radius:10px;padding:11px 13px;margin-bottom:18px"><i class="ph ph-info" style="color:var(--color-neutral-400);margin-top:1px"></i><span>A block has to be off before you can edit it. It's off now, so go ahead.</span></div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:10px">Apps &amp; sites <span style="float:right;color:var(--color-accent-300);text-transform:none;letter-spacing:0;cursor:pointer">Edit</span></div>
+            <div style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-squares-four" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">Instagram</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-squares-four" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">TikTok</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-globe" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">reddit.com</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-squares-four" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">X</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-globe" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">news.ycombinator.com</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 2px"><i class="ph ph-squares-four" style="font-size:15px;color:var(--color-neutral-500)"></i><span style="flex:1;font-size:14px">Facebook</span></div>
+            </div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:10px">The friction <span style="float:right;color:var(--color-accent-300);text-transform:none;letter-spacing:0;cursor:pointer">Edit</span></div>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+              <div style="display:flex"><span style="flex:1;color:var(--color-neutral-400)">To pause</span><span>Type 150 · ~40s</span></div>
+              <div style="display:flex"><span style="flex:1;color:var(--color-neutral-400)">To turn off</span><span>Type 350 · ~2.5m</span></div>
+              <div style="display:flex"><span style="flex:1;color:var(--color-neutral-400)">Pause lasts</span><span>15 minutes</span></div>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 14 Block screen -->
+        <sc-if value="{{ vis.s14 }}">
+          <div class="sb" style="background:#08090f"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="background:#08090f;justify-content:center;text-align:center;padding:24px 28px 24px">
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:auto;padding-top:8px">The scroll pit</div>
+            <h4 style="font-size:26px;margin:0 0 10px;line-height:1.25">Open Instagram?</h4>
+            <p class="muted" style="font-size: 14px; line-height: 1.55; margin: 0 0 auto"></p>
+            <a class="btn btn-block" style="height:58px;font-size:17.5px;font-weight:600;margin-top:24px;background:var(--color-accent-300);color:#0b0b0f;border:none;box-shadow:0 6px 22px color-mix(in srgb,var(--color-accent) 45%,transparent)" data-go="15">Not now</a>
+            <a class="btn btn-block" style="height:50px;margin-top:12px;font-size:14.5px;font-weight:500;background:rgba(12,12,16,.72);color:#fff;border:1.5px solid rgba(255,255,255,.5);backdrop-filter:blur(6px)" data-go="16">I'll do the challenge. Let me in&nbsp;🚩🙃</a>
+          </div>
+          <div class="navbar" style="background:#08090f"><span></span></div>
+        </sc-if>
+
+        <!-- 15 Walk-away -->
+        <sc-if value="{{ vis.s15 }}">
+          <div class="sb" style="background:#0b0d17"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="background:#0b0d17;justify-content:center;text-align:center;padding:24px 30px;position:relative" data-go="06">
+            <div style="width:88px;height:88px;border-radius:50%;background:var(--color-accent-900);display:grid;place-items:center;color:var(--color-accent-200);font-size:42px;margin:0 auto 28px;box-shadow:0 0 0 12px color-mix(in srgb,var(--color-accent) 8%,transparent)"><i class="ph-bold ph-check"></i></div>
+            <h4 style="font-size:26px;margin:0 0 12px">Nice! You just saved your precious time</h4>
+            <p style="font-size:15px;color:var(--color-neutral-300);margin:0">That's the 4th instance today&nbsp;🎉</p>
+            
+            <div class="tap-hint">tap to continue</div>
+          </div>
+        </sc-if>
+
+        <!-- 16 Typing challenge -->
+        <sc-if value="{{ vis.s16 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div style="display:flex;align-items:center;padding:2px 0 14px"><span style="flex:1;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">The scroll pit</span><a class="btn btn-ghost" style="font-size:13px;color:var(--color-neutral-300)" data-go="15">I'll walk away</a></div>
+            <div style="background:var(--color-neutral-900);border-radius:12px;padding:15px;font-size:15px;line-height:1.7;color:var(--color-neutral-400);margin-bottom:14px">meadow copper lantern <span style="color:var(--color-neutral-500)">gravel willow harbor drift</span> pebble amber thicket cider maple orbit velvet cobble</div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:6px">Type it out</div>
+            <div style="background:var(--color-surface);border:1px solid var(--color-accent);border-radius:12px;padding:15px;font-size:15px;line-height:1.7;min-height:96px;cursor:pointer" data-go="16b">meadow copper lantern gravel<span style="display:inline-block;width:2px;height:17px;background:var(--color-accent);vertical-align:-3px;margin-left:1px"></span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px"><div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="width:41%;height:100%;background:var(--color-accent)"></div></div><span class="muted num" style="font-size:12px">62 / 150</span></div>
+            <div style="display:flex;gap:16px;margin-top:14px;font-size:11.5px;color:var(--color-neutral-600)"><span><i class="ph ph-clipboard"></i> Paste is off</span><span><i class="ph ph-magic-wand"></i> Autocorrect off</span></div>
+            <div style="flex:1;min-height:10px"></div>
+            <div style="height:170px;background:var(--color-neutral-900);border-radius:12px 12px 0 0;margin:0 -20px -16px;display:grid;place-items:center;color:var(--color-neutral-700);font-size:12px">keyboard</div>
+          </div>
+        </sc-if>
+
+        <!-- 16b Typing challenge — mistyped -->
+        <sc-if value="{{ vis.s16b }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div style="display:flex;align-items:center;padding:2px 0 14px"><span style="flex:1;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">The scroll pit</span><a class="btn btn-ghost" style="font-size:13px;color:var(--color-neutral-300)" data-go="15">I'll walk away</a></div>
+            <div style="background:var(--color-neutral-900);border-radius:12px;padding:15px;font-size:15px;line-height:1.7;color:var(--color-neutral-400);margin-bottom:14px">meadow copper lantern gravel willow harbor drift pebble amber thicket cider maple orbit velvet cobble</div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:6px">Type it out</div>
+            <div style="background: var(--color-surface); border: 1px solid #e6c98a; border-radius: 12px; padding: 15px; font-size: 15px; line-height: 1.9; min-height: 96px; cursor: pointer; color: var(--color-neutral-200)" data-go="18">meadow copper <span style="border-bottom: 2px solid #8B0000; border-radius: 3px; padding: 1px 2px">lantren</span> <span style="border-bottom: 2px solid #8B0000; border-radius: 3px; padding: 1px 2px">graval</span><span style="display:inline-block;width:2px;height:17px;background:var(--color-accent);vertical-align:-3px;margin-left:1px"></span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:12.5px;color:#e6c98a;line-height:1.5"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="width:38%;height:100%;background:var(--color-accent)"></div></div><span class="muted num" style="font-size:12px">57 / 150</span></div>
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--color-neutral-600)"><span><i class="ph ph-eye"></i> Typo positions shown</span><span><i class="ph ph-arrows-counter-clockwise"></i> Kept what you typed</span></div>
+            <div style="flex:1;min-height:6px"></div>
+            <div style="height:150px;background:var(--color-neutral-900);border-radius:12px 12px 0 0;margin:0 -20px -16px;display:grid;place-items:center;color:var(--color-neutral-700);font-size:12px">keyboard</div>
+          </div>
+        </sc-if>
+
+        <!-- 17 Delay countdown -->
+        <sc-if value="{{ vis.s17 }}">
+          <div class="sb" style="background:transparent"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="background:radial-gradient(120% 90% at 50% 12%,#1c1f36 0%,#101120 55%,#0a0b13 100%);justify-content:center;text-align:center;padding:24px 30px 24px">
+            <div style="flex:1"></div>
+            <div style="position:relative;width:200px;height:200px;margin:0 auto 30px">
+              <svg viewBox="0 0 200 200" style="width:100%;height:100%;transform:rotate(-90deg)"><circle cx="100" cy="100" r="92" fill="none" stroke="var(--color-neutral-800)" stroke-width="4"></circle><circle cx="100" cy="100" r="92" fill="none" stroke="var(--color-accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="185"></circle></svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="num" style="font-size:52px;font-weight:300;letter-spacing:-.02em">0:47</div></div>
+            </div>
+            
+            <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+              <div style="font-size:16px;font-weight:500;color:var(--color-neutral-100)">Stay on this screen</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--color-neutral-400);max-width:250px;text-wrap:pretty">The timer only runs while you're here. It resets if you lock your phone or open another app.</div>
+            </div>
+            <div style="flex:1"></div>
+            <div style="display:inline-flex;align-items:center;gap:8px;align-self:center;font-size:12.5px;color:var(--color-accent-200);background:color-mix(in srgb,var(--color-accent) 14%,transparent);padding:8px 14px;border-radius:20px;margin-bottom:18px"><span style="width:7px;height:7px;border-radius:50%;background:var(--color-accent-300)"></span>Counting</div>
+            <a class="btn btn-block" style="background:rgba(255,255,255,.08);border:1px solid var(--color-neutral-700);color:var(--color-neutral-100);font-size:14.5px;font-weight:500;padding:14px" data-go="15">Never mind</a>
+          </div>
+        </sc-if>
+
+        <!-- 18 Floating bubble -->
+        <sc-if value="{{ vis.s18 }}">
+          <div class="sb" style="background:#000"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div style="flex:1;position:relative;background:linear-gradient(160deg,#2a2320,#0e0d12);overflow:hidden" data-go="06">
+            <div style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.16);font-size:13px">Instagram — now open</div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:70px;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:space-around;color:rgba(255,255,255,.35);font-size:20px"><i class="ph ph-house"></i><i class="ph ph-magnifying-glass"></i><i class="ph ph-plus-square"></i><i class="ph ph-film-strip"></i><i class="ph ph-user"></i></div>
+            <div style="position:absolute;top:26px;right:20px;display:inline-flex;align-items:center;gap:8px;background:color-mix(in srgb,#161826 92%,transparent);border:1px solid var(--color-accent);border-radius:26px;padding:8px 14px 8px 11px;box-shadow:0 6px 20px rgba(0,0,0,.5)"><i class="ph-fill ph-hourglass-medium" style="color:var(--color-accent-300);font-size:16px"></i><span class="num" style="font-size:15px;font-weight:500;color:#fff">12:04</span></div>
+            <div class="tap-hint" style="color:rgba(255,255,255,.4)">draggable · tap to go back</div>
+          </div>
+        </sc-if>
+
+        <!-- 19 Ongoing notification -->
+        <sc-if value="{{ vis.s19 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="background:linear-gradient(#141520,#0c0d15);padding:8px 16px" data-go="18">
+            <div class="num" style="text-align:center;font-size:15px;color:var(--color-neutral-400);margin:8px 0 20px">Fri 14 Aug</div>
+            <div style="background:var(--color-surface);border-radius:16px;padding:14px 15px">
+              <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:var(--color-neutral-400);margin-bottom:9px"><span style="width:18px;height:18px;border-radius:5px;background:var(--color-accent-800);display:grid;place-items:center;color:var(--color-accent-200);font-size:11px"><i class="ph-fill ph-hourglass-medium"></i></span>TimeShrine · now <span style="flex:1"></span><i class="ph ph-caret-down"></i></div>
+              <div style="font-size:14.5px;font-weight:500;margin-bottom:3px">The scroll pit is paused</div>
+              <div style="font-size:13px;color:var(--color-neutral-400)">12:04 left · re-arms on its own</div>
+              <div style="height:5px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden;margin-top:11px"><div style="width:62%;height:100%;background:var(--color-accent)"></div></div>
+            </div>
+            <div style="text-align:center;font-size:11.5px;color:var(--color-neutral-600);margin-top:14px"><i class="ph ph-lock-simple"></i> Stays until the pause ends — you can't swipe it away</div>
+            <div style="flex:1"></div>
+          </div>
+        </sc-if>
+
+        <!-- 20 Turn-off typing -->
+        <sc-if value="{{ vis.s20 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div style="display:flex;align-items:center;padding:2px 0 12px"><span style="flex:1;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Turning off · The scroll pit</span><a class="btn btn-ghost" style="font-size:13px;color:var(--color-neutral-300)" data-go="13">Leave it on</a></div>
+            <div style="display:flex;gap:9px;background:var(--color-neutral-900);border-radius:10px;padding:12px 13px;margin-bottom:14px;font-size:12.5px;color:var(--color-neutral-300);line-height:1.5"><i class="ph ph-lock-key" style="color:var(--color-accent-300);margin-top:1px"></i><span>Type in 350 characters to turn this block off.</span></div>
+            <div style="background:var(--color-neutral-900);border-radius:12px;padding:15px;font-size:14px;line-height:1.7;color:var(--color-neutral-400);margin-bottom:12px">harbor cinder maple velvet orchard timber pebble cobalt meadow lantern gravel willow amber drift thicket cider ...</div>
+            <div style="background:var(--color-surface);border:1px solid var(--color-accent);border-radius:12px;padding:14px;font-size:14px;line-height:1.7;min-height:60px;color:var(--color-neutral-200);cursor:pointer" data-go="06">harbor cinder maple<span style="display:inline-block;width:2px;height:16px;background:var(--color-accent);vertical-align:-3px"></span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="width:25%;height:100%;background:var(--color-accent)"></div></div><span class="muted num" style="font-size:12px">88 / 350</span></div>
+            <div style="flex:1;min-height:8px"></div>
+            <div style="height:150px;background:var(--color-neutral-900);border-radius:12px 12px 0 0;margin:0 -20px -16px;display:grid;place-items:center;color:var(--color-neutral-700);font-size:12px">keyboard</div>
+          </div>
+        </sc-if>
+
+        <!-- 21 Stats -->
+        <sc-if value="{{ vis.s21 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="overflow-y:auto;gap:24px">
+            <div class="appbar" style="padding-bottom:0"><i class="ph ph-arrow-left" data-go="06"></i><span class="t">Your time</span><span class="s">Weekly info</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--color-neutral-400)">Time saved per day<i class="ph ph-question" style="font-size:15px;color:var(--color-neutral-500);cursor:pointer" onClick="{{ openSaved }}"></i></div>
+              <div style="display:flex;align-items:baseline;gap:8px"><span class="num" style="font-size:68px;font-weight:300;line-height:1;letter-spacing:-.03em;color:var(--color-accent-200)">48m</span><span style="font-size:15px;color:var(--color-neutral-500)">/ day</span></div>
+              <div style="font-size:14px;color:var(--color-neutral-200)">5h 36m saved so far</div>
+              <div style="font-size:12px;color:var(--color-neutral-500);margin-top:2px">Screen time 3h 40m/day · ↓ 22% vs your usual</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none">
+              <div style="background:var(--color-surface);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span class="num" style="font-size:24px;font-weight:500">12</span><span style="font-size:11.5px;color:var(--color-neutral-500)">Attempts / day</span></div>
+              <div style="background:var(--color-surface);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span class="num" style="font-size:24px;font-weight:500">62%</span><span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--color-neutral-500)">Nope rate<i class="ph ph-question" style="font-size:13px;color:var(--color-neutral-500);cursor:pointer" onClick="{{ openNope }}"></i></span><div style="height:3px;border-radius:2px;background:var(--color-neutral-800);margin-top:4px"><div style="width:62%;height:100%;border-radius:2px;background:var(--color-accent)"></div></div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;flex:none">
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Time saved on blocked apps<i class="ph ph-question" style="font-size:14px;color:var(--color-neutral-500);cursor:pointer" onClick="{{ openSaved }}"></i></div>
+              <div style="position:relative">
+                <div style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
+                  <sc-for list="{{ statApps }}" as="a" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--color-divider);flex:none"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:500">{{ a.n }}</span><span style="font-size:11.5px;color:var(--color-neutral-500)">{{ a.nopes }} nopes this week · ~{{ a.v }} per visit</span></div><span class="num" style="font-size:14px;color:var(--color-accent-200)">{{ a.t }}</span></div></sc-for>
+                </div>
+                <div style="position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(transparent,var(--color-bg));pointer-events:none"></div>
+              </div>
+            </div>
+            <div style="background:var(--color-surface);border-radius:14px;padding:16px 14px 12px;display:flex;flex-direction:column;gap:12px;flex:none">
+              <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:13px;font-weight:500">Time saved</span><span class="num" style="font-size:12px;color:var(--color-accent-200)">5h 36m</span></div>
+              <div style="display:flex;align-items:flex-end;gap:7px;height:108px">
+                <sc-for list="{{ statSaved }}" as="b" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%"><span class="num" style="font-size:10px;white-space:nowrap;color:{{ b.vc }}">{{ b.lab }}</span><div style="width:100%;height:{{ b.h }}px;border-radius:4px;background:{{ b.bg }};box-shadow:{{ b.glow }}"></div></div></sc-for>
+              </div>
+              <div style="display:flex;gap:7px;border-top:1px solid var(--color-divider);padding-top:8px"><sc-for list="{{ statSaved }}" as="b" hint-placeholder-count="7"><span style="flex:1;text-align:center;font-size:10px;color:{{ b.lc }}">{{ b.d }}</span></sc-for></div>
+            </div>
+            <div style="background:var(--color-surface);border-radius:14px;padding:16px 14px 12px;display:flex;flex-direction:column;gap:12px;flex:none">
+              <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:13px;font-weight:500">Time spent after the challenge</span><span class="num" style="font-size:12px;color:var(--color-neutral-400)">2h 38m</span></div>
+              <div style="display:flex;align-items:flex-end;gap:7px;height:108px">
+                <sc-for list="{{ statSpent }}" as="b" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%"><span class="num" style="font-size:10px;white-space:nowrap;color:var(--color-neutral-400)">{{ b.lab }}</span><div style="width:100%;height:{{ b.h }}px;border-radius:4px;background:{{ b.bgS }}"></div></div></sc-for>
+              </div>
+              <div style="display:flex;gap:7px;border-top:1px solid var(--color-divider);padding-top:8px"><sc-for list="{{ statSpent }}" as="b" hint-placeholder-count="7"><span style="flex:1;text-align:center;font-size:10px;color:{{ b.lc }}">{{ b.d }}</span></sc-for></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:14px;border:1px solid var(--color-neutral-800);flex:none">
+              <div style="font-size:14px;font-weight:500">Recalibrate time spent on apps</div>
+              <div style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-400)">Usual time per app seems off? Hit recalibrate and we'll re-measure it from your last 7 days.</div>
+              <a class="btn btn-secondary btn-block" style="height:40px">Recalibrate</a>
+            </div>
+            <div style="display:flex;gap:14px;justify-content:center;font-size:11px;flex:none"><a data-go="21b" style="color:var(--color-neutral-500)">No-access state</a><a data-go="21c" style="color:var(--color-neutral-500)">No-blocks state</a></div>
+          </div>
+          <div class="navbar"><span></span></div>
+          <sc-if value="{{ infoSaved }}">
+          <div style="position:absolute;inset:5px;border-radius:29px;overflow:hidden;z-index:5">
+            <div style="position:absolute;inset:0;background:rgba(8,9,15,.7);cursor:pointer" onClick="{{ closeInfo }}"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--color-surface);border-radius:22px 22px 0 0;padding:10px 22px 28px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-lg)">
+              <div style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-700);align-self:center"></div>
+              <div style="font-size:18px;font-weight:500">Time saved</div>
+              <div style="font-size:13.5px;line-height:1.55;color:var(--color-neutral-300)">Every time you nope out, you skip a visit. We count the time that visit would usually have taken.</div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:12px;border-radius:12px;background:var(--color-neutral-900);font-size:12px;color:var(--color-neutral-300)"><span style="padding:4px 8px;border-radius:7px;white-space:nowrap;border:1px solid var(--color-neutral-700)">Nopes</span><span style="color:var(--color-neutral-500)">×</span><span style="padding:4px 8px;border-radius:7px;white-space:nowrap;border:1px solid var(--color-neutral-700)">Usual visit length</span><span style="color:var(--color-neutral-500)">=</span><span style="padding:4px 8px;border-radius:7px;white-space:nowrap;border:1px solid var(--color-accent);color:var(--color-accent-200)">Time saved</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px"><div style="font-size:13px;font-weight:500">How we get "usual visit length"</div><div style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-400)">We look at your last 7 days before you installed Toki. Total time in an app ÷ number of times you opened it. In the absence of data, we assume 10 mins per visit.</div></div>
+              <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-500)">Tried again within 5 minutes? That counts as one nope.</div>
+              <a class="btn btn-secondary btn-block" style="height:42px" onClick="{{ closeInfo }}">Got it</a>
+            </div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ infoNope }}">
+          <div style="position:absolute;inset:5px;border-radius:29px;overflow:hidden;z-index:5">
+            <div style="position:absolute;inset:0;background:rgba(8,9,15,.7);cursor:pointer" onClick="{{ closeInfo }}"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--color-surface);border-radius:22px 22px 0 0;padding:10px 22px 28px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-lg)">
+              <div style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-700);align-self:center"></div>
+              <div style="font-size:18px;font-weight:500">Nope rate</div>
+              <div style="font-size:13.5px;line-height:1.55;color:var(--color-neutral-300)">How often you walked away instead of pushing through the challenge.</div>
+              <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--color-neutral-900)"><div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px"><div style="width:62%;background:var(--color-accent)"></div><div style="flex:1;background:var(--color-neutral-700)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--color-accent-200)">52 nopes</span><span style="color:var(--color-neutral-400)">32 pushed through</span></div></div>
+              <div style="font-size:13px;color:var(--color-neutral-300)">52 of 84 tries this week = <span style="color:var(--color-accent-200)">62%</span>. Higher is better.</div>
+              <a class="btn btn-secondary btn-block" style="height:42px" onClick="{{ closeInfo }}">Got it</a>
+            </div>
+          </div>
+          </sc-if>
+        </sc-if>
+
+        <!-- 21b Stats — no usage access -->
+        <sc-if value="{{ vis.s21b }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="gap:24px">
+            <div class="appbar" style="padding-bottom:0"><i class="ph ph-arrow-left" data-go="21"></i><span class="t">Your time</span></div>
+            <div style="background:var(--color-surface);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:inset 0 0 0 1px var(--color-neutral-800)">
+              <div style="font-size:18px;font-weight:500;line-height:1.3">See how much time you're saving</div>
+              <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-400)">Allow usage access so we can see how long you usually spend in each app. We only read app time, never what you do inside them.</div>
+              <a class="btn btn-primary btn-block" style="height:44px;margin-top:4px" data-go="21">Allow usage access</a>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 21c Stats — no blocks -->
+        <sc-if value="{{ vis.s21c }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="21"></i><span class="t">Your time</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding-bottom:60px">
+              <div style="font-size:24px;font-weight:500;line-height:1.25;letter-spacing:-.01em">Nothing to brag about… yet.</div>
+              <div style="font-size:14px;line-height:1.55;color:var(--color-neutral-400)">Create a block to see how much time you save.</div>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 22 Settings -->
+        <sc-if value="{{ vis.s22 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="06"></i><span class="t">Settings</span></div>
+            <div style="display:flex;flex-direction:column;gap:1px;background:var(--color-surface);border-radius:12px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:13px;padding:14px;cursor:pointer" data-go="02"><i class="ph ph-heartbeat" style="font-size:19px;color:var(--color-accent-300)"></i><div style="flex:1"><div style="font-size:14px">Permission health</div><div class="muted" style="font-size:11.5px">All 4 granted</div></div><span class="state-ok" style="background:transparent;border:1px solid var(--color-accent-700)"><i class="ph-bold ph-check"></i></span></div>
+              <div style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--color-neutral-900)"><i class="ph ph-globe" style="font-size:19px;color:var(--color-neutral-400)"></i><div style="flex:1"><div style="font-size:14px">Supported browsers</div><div class="muted" style="font-size:11.5px">Chrome, Firefox, Samsung Internet</div></div><i class="ph ph-caret-right muted"></i></div>
+              <div style="display:flex;align-items:center;gap:13px;padding:14px"><i class="ph ph-chat-circle-text" style="font-size:19px;color:var(--color-neutral-400)"></i><div style="flex:1"><div style="font-size:14px">Countdown messages</div><div class="muted" style="font-size:11.5px">Updated remotely</div></div><i class="ph ph-caret-right muted"></i></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;background:var(--color-surface);border-radius:12px;overflow:hidden;margin-top:14px">
+              <div style="display:flex;align-items:center;gap:13px;padding:14px"><i class="ph ph-moon" style="font-size:19px;color:var(--color-neutral-400)"></i><div style="flex:1;font-size:14px">Theme</div><span class="muted" style="font-size:13px">Dark</span></div>
+              <div style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--color-neutral-900);cursor:pointer" data-go="23"><i class="ph ph-paper-plane-tilt" style="font-size:19px;color:var(--color-neutral-400)"></i><div style="flex:1;font-size:14px">Send feedback</div><i class="ph ph-caret-right muted"></i></div>
+              <div style="display:flex;align-items:center;gap:13px;padding:14px"><i class="ph ph-info" style="font-size:19px;color:var(--color-neutral-400)"></i><div style="flex:1;font-size:14px">About TimeShrine</div><span class="muted" style="font-size:12px">v0.1</span></div>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+        <!-- 23 Feedback -->
+        <sc-if value="{{ vis.s23 }}">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left" data-go="06"></i><span class="t">Send feedback</span></div>
+            <h4 class="sh" style="font-size:21px">How's it going?</h4>
+            <p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 16px">You're one of a handful of people trying this. Tell us what's working and what's driving you up the wall.</p>
+            <textarea class="input" style="min-height:150px;font-size:14px;line-height:1.6" placeholder="What's on your mind…"></textarea>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px"><span style="flex:1;font-size:13.5px">Attach a diagnostic log<div class="muted" style="font-size:11.5px">Helps us track down bugs</div></span><span class="tgl on"><span class="k"></span></span></div>
+            <div style="flex:1"></div>
+            <a class="btn btn-primary btn-block" style="height:46px" data-go="06">Send it</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </sc-if>
+
+      </div></div>
+    </div>
+  </div>
+
+  <!-- NEW SCREENS: proposals, outside the prototype -->
+  <section style="margin:80px auto 0;max-width:900px;border-top:1px solid var(--color-neutral-900);padding-top:34px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h5 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--color-neutral-500);margin:0">Proposed changes — not wired into the prototype</h5>
+      <p style="font-size:13px;line-height:1.6;color:var(--color-neutral-400);margin:0;max-width:620px">The user picks how long a pause lasts at the moment they ask for it, so the fixed “Block stays off for” setting leaves block creation.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start">
+
+      <div data-screen-label="14 v2 Block screen" style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">14 v2</span><span style="font-size:14px;font-weight:500">Block screen · pick pause length</span></div>
+        <div class="screen"><div class="inner">
+          <div class="sb" style="background:#08090f"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr" style="background:#08090f;justify-content:center;text-align:center;padding:24px 28px 100px">
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:auto;padding-top:8px">The scroll pit</div>
+            <h4 style="font-size:26px;margin:0 0 10px;line-height:1.25">Open Instagram?</h4>
+            <div style="margin:0 0 auto"></div>
+            <a class="btn btn-block" style="height:58px;font-size:17.5px;font-weight:600;margin-top:24px;background:var(--color-accent-400);color:#0b0b0f;border:none;box-shadow:0 6px 22px color-mix(in srgb,var(--color-accent) 40%,transparent)">Not now</a>
+            <div style="position:relative;margin-top:12px">
+              <a class="btn btn-block" style="height:50px;font-size:14.5px;font-weight:500;background:rgba(12,12,16,.72);color:#fff;border:1.5px solid rgba(255,255,255,.5);backdrop-filter:blur(6px)" onClick="{{ toggleDrop }}">I'll do the challenge. Let me in&nbsp;🚩🙃</a>
+              <div style="position:absolute;left:0;right:0;top:100%;padding-top:8px;display:flex;flex-direction:column;gap:6px;pointer-events:{{ dropPE }}">
+                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-400);opacity:{{ dropOp }};transform:translateY({{ dropY }});transition:opacity .25s ease,transform .35s cubic-bezier(.2,.8,.2,1)">Minutes to unlock</div>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ unlockChips }}" as="c" hint-placeholder-count="4">
+                    <a style="{{ c.style }}" onClick="{{ c.pick }}">{{ c.m }}</a>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="navbar" style="background:#08090f"><span></span></div>
+        </div></div>
+        <div style="font-size:12px;line-height:1.55;color:var(--color-neutral-500);max-width:340px">Tap the challenge button to see the minutes drop in. “Not now” moves to accent-400. Both buttons sit ~76px higher to make room.</div>
+      </div>
+
+      <div data-screen-label="09b v2 Adjust details" style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">09b v2</span><span style="font-size:14px;font-weight:500">Create · adjust details</span></div>
+        <div class="screen"><div class="inner">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column">
+            <div class="scr" style="opacity:.32;pointer-events:none">
+              <div class="appbar"><i class="ph ph-arrow-left"></i><span class="t">New block</span><span class="s num">3 / 5</span></div>
+              <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+              <h4 class="sh">What should getting in cost?</h4>
+              <p class="muted" style="font-size:13px;line-height:1.6;margin:6px 0 18px">Pick whichever you'll actually respect.</p>
+              <div style="border:1.5px solid var(--color-accent);background:var(--color-accent-900);border-radius:14px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-keyboard" style="font-size:20px;color:var(--color-accent-200)"></i><b style="font-size:15.5px;flex:1">Type a passage</b><i class="ph-fill ph-check-circle" style="font-size:20px;color:var(--color-accent-200)"></i></div>
+                <div style="font-size:13px;line-height:1.55;color:var(--color-accent-100)">150 characters. Random words.</div>
+              </div>
+              <div style="border:1px solid var(--color-divider);background:var(--color-surface);border-radius:14px;padding:16px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><i class="ph ph-hourglass" style="font-size:20px;color:var(--color-neutral-400)"></i><b style="font-size:15.5px;flex:1">Wait it out</b><i class="ph ph-circle" style="font-size:20px;color:var(--color-neutral-400)"></i></div>
+                <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-400)">A 60 second wait to pause the block.</div>
+              </div>
+            </div>
+            <div style="position:absolute;inset:0;background:rgba(6,6,10,.55)"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--color-bg);border-top:1px solid var(--color-divider);border-radius:20px 20px 0 0;padding:8px 20px 22px;box-shadow:0 -18px 44px rgba(0,0,0,.5)">
+              <div style="width:38px;height:4px;border-radius:2px;background:var(--color-neutral-700);margin:0 auto 16px"></div>
+              <div style="display:flex;align-items:baseline;margin-bottom:4px"><h4 class="sh" style="font-size:19px;margin:0;flex:1">The details</h4><span style="font-size:12.5px;color:var(--color-accent-300);cursor:pointer">Reset</span></div>
+              <p class="muted" style="font-size:12px;line-height:1.5;margin:0 0 18px">Typing a passage to get in.</p>
+              <div>
+                <div class="field-lg">Passage length</div>
+                <div class="stepper"><span class="b">–</span><span class="num" style="font-size:14px">150 characters</span><span class="b">+</span></div>
+              </div>
+              <div style="display:flex;gap:8px;font-size:11.5px;line-height:1.5;color:var(--color-neutral-500);margin-top:14px"><i class="ph ph-clock-countdown" style="color:var(--color-neutral-400);margin-top:1px"></i><span>You'll pick how long each pause lasts when you unlock.</span></div>
+              <a class="btn btn-primary btn-block" style="height:46px;margin-top:20px">Done</a>
+            </div>
+          </div>
+          <div class="navbar"><span></span></div>
+        </div></div>
+        <div style="font-size:12px;line-height:1.55;color:var(--color-neutral-500);max-width:340px">“Block stays off for” removed. One line tells the user where pause length now lives.</div>
+      </div>
+
+      <div data-screen-label="09 v3 Pick friction inline" style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">09 v3</span><span style="font-size:14px;font-weight:500">Create · pick cost, tune inline</span></div>
+        <div class="screen"><div class="inner">
+          <div class="sb"><b>9:41</b><span class="ico"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="scr">
+            <div class="appbar"><i class="ph ph-arrow-left"></i><span class="t">New block</span><span class="s num">3 / 5</span></div>
+            <div class="dots" style="margin-bottom:18px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+            <h4 class="sh">What should getting in cost?</h4>
+            <p class="muted" style="font-size:13px;line-height:1.6;margin:6px 0 18px">Pick whichever you'll actually respect.</p>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="{{ v3TypeCard }}">
+                <div style="display:flex;align-items:center;gap:10px;padding:16px;cursor:pointer" onClick="{{ v3PickType }}"><i class="ph ph-keyboard" style="{{ v3TypeIcon }}"></i><b style="font-size:15.5px;flex:1">Type a passage</b><i class="{{ v3TypeMark }}" style="{{ v3TypeIcon }}"></i></div>
+                <div style="display:grid;grid-template-rows:{{ v3TypeRows }};transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1)">
+                  <div style="overflow:hidden;min-height:0">
+                    <div style="padding:0 16px 16px;opacity:{{ v3TypeOp }};transform:translateY({{ v3TypeY }});transition:opacity .25s ease .08s,transform .38s cubic-bezier(.2,.9,.25,1.15) .08s">
+                      <div class="field-lg">Passage length</div>
+                      <div class="stepper"><span class="b" style="cursor:pointer" onClick="{{ v3CharsDown }}">–</span><span class="num" style="font-size:14px">{{ v3Chars }} characters</span><span class="b" style="cursor:pointer" onClick="{{ v3CharsUp }}">+</span></div>
+                      <div style="font-size:11.5px;color:var(--color-neutral-500);margin-top:6px">Random words · about {{ v3CharsEst }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="{{ v3WaitCard }}">
+                <div style="display:flex;align-items:center;gap:10px;padding:16px;cursor:pointer" onClick="{{ v3PickWait }}"><i class="ph ph-hourglass" style="{{ v3WaitIcon }}"></i><b style="font-size:15.5px;flex:1">Wait it out</b><i class="{{ v3WaitMark }}" style="{{ v3WaitIcon }}"></i></div>
+                <div style="display:grid;grid-template-rows:{{ v3WaitRows }};transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1)">
+                  <div style="overflow:hidden;min-height:0">
+                    <div style="padding:0 16px 16px;opacity:{{ v3WaitOp }};transform:translateY({{ v3WaitY }});transition:opacity .25s ease .08s,transform .38s cubic-bezier(.2,.9,.25,1.15) .08s">
+                      <div class="field-lg">Wait before you're in</div>
+                      <div class="stepper"><span class="b" style="cursor:pointer" onClick="{{ v3SecsDown }}">–</span><span class="num" style="font-size:14px">{{ v3Secs }} sec</span><span class="b" style="cursor:pointer" onClick="{{ v3SecsUp }}">+</span></div>
+                      <div style="font-size:11.5px;color:var(--color-neutral-500);margin-top:6px">A countdown you can't skip.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;font-size:11.5px;line-height:1.5;color:var(--color-neutral-500);margin-top:14px"><i class="ph ph-clock-countdown" style="color:var(--color-neutral-400);margin-top:1px"></i><span>You'll pick how long each pause lasts when you unlock.</span></div>
+            <div style="flex:1;min-height:14px"></div>
+            <a class="btn btn-primary btn-block" style="height:46px;opacity:{{ v3NextOp }}">Next</a>
+          </div>
+          <div class="navbar"><span></span></div>
+        </div></div>
+        <div style="font-size:12px;line-height:1.55;color:var(--color-neutral-500);max-width:340px">Replaces 09 + 09b. No “Adjust the details” button, no sheet. Tap a card: its one control unfolds beneath it with the default already set, so the user can tweak or just hit Next. Tapping the other card folds this one and opens that one.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER: legend + principle + tone -->
+  <div class="foot">
+    <div class="foot-grid">
+      <div>
+        <h5>Reading the mocks</h5>
+        <div class="leg"><span class="tgl on" style="pointer-events:none"><span class="k"></span></span>Block <b style="color:var(--color-neutral-100)">On</b> — enforcing</div>
+        <div class="leg"><span class="tgl off" style="pointer-events:none"><span class="k"></span></span>Block <b style="color:var(--color-neutral-100)">Off</b> — exists, not enforcing</div>
+        <div class="leg"><span class="pausepill" style="pointer-events:none"><i class="ph-fill ph-pause"></i>12:04</span>Paused — open, counting down to re-arm</div>
+        <p class="muted" style="font-size:12px;line-height:1.6;margin:14px 0 0">The prominent button is always the walk-away. Getting in is offered plainly, never hidden and never shamed.</p>
+      </div>
+      <div>
+        <h5>Countdown voice (§9)</h5>
+        <p class="tone-l">"No rush. The feed will still be there."</p>
+        <p class="tone-l">"Nothing to do here. That's the point."</p>
+        <p class="tone-l">"Past you set this up. Present you gets to decide."</p>
+        <p class="tone-l">"If you still want in when this ends, that's a fine answer."</p>
+        <p class="tone-l">"Urges usually pass quicker than you'd think."</p>
+        <p class="muted" style="font-size:11.5px;margin:12px 0 0">Shown at random. No guilt, no productivity talk, choice left open.</p>
+      </div>
+    </div>
+
+    <!-- state variants reference -->
+    <div class="ref">
+      <h5 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--color-neutral-500);margin:0">Component states — reference</h5>
+      <div class="ref-row">
+        <div class="ref-item">
+          <div class="ref-cap">Countdown <span>— advancing vs stalled (§6, the one to get right)</span></div>
+          <div style="display:flex;gap:12px">
+            <div class="tile" style="flex:1;text-align:center;background:radial-gradient(120% 90% at 50% 0%,#1c1f36,#0e1020)"><div class="num" style="font-size:34px;font-weight:300">0:47</div><div style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-accent-200);background:color-mix(in srgb,var(--color-accent) 14%,transparent);padding:5px 9px;border-radius:20px;margin-top:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-300)"></span>Counting</div></div>
+            <div class="tile" style="flex:1;text-align:center;background:radial-gradient(120% 90% at 50% 0%,#2a2417,#15130c)"><div class="num" style="font-size:34px;font-weight:300;color:var(--color-neutral-400)">0:47</div><div style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:#e6c98a;background:color-mix(in srgb,#e6c98a 14%,transparent);padding:5px 9px;border-radius:20px;margin-top:8px"><i class="ph-fill ph-hand-tap"></i>Set down</div></div>
+          </div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-cap">Permission row <span>— pending / granted</span></div>
+          <div class="prow tile" style="padding:12px"><div class="pi" style="background:var(--color-neutral-900);color:var(--color-neutral-500)"><i class="ph ph-bell"></i></div><div style="flex:1"><div class="pt">Notifications</div><div class="pd">Shows the pause countdown</div></div><span class="state-pend" style="cursor:default">Grant</span></div>
+          <div class="prow tile" style="padding:12px"><div class="pi"><i class="ph ph-eye"></i></div><div style="flex:1"><div class="pt">Accessibility</div><div class="pd">Tells us which app is open</div></div><span class="state-ok"><i class="ph-bold ph-check"></i>Granted</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { cur: '01', fMode: 'type', bMode: 'apps', info: null };
+
+  order = ['01','02','03','04','05','06','07','07b','08','09','09b','09c','10','11','12','13','14','15','16','16b','17','18','19','20','21','21b','21c','22','23'];
+
+  names = {
+    '01':'Welcome', '02':'Permission checklist', '03':'Accessibility explainer', '04':'Battery settings',
+    '05':'Block list — empty', '06':'Block list — populated', '07':'Create · add apps & sites', '07b':'Create · app search', '08':'Create · name it',
+    '09':'Create · getting in', '09b':'Create · adjust details', '09c':'Create · disabling', '10':'Create · review & save', '11':'Conflict dialog',
+    '12':'Turn-on confirmation', '13':'Block detail & edit',
+    '14':'Block screen', '15':'Walk-away moment', '16':'Typing challenge', '16b':'Typing — mistyped', '17':'Delay countdown',
+    '18':'Floating bubble', '19':'Ongoing notification', '20':'Turn-off typing',
+    '21':'Stats', '21b':'Stats — no usage access', '21c':'Stats — no blocks', '22':'Settings', '23':'Feedback'
+  };
+
+  groups = [
+    { id:'A', t:'Onboarding', s:['01','02','03','04'] },
+    { id:'B', t:'Blocks & create', s:['05','06','07','07b','08','09','09b','09c','10','11'] },
+    { id:'C', t:'Turn on & edit', s:['12','13'] },
+    { id:'D', t:'The interruption', s:['14','15','16','16b','17'] },
+    { id:'E·F', t:'Pause & turn off', s:['18','19','20'] },
+    { id:'G', t:'Utilities', s:['21','21b','21c','22','23'] }
+  ];
+
+  mkBars(arr) {
+    const days = ['M','T','W','T','F','S','Today'];
+    const fmt = m => m >= 100 ? Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) : '') : m + 'm';
+    const max = Math.max(...arr, 1);
+    return arr.map((m, i) => {
+      const today = i === 6;
+      return {
+        d: days[i], lab: fmt(m), h: m ? Math.max(4, Math.round(m / max * 74)) : 3,
+        bg: m ? (today ? 'var(--color-accent)' : 'var(--color-accent-700)') : 'var(--color-neutral-800)',
+        glow: today && m ? '0 0 14px color-mix(in srgb, var(--color-accent) 45%, transparent)' : 'none',
+        bgS: m ? (today ? 'var(--color-neutral-400)' : 'var(--color-neutral-700)') : 'var(--color-neutral-800)',
+        vc: today ? 'var(--color-accent-200)' : 'var(--color-neutral-400)',
+        lc: today ? 'var(--color-neutral-100)' : 'var(--color-neutral-500)'
+      };
+    });
+  }
+
+  go(id){ if(id) this.setState({ cur: id, info: null }); }
+
+  onNav = (e) => {
+    const el = e.target.closest('[data-go]');
+    if (!el) return;
+    e.preventDefault();
+    this.go(el.getAttribute('data-go'));
+  };
+
+  renderVals() {
+    const cur = this.state.cur;
+    const idx = this.order.indexOf(cur);
+    const vis = {};
+    this.order.forEach(id => { vis['s' + id] = (id === cur); });
+    const activeStyle = 'background:var(--color-accent-900);color:var(--color-accent-100)';
+    const fType = this.state.fMode === 'type';
+    const bApps = this.state.bMode !== 'sites';
+    const segOn = 'flex:1;text-align:center;padding:8px;font-size:13px;border-radius:8px;background:var(--color-accent-900);color:var(--color-accent-200);box-shadow:inset 0 0 0 1px var(--color-accent);cursor:pointer';
+    const segOff = 'flex:1;text-align:center;padding:8px;font-size:13px;color:var(--color-neutral-400);cursor:pointer';
+    const cardOn = 'border:1.5px solid var(--color-accent);background:var(--color-accent-900);border-radius:14px;padding:16px;cursor:pointer;';
+    const cardOff = 'border:1px solid var(--color-divider);background:var(--color-surface);border-radius:14px;padding:16px;cursor:pointer;';
+    const iconOn = 'font-size:20px;color:var(--color-accent-200)';
+    const iconOff = 'font-size:20px;color:var(--color-neutral-400)';
+    const markOn = 'ph-fill ph-check-circle';
+    const markOff = 'ph ph-circle';
+    const bodyOn = 'font-size:13px;line-height:1.55;color:var(--color-accent-100)';
+    const bodyOff = 'font-size:13px;line-height:1.55;color:var(--color-neutral-400)';
+    const drop = !!this.state.drop;
+    const unlockChips = [5, 10, 15, 20].map((m, i) => {
+      const on = this.state.pick === m;
+      const d = drop ? i * 60 + 80 : (3 - i) * 30;
+      return {
+        m,
+        pick: () => this.setState({ pick: m }),
+        style: 'flex:1;height:36px;display:grid;place-items:center;border-radius:10px;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer;backdrop-filter:blur(6px);'
+          + (on ? 'background:var(--color-accent-900);border:1.5px solid var(--color-accent-400);color:var(--color-accent-100);'
+                : 'background:rgba(12,12,16,.72);border:1px solid rgba(255,255,255,.3);color:var(--color-neutral-100);')
+          + 'opacity:' + (drop ? 1 : 0) + ';transform:translateY(' + (drop ? '0' : '-18px') + ');'
+          + 'transition:opacity .26s ease ' + d + 'ms,transform .42s cubic-bezier(.2,.9,.25,1.15) ' + d + 'ms,background .15s,border-color .15s'
+      };
+    });
+    const v3 = this.state.v3 || null;
+    const v3Chars = this.state.v3Chars ?? 150;
+    const v3Secs = this.state.v3Secs ?? 60;
+    const v3card = (on) => 'border-radius:14px;transition:background .2s,border-color .2s;' + (on
+      ? 'border:1.5px solid var(--color-accent);background:var(--color-accent-900);'
+      : 'border:1px solid var(--color-divider);background:var(--color-surface);');
+    const v3icon = (on) => 'font-size:20px;color:' + (on ? 'var(--color-accent-200)' : 'var(--color-neutral-400)');
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const est = Math.round(v3Chars / 4);
+    const v3open = (k) => v3 === k;
+    const v3Pick = (k) => (e) => { e && e.stopPropagation(); this.setState({ v3: k }); };
+    return {
+      v3TypeCard: v3card(v3open('type')), v3WaitCard: v3card(v3open('wait')),
+      v3TypeIcon: v3icon(v3open('type')), v3WaitIcon: v3icon(v3open('wait')),
+      v3TypeMark: v3open('type') ? 'ph-fill ph-check-circle' : 'ph ph-circle',
+      v3WaitMark: v3open('wait') ? 'ph-fill ph-check-circle' : 'ph ph-circle',
+      v3TypeRows: v3open('type') ? '1fr' : '0fr', v3WaitRows: v3open('wait') ? '1fr' : '0fr',
+      v3TypeOp: v3open('type') ? 1 : 0, v3WaitOp: v3open('wait') ? 1 : 0,
+      v3TypeY: v3open('type') ? '0' : '-12px', v3WaitY: v3open('wait') ? '0' : '-12px',
+      v3PickType: v3Pick('type'), v3PickWait: v3Pick('wait'),
+      v3Chars, v3Secs,
+      v3CharsEst: est < 60 ? est + ' sec' : (est / 60).toFixed(1).replace('.0', '') + ' min',
+      v3CharsDown: (e) => { e.stopPropagation(); this.setState({ v3Chars: clamp(v3Chars - 50, 50, 500) }); },
+      v3CharsUp: (e) => { e.stopPropagation(); this.setState({ v3Chars: clamp(v3Chars + 50, 50, 500) }); },
+      v3SecsDown: (e) => { e.stopPropagation(); this.setState({ v3Secs: clamp(v3Secs - 15, 15, 300) }); },
+      v3SecsUp: (e) => { e.stopPropagation(); this.setState({ v3Secs: clamp(v3Secs + 15, 15, 300) }); },
+      v3NextOp: v3 ? 1 : 0.45,
+      unlockChips,
+      toggleDrop: (e) => { e.stopPropagation(); this.setState(s => ({ drop: !s.drop, pick: s.drop ? null : s.pick })); },
+      dropOp: drop ? 1 : 0,
+      dropY: drop ? '0' : '-10px',
+      dropPE: drop ? 'auto' : 'none',
+      infoSaved: this.state.info === 'saved',
+      infoNope: this.state.info === 'nope',
+      openSaved: (e) => { e.stopPropagation(); this.setState({ info: 'saved' }); },
+      openNope: (e) => { e.stopPropagation(); this.setState({ info: 'nope' }); },
+      closeInfo: (e) => { e.stopPropagation(); this.setState({ info: null }); },
+      statSaved: this.mkBars([52,40,61,45,38,55,45]),
+      statSpent: this.mkBars([20,28,12,30,35,18,15]),
+      statApps: [
+        { n: 'Instagram', nopes: 22, v: '6m', t: '2h 12m' },
+        { n: 'YouTube', nopes: 6, v: '14m', t: '1h 24m' },
+        { n: 'Reddit', nopes: 8, v: '7m', t: '56m' },
+        { n: 'Chrome', nopes: 8, v: '4m', t: '32m' },
+        { n: 'TikTok', nopes: 4, v: '5m', t: '20m' },
+        { n: 'X', nopes: 4, v: '3m', t: '12m' }
+      ],
+      cur, vis,
+      fType, fWait: !fType,
+      segType: fType ? segOn : segOff,
+      segWait: fType ? segOff : segOn,
+      setType: () => this.setState({ fMode: 'type' }),
+      setWait: () => this.setState({ fMode: 'wait' }),
+      cardType: fType ? cardOn + 'margin-bottom:12px' : cardOff + 'margin-bottom:12px',
+      cardWait: fType ? cardOff : cardOn,
+      cardTypeIcon: fType ? iconOn : iconOff,
+      cardWaitIcon: fType ? iconOff : iconOn,
+      cardTypeMark: fType ? markOn : markOff,
+      cardWaitMark: fType ? markOff : markOn,
+      cardTypeBody: fType ? bodyOn : bodyOff,
+      cardWaitBody: fType ? bodyOff : bodyOn,
+      sheetSub: fType ? 'Typing a passage to get in.' : "Waiting it out to get in.",
+      revIcon: fType ? 'ph ph-keyboard' : 'ph ph-hourglass',
+      revPause: fType ? 'Type 150 characters · ~40 sec' : 'Wait 60 seconds',
+      revOff: fType ? 'Type 350 characters · ~1.5 min' : 'Wait 6 minutes',
+      bApps, bSites: !bApps,
+      segBApps: bApps ? segOn : segOff,
+      segBSites: bApps ? segOff : segOn,
+      setBApps: () => this.setState({ bMode: 'apps' }),
+      setBSites: () => this.setState({ bMode: 'sites' }),
+      curNo: idx + 1,
+      total: this.order.length,
+      curTag: 'SCREEN ' + cur,
+      curName: this.names[cur],
+      onNav: this.onNav,
+      prev: () => this.go(this.order[(idx - 1 + this.order.length) % this.order.length]),
+      next: () => this.go(this.order[(idx + 1) % this.order.length]),
+      groups: this.groups.map(g => ({
+        id: g.id, t: g.t,
+        items: g.s.map(id => ({
+          id, name: this.names[id], no: this.order.indexOf(id) + 1,
+          style: id === cur ? activeStyle : ''
+        }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
