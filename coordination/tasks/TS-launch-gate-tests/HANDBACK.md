@@ -1,5 +1,14 @@
 # TS-launch-gate-tests — handback
 
+## D2 — LG-5 settle fix and LG-7 re-run, 23 October 2026
+
+Implementer: Claude Opus 5.5, under Arjun's authorization for the isolated emulator only. Base: `f10fe2f` (D1). Identity: [D2-SUBMISSION.sha256](D2-SUBMISSION.sha256), the same seven test files with `BlockGateScreenTest.kt` updated.
+
+- **Change:** `BlockGateScreenTest.foldingRightAfterAChipTapReportsNothing` calls `compose.waitForIdle()` after opening the row and before turning `mainClock.autoAdvance` off. Without it, the chip was not yet in the merged tree (LG-7 run 1). Test code only; the debug APK is still `9d505bd8…`.
+- **Checks:** `./build.sh assembleDebug assembleDebugAndroidTest` → BUILD SUCCESSFUL. Emulator: run 1 on D1 `Tests run: 102, Failures: 1`; `BlockGateScreenTest` on D2 `OK (6 tests)`; final full suite on D2 `OK (102 tests)`. Details and raw output: [OWNER-CHECKS](OWNER-CHECKS.md#lg-7-re-run--23-october-2026-isolated-emulator-agent-executed).
+- **Findings:** no real app bug. The 39 previously unrunnable tests passed as written.
+- **Limits:** one passing full run on the emulator, not the Samsung; self-verified; D1's JVM result (277/277) stands, since no main or unit-test code changed.
+
 ## D1 — LG-1–LG-6 test repairs, 23 October 2026
 
 Implementer: Claude Opus 5.5 (senior implementer), taking over the launch-gate session at Arjun's request. Base: `main` at `fa55fbd` (the run record). Arjun's unrelated deletion of `design_handoff_stats_screen/` is untouched and unstaged. Identity: [D1-SUBMISSION.sha256](D1-SUBMISSION.sha256) (the seven changed test files).

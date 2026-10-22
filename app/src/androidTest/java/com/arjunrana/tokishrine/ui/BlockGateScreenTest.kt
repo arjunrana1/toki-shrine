@@ -119,6 +119,8 @@ class BlockGateScreenTest {
 
         // Drive the clock by hand: with auto-advance, the click's idle sync
         // would run the whole hold and report before the fold (launch-gate LG-5).
+        // Let the opened row settle first, so the chips are in the merged tree.
+        compose.waitForIdle()
         compose.mainClock.autoAdvance = false
         compose.onNodeWithContentDescription("5 minutes").performClick()
         compose.mainClock.advanceTimeBy(GATE_SELECTION_HOLD_MS / 2) // inside the hold
