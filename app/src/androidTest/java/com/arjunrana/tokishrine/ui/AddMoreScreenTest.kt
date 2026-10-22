@@ -135,7 +135,13 @@ class AddMoreScreenTest {
             compose.onAllNodes(hasText("Add").and(isEnabled())).fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithText("Add").performClick()
-        awaitText(domain)
+        // The website field's hint is also "example.com", so wait for the
+        // added row only: a text node without the field's set-text action.
+        val addedRow = hasText(domain).and(!hasSetTextAction())
+        compose.waitUntil(timeoutMillis = 5_000) {
+            compose.onAllNodes(addedRow).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(addedRow).assertExists()
     }
 
     @Test

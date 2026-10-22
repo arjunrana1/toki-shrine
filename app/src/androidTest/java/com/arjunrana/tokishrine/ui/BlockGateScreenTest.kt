@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.DpRect
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.arjunrana.tokishrine.R
 import com.arjunrana.tokishrine.ui.interruption.BlockGateScreen
+import com.arjunrana.tokishrine.ui.interruption.GATE_SELECTION_HOLD_MS
 import com.arjunrana.tokishrine.ui.theme.NocturneTheme
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -116,10 +117,15 @@ class BlockGateScreenTest {
         showGate()
         toggleRow()
 
+        // Drive the clock by hand: with auto-advance, the click's idle sync
+        // would run the whole hold and report before the fold (launch-gate LG-5).
+        compose.mainClock.autoAdvance = false
         compose.onNodeWithContentDescription("5 minutes").performClick()
+        compose.mainClock.advanceTimeBy(GATE_SELECTION_HOLD_MS / 2) // inside the hold
+        assertTrue(entered.isEmpty())
         toggleRow()
-        compose.waitForIdle()
-        Thread.sleep(500) // longer than the selected-state hold
+        compose.mainClock.advanceTimeBy(GATE_SELECTION_HOLD_MS * 3) // well past it
+        compose.mainClock.autoAdvance = true
         compose.waitForIdle()
 
         assertTrue(entered.isEmpty())

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -61,9 +62,12 @@ import org.junit.runner.RunWith
 class CreateFlowScreenTest {
 
     companion object {
-        // Phosphor glyph text nodes (arrow-left appbar back, X remove). The
-        // glyph characters are the nodes' text content.
-        private const val BACK_GLYPH = "\ue058"
+        // The appbar back control is named "Back"; its glyph is cleared from
+        // the merged tree (Phase 7 accessibility pass, launch-gate LG-4).
+        private const val BACK = "Back"
+
+        // Phosphor glyph text nodes (X remove, plus). The glyph characters
+        // are the nodes' text content.
         private const val REMOVE_GLYPH = "\ue4f6"
         private const val PLUS_GLYPH = "\ue3d4"
 
@@ -271,8 +275,8 @@ class CreateFlowScreenTest {
         val closeCount = showFlow(editBlockId = null)
 
         awaitText("What should this cover?") // step 1
-        compose.onNodeWithText(BACK_GLYPH).performClick()
-        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick()
 
         // Still inside the suspended window: nothing recorded, nothing closed.
         compose.waitForIdle()
@@ -573,7 +577,7 @@ class CreateFlowScreenTest {
         assertNoRetiredConflictEvents()
 
         // Recovery: unwind, drop the held app, save again — the guard is free.
-        repeat(4) { compose.onNodeWithText(BACK_GLYPH).performClick() }
+        repeat(4) { compose.onNodeWithContentDescription(BACK).performClick() }
         awaitText("What should this cover?")
         // Selected rows: apps [Instagram, Sleeper] then sites [reddit.com].
         compose.onAllNodesWithText(REMOVE_GLYPH)[1].performClick()
@@ -654,7 +658,7 @@ class CreateFlowScreenTest {
 
         compose.onNodeWithText("Search your installed apps…").performClick()
         awaitText("Done")
-        compose.onNodeWithText(BACK_GLYPH).performClick() // search exits, nothing logged
+        compose.onNodeWithContentDescription(BACK).performClick() // search exits, nothing logged
         awaitText("Search your installed apps…")
 
         seedHolderAndPickFreeApp(freeApp)
@@ -664,7 +668,7 @@ class CreateFlowScreenTest {
         pickMethod() // 09 v3: Next stays dimmed until a card is picked
         next() // step_completed(3)
         awaitText("Type a bit more") // disable step 4/5 with the typing ladder
-        compose.onNodeWithText(BACK_GLYPH).performClick() // 4 → 3, nothing logged
+        compose.onNodeWithContentDescription(BACK).performClick() // 4 → 3, nothing logged
         awaitText("Type a passage")
         next() // step_completed(3) again: the pick was kept
         awaitText("Type a bit more")
@@ -756,7 +760,7 @@ class CreateFlowScreenTest {
         )
 
         awaitText("Instagram")
-        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         compose.waitForIdle()
         assertEquals(1, closeCount.get())
@@ -855,7 +859,7 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Wait before you're in").assertDoesNotExist() // other card folded
         compose.onNodeWithText("Next").assertIsEnabled()
 
-        compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits, not step 2
+        compose.onNodeWithContentDescription(BACK).performClick() // entry step: exits, not step 2
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(1, closeCount.get())
         assertTrue(events().isEmpty()) // edit cancellation stays silent
@@ -886,7 +890,7 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Next").performTouchInput { click() }
         compose.onNodeWithText("4 / 5").assertDoesNotExist()
 
-        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(1, closeCount.get())
         assertTrue(events().isEmpty())
@@ -1093,7 +1097,7 @@ class CreateFlowScreenTest {
         compose.onNodeWithText("Next").assertIsEnabled()
 
         // Backtracking keeps the unwound draft: the typed name is intact.
-        compose.onNodeWithText(BACK_GLYPH).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick()
         awaitText("2 / 5")
         awaitText("Evening lockout")
         assertEquals(0, closeCount.get())
@@ -1124,10 +1128,10 @@ class CreateFlowScreenTest {
         awaitText("Wait before you're in")
         compose.onNodeWithText("Passage length").assertDoesNotExist()
 
-        compose.onNodeWithText(BACK_GLYPH).performClick() // 3 → 2, then exit
+        compose.onNodeWithContentDescription(BACK).performClick() // 3 → 2, then exit
         awaitText("2 / 5")
-        compose.onNodeWithText(BACK_GLYPH).performClick()
-        compose.onNodeWithText(BACK_GLYPH).performClick() // entry step: exits
+        compose.onNodeWithContentDescription(BACK).performClick()
+        compose.onNodeWithContentDescription(BACK).performClick() // entry step: exits
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
         assertEquals(1, closeCount.get())
         assertTrue(events().isEmpty()) // canceled edit writes nothing

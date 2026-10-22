@@ -597,7 +597,7 @@ class BlockRepositoryTest {
     }
 
     @Test
-    fun addTargetsRespectsOwnershipAtomically() = runBlocking {
+    fun addTargetsRespectsOwnershipAtomically(): Unit = runBlocking {
         val id = repo.createBlock(draft("Social", apps = listOf("com.a")))
         val other = repo.createBlock(draft("Other", apps = listOf("com.owned"), sites = listOf("owned.com")))
         assertThrows(ConflictingOwnershipException::class.java) {

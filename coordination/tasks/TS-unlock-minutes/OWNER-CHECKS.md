@@ -85,6 +85,10 @@ Diagnosis is from the raw traces and a read of the source and git history only. 
 - **Not covered:** the dedicated same-version reopen test (`EventRepositoryTest.kt:252–288`, LG-1), partly overlapped by the v6 reopen inside the passing `StatsMigrationTest`; chosen minutes surviving Android recreation or process restoration in `BlockActivity.kt:702–765`, which no instrumented test exercises (only the JVM snapshot tests do), plus the failing fold-inside-the-hold test (LG-5). Those parts remain with Arjun's phone checks UM-O2, UM-O3 and UM-O7, which he reported PASS above.
 - So UM-RN1 is **partly executed on Android, not closed**; do not report the Android tests as executed PASS.
 
+### Owner decisions — 23 October 2026
+
+Arjun: LG-5 tested on the phone; a folded pick "is not getting reported unless it actually runs", so it is not a product defect. LG-6 is intended: browser data stays when the site block is off (P7-F10). The other failures are outdated tests, and tests that did not run because the code changed are acceptable. The repairs and the re-run are in [TS-launch-gate-tests](../TS-launch-gate-tests/TASK.md).
+
 ### Limits
 
 Stock emulator SQLite/Room (AOSP-like, API 36 arm64), not Arjun's Samsung OEM storage; single run; no re-run to separate deterministic from flaky failures; no diagnostics beyond the raw output. Only the instrumented process ran: no manual app launch, screenshot or UI session. The emulator's own app data was not preserved or inspected. P7-D3/D4 (the phone database and usage audit) are unaffected and remain open.

@@ -197,7 +197,9 @@ class StatsRepositoryTest {
         blocks.setEnabled(siteBlock, false)
         sites.refresh()
         val withoutSites = (sites.state.value as StatsScreenState.Ready).dashboard
-        assertEquals(listOf("app"), withoutSites.apps.map { it.packageName })
+        // P7-F10, owner-confirmed 23 October (launch-gate LG-6): the browser has
+        // counted site outcomes this week, so its row stays after the site block is off.
+        assertEquals(listOf("browser", "app"), withoutSites.apps.map { it.packageName })
         assertEquals(StatsLedger.FALLBACK_MS, withoutSites.savedMs) // historical total retained
     }
 

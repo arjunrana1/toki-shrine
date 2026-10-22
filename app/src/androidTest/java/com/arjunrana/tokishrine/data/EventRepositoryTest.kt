@@ -249,7 +249,7 @@ class EventRepositoryTest {
     // uses the shipped builder (TokiDatabase.build), whose reset is scoped
     // to upgrades from v3–v5 and never touches a same-version reopen.
     @Test
-    fun existingRowsSurviveReopenWithoutDestructiveFallback() = runBlocking {
+    fun existingRowsSurviveReopenWithoutDestructiveFallback(): Unit = runBlocking {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val dbName = "p7-reopen-preservation.db"
         context.getDatabasePath(dbName).parentFile?.mkdirs()

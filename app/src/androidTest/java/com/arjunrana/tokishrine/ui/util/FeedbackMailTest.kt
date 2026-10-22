@@ -2,6 +2,7 @@ package com.arjunrana.tokishrine.ui.util
 
 import android.content.Intent
 import android.net.MailTo
+import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -42,10 +43,17 @@ class FeedbackMailTest {
 
         val dataString = intent.dataString!!
         assertTrue(MailTo.isMailTo(dataString))
-        val mailTo = MailTo.parse(dataString)
-        assertEquals(FeedbackEmail.RECIPIENT, mailTo.to)
-        assertEquals(FeedbackEmail.SUBJECT, mailTo.subject)
-        assertEquals(body.replace("\n", "\r\n"), mailTo.body)
+        // RFC 6068 order: split the still-encoded query on & and =, then decode
+        // each part. android.net.MailTo.parse cut the body at its first encoded
+        // & on API 36 (launch-gate LG-2), so it cannot be the oracle here.
+        val (to, query) = Uri.parse(dataString).encodedSchemeSpecificPart.split("?", limit = 2)
+        val fields = query.split("&").associate { field ->
+            val (name, value) = field.split("=", limit = 2)
+            Uri.decode(name) to Uri.decode(value)
+        }
+        assertEquals(FeedbackEmail.RECIPIENT, Uri.decode(to))
+        assertEquals(FeedbackEmail.SUBJECT, fields["subject"])
+        assertEquals(body.replace("\n", "\r\n"), fields["body"])
     }
 
     @Test
