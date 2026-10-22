@@ -24,6 +24,6 @@ Required non-device checks: `./build.sh assembleDebug testDebugUnitTest assemble
 **Closed** with no code blockers. Owner device acceptance passed through the 11 October retest (APK `8a7cbdb9…`). Code: `c19b53f`; records: `5501509`. Arjun closed the phase with these obligations carried to the **launch gate**:
 
 - **P7-D3/D4 database and usage audit:** a read-only pull of the app database plus `dumpsys usagestats`, checked against the code once real usage exists. Also explains the 7 nopes of unknown source from the 10 October retest.
-- **Run the Android tests** (Room repository, migration and UI tests). Since the 4 October P7-D1/D2 run they have only compiled, across schema v5, auto-nope and the two-minute window. Run them on the isolated emulator (AVD `toki-p7d-isolated`) with owner authorization.
+- **Run the Android tests: done 23 October 2026.** After stale-test repairs, the full instrumented suite passed 102/102 on the isolated emulator at schema v6 ([TS-launch-gate-tests](../../coordination/tasks/TS-launch-gate-tests/OWNER-CHECKS.md), closed).
 - **Debug testing values (delta 5)** stay until launch. Then decide on removal and confirm production values (P7-O14) as part of the pre-launch config review.
 - **Not blocking, owner's option:** independent review of deltas 11, 12A and 13; the PRD wording "returns to the block" vs the Blocks list for the turn-off escape (retest row 4); Samsung overnight survival (P4-09, accepted deferred risk).
