@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Toki Shrine"
+rootProject.name = "Time Shrine"
 include(":app")

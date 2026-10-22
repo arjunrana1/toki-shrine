@@ -1,0 +1,197 @@
+package com.arjunrana.timeshrine.data.repo
+
+import androidx.room.withTransaction
+import com.arjunrana.timeshrine.data.db.AppMetaDao
+import com.arjunrana.timeshrine.data.db.EventDao
+import com.arjunrana.timeshrine.data.db.TargetCount
+import com.arjunrana.timeshrine.data.db.TimeShrineDatabase
+import com.arjunrana.timeshrine.data.entity.AppMeta
+import com.arjunrana.timeshrine.data.entity.Event
+import com.arjunrana.timeshrine.data.stats.StatsCalculator
+import java.time.ZoneId
+import org.json.JSONObject
+
+data class StatsSnapshot(
+    val totalWalkAways: Int,
+    val daysActive: Int,
+    val thisWeek: Int,
+    val bestDay: Int,
+    val walkAwayRate: Double,
+    val mostWalkedAwayFrom: List<TargetCount>,
+)
+
+// open (and log below) only so instrumented UI tests can gate event writes;
+// production code always uses this class directly.
+open class EventRepository(
+    db: TimeShrineDatabase,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+
+    // The whole event store shares one database; the handle stays reachable
+    // for the transactional completion below.
+    private val db: TimeShrineDatabase = db
+    private val eventDao: EventDao = db.eventDao()
+    private val metaDao: AppMetaDao = db.appMetaDao()
+
+    open suspend fun log(
+        name: String,
+        blockId: Long? = null,
+        target: String? = null,
+        targetType: String? = null,
+        params: Map<String, Any?> = emptyMap(),
+    ) {
+        // A target without a kind would silently vanish from the per-app
+        // leaderboard, so the contract is enforced loudly at the call site.
+        require(target == null || targetType != null) {
+            "target_type is required whenever target is set (event: $name, target: $target)"
+        }
+        ensureFirstLaunchRecorded()
+        val paramsJson = if (params.isEmpty()) null else JSONObject(params).toString()
+        eventDao.insert(
+            Event(
+                name = name,
+                timestampUtc = clock(),
+                blockId = blockId,
+                target = target,
+                targetType = targetType,
+                paramsJson = paramsJson,
+            ),
+        )
+    }
+
+    // Lets a caller pair its own Room mutation with the events describing
+    // that mutation. Nested repository withTransaction calls reuse Room's
+    // coroutine transaction, so create/edit plus terminal telemetry either
+    // all commit or all roll back. Keep the block small and database-only.
+    suspend fun <T> atomically(block: suspend () -> T): T =
+        db.withTransaction { block() }
+
+    // Legacy pre-redesign figures; retained until the GLM screen replacement. nowMs/zone are parameters so the
+    // formulas are pinned down exactly in tests; production uses defaults.
+    suspend fun getStats(nowMs: Long = clock(), zone: ZoneId = ZoneId.systemDefault()): StatsSnapshot {
+        ensureFirstLaunchRecorded()
+        val totalWalkAways = eventDao.countByName(EVENT_WALK_AWAY)
+        val completed = eventDao.countByName(EVENT_CHALLENGE_COMPLETED)
+        val firstLaunchAt = metaDao.get(AppMeta.KEY_FIRST_LAUNCH_AT)?.toLongOrNull()
+        return StatsSnapshot(
+            totalWalkAways = totalWalkAways,
+            daysActive = firstLaunchAt?.let { StatsCalculator.daysSince(it, nowMs, zone) } ?: 0,
+            thisWeek = eventDao.countByNameSince(
+                EVENT_WALK_AWAY,
+                StatsCalculator.calendarWeekStart(nowMs, zone),
+            ),
+            bestDay = eventDao.maxCountPerLocalDay(EVENT_WALK_AWAY) ?: 0,
+            walkAwayRate = StatsCalculator.walkAwayRate(totalWalkAways, completed),
+            mostWalkedAwayFrom = eventDao.countsByTarget(EVENT_WALK_AWAY, TARGET_TYPE_APP),
+        )
+    }
+
+    suspend fun countWalkAwaysSince(sinceUtc: Long): Int =
+        eventDao.countByNameSince(EVENT_WALK_AWAY, sinceUtc)
+
+    suspend fun countAllEvents(): Int = eventDao.countAll()
+
+    // Onboarding completion flag (PRD §6 screen 2: persistent and resumable;
+    // the welcome screen returns until onboarding is completed).
+    suspend fun isOnboardingCompleted(): Boolean =
+        metaDao.get(AppMeta.KEY_ONBOARDING_COMPLETED_AT) != null
+
+    // Onboarding completion is terminal: the §10 event and the one-way
+    // app_meta marker commit in one transaction and at most once, so a
+    // repeated or recreated Continue can produce neither a second
+    // onboarding_completed event nor an event/marker disagreement (review
+    // blocker 2). Returns whether this call recorded the completion.
+    open suspend fun completeOnboarding(grantedCount: Int): Boolean = db.withTransaction {
+        ensureFirstLaunchRecorded()
+        if (metaDao.get(AppMeta.KEY_ONBOARDING_COMPLETED_AT) != null) {
+            false
+        } else {
+            eventDao.insert(
+                Event(
+                    name = EVENT_ONBOARDING_COMPLETED,
+                    timestampUtc = clock(),
+                    paramsJson = JSONObject(mapOf("granted_count" to grantedCount)).toString(),
+                ),
+            )
+            metaDao.putIfAbsent(AppMeta(AppMeta.KEY_ONBOARDING_COMPLETED_AT, clock().toString()))
+            true
+        }
+    }
+
+    private suspend fun ensureFirstLaunchRecorded() {
+        metaDao.putIfAbsent(AppMeta(AppMeta.KEY_FIRST_LAUNCH_AT, clock().toString()))
+    }
+
+    companion object {
+        // Canonical event names (PRD §10). Fixed here so the store, Stats and
+        // later phases can't drift apart.
+        const val EVENT_WALK_AWAY = "walk_away"
+        const val EVENT_CHALLENGE_COMPLETED = "challenge_completed"
+        const val EVENT_CHALLENGE_STARTED = "challenge_started"
+        const val EVENT_TYPING_MISMATCH = "typing_mismatch"
+        const val EVENT_COUNTDOWN_STARTED = "countdown_started"
+        const val EVENT_COUNTDOWN_COMPLETED = "countdown_completed"
+        const val EVENT_BLOCK_SCREEN_SHOWN = "block_screen_shown"
+        const val EVENT_TURNOFF_STARTED = "turnoff_started"
+        const val EVENT_TURNOFF_COMPLETED = "turnoff_completed"
+        const val EVENT_TURNOFF_ABANDONED = "turnoff_abandoned"
+        const val EVENT_STATS_INFO_OPENED = "stats_info_opened"
+        const val EVENT_STATS_USAGE_ACCESS_CTA_TAPPED = "stats_usage_access_cta_tapped"
+        const val EVENT_USAGE_ACCESS_GRANTED = "usage_access_granted"
+        const val EVENT_STATS_RECALIBRATE_TAPPED = "stats_recalibrate_tapped"
+        const val EVENT_BASELINE_RECALIBRATED = "baseline_recalibrated"
+        const val EVENT_STATS_VIEWED = "stats_viewed"
+
+        // target_type values, aligned with §10's trigger_type (app | site).
+        const val TARGET_TYPE_APP = "app"
+        const val TARGET_TYPE_SITE = "site"
+
+        // walk_away `source` values (§10). auto_away: the gate or pause
+        // challenge was out of sight for 15 s (8 October §17 addendum).
+        const val WALK_AWAY_SOURCE_BLOCK_SCREEN = "block_screen"
+        const val WALK_AWAY_SOURCE_TYPING = "typing"
+        const val WALK_AWAY_SOURCE_COUNTDOWN = "countdown"
+        const val WALK_AWAY_SOURCE_AUTO_AWAY = "auto_away"
+
+        // Block-management events (§10) fired by the list/create/edit flows.
+        const val EVENT_BLOCK_CREATE_STARTED = "block_create_started"
+        const val EVENT_BLOCK_CREATE_STEP_COMPLETED = "block_create_step_completed"
+        const val EVENT_BLOCK_CREATE_ABANDONED = "block_create_abandoned"
+        const val EVENT_BLOCK_CREATED = "block_created"
+        const val EVENT_BLOCK_EDITED = "block_edited"
+        const val EVENT_BLOCK_DELETED = "block_deleted"
+        const val EVENT_BLOCK_TURNED_ON = "block_turned_on"
+        const val EVENT_BLOCK_TURNED_OFF = "block_turned_off"
+
+        // Onboarding and settings events (§10) fired by the permission flow
+        // (Phase 3) and the Settings screen.
+        const val EVENT_ONBOARDING_STARTED = "onboarding_started"
+        const val EVENT_PERMISSION_REQUESTED = "permission_requested"
+        const val EVENT_PERMISSION_GRANTED = "permission_granted"
+        const val EVENT_PERMISSION_DENIED = "permission_denied"
+        const val EVENT_ONBOARDING_COMPLETED = "onboarding_completed"
+        const val EVENT_SETTINGS_VIEWED = "settings_viewed"
+
+        // Feature-engagement events (§10) fired by the Phase 7 screens.
+        // feedback_sent means the populated mail intent was successfully
+        // handed to an external mail app — never confirmed delivery.
+        const val EVENT_FEEDBACK_OPENED = "feedback_opened"
+        const val EVENT_FEEDBACK_SENT = "feedback_sent"
+
+        // Service-health events (§10) fired by the Phase 4 detection
+        // service. url_read_failed is the silent-failure canary: a browser
+        // that changes its address-bar view ID stops detection with no
+        // visible error, so nulls are counted per browser package.
+        const val EVENT_ACCESSIBILITY_CONNECTED = "accessibility_connected"
+        const val EVENT_ACCESSIBILITY_DISCONNECTED = "accessibility_disconnected"
+        const val EVENT_URL_READ_FAILED = "url_read_failed"
+
+        // Pause lifecycle events (§10) fired by the Phase 6 pause
+        // coordinator and the bubble.
+        const val EVENT_PAUSE_STARTED = "pause_started"
+        const val EVENT_PAUSE_EXPIRED = "pause_expired"
+        const val EVENT_BUBBLE_SHOWN = "bubble_shown"
+        const val EVENT_BUBBLE_TAPPED = "bubble_tapped"
+        const val EVENT_BUBBLE_DISMISSED = "bubble_dismissed"
+    }
+}

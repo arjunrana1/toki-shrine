@@ -4,8 +4,8 @@ Read for create/edit/input/ownership/target list changes. PRD §§4/6/7 plus **a
 
 ## Source and tests
 
-`app/src/main/java/com/arjunrana/tokishrine/ui/screens/{CreateFlowScreen,BlockListScreen,BlockDetailScreen,TurnOnScreen}.kt`; `ui/components/TargetList.kt`; `ui/util/{Domain,Countdown}.kt`; `data/apps/InstalledAppsRepository.kt`; `data/repo/BlockRepository.kt`.
-Tests: `app/src/test/java/com/arjunrana/tokishrine/ui/util/DomainTest.kt`; `app/src/androidTest/java/com/arjunrana/tokishrine/ui/CreateFlowScreenTest.kt` and data/BlockRepositoryTest.kt.
+`app/src/main/java/com/arjunrana/timeshrine/ui/screens/{CreateFlowScreen,BlockListScreen,BlockDetailScreen,TurnOnScreen}.kt`; `ui/components/TargetList.kt`; `ui/util/{Domain,Countdown}.kt`; `data/apps/InstalledAppsRepository.kt`; `data/repo/BlockRepository.kt`.
+Tests: `app/src/test/java/com/arjunrana/timeshrine/ui/util/DomainTest.kt`; `app/src/androidTest/java/com/arjunrana/timeshrine/ui/CreateFlowScreenTest.kt` and data/BlockRepositoryTest.kt.
 
 ## Current rules
 

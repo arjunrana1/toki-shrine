@@ -2,7 +2,7 @@
 
 Read for visual implementation or shared controls. PRD §§6/15 and §17 addenda override stale mock copy/layout. Canonical token files: [styles.css](../../toki-shrine-ui-mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/styles.css), [design rules](../../toki-shrine-ui-mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/readme.md). Read only relevant screen markup/render in `toki-shrine-ui-mockups/project/TimeShrine Mocks.dc.html` and `design/screens/`.
 
-Source: `app/src/main/java/com/arjunrana/tokishrine/ui/theme/`, `ui/components/NocturneUi.kt`, `TargetList.kt`, `ui/icons/Phosphor.kt`, resources under `app/src/main/res/`.
+Source: `app/src/main/java/com/arjunrana/timeshrine/ui/theme/`, `ui/components/NocturneUi.kt`, `TargetList.kt`, `ui/icons/Phosphor.kt`, resources under `app/src/main/res/`.
 
 ## Active design decisions
 
@@ -15,7 +15,7 @@ Source: `app/src/main/java/com/arjunrana/tokishrine/ui/theme/`, `ui/components/N
 
 ## Naming and open obligations
 
-Owner recorded a future rename to **Time Shrine**. Current app/spec/package remain Toki Shrine / com.arjunrana.tokishrine; perform rename only as a separately assigned change. Historical root “use Toki everywhere” referred to current implementation, not cancellation of the recorded rename.
+The product is **Time Shrine** (`com.arjunrana.timeshrine`, theme `Theme.TimeShrine`), renamed 23 October 2026 (PRD §17 rename addendum). The design export folder keeps its old path `toki-shrine-ui-mockups/`; strings inside older mocks may still say Toki Shrine or TimeShrine, and the app copy wins.
 
 Phase 7 added labels/roles and 44 dp targets to the shared Back and home Stats/Settings controls. Its TalkBack, large-text and final visual acceptance remain pending in [P7-O20–O22](../../coordination/tasks/TS-P7-stats-feedback-final/OWNER-CHECKS.md); this is not proof that every surface has passed accessibility testing. Haptic acceptance is recorded in [navigation/permissions](navigation-permissions.md). Arjun owns visual/device acceptance; source/compilation is not a pixel or feel pass. Routine owner-reported visual corrections may use the direct GLM path in WORKFLOW.
 
@@ -25,4 +25,4 @@ Use [S1–S6 PNGs](../../design/screens/stats-redesign/README.md) and the bundle
 
 ## Unlock-minutes screens
 
-Gate 14 v2 ([`BlockGateScreen`](../../app/src/main/java/com/arjunrana/tokishrine/ui/interruption/BlockGateScreen.kt)) and step 3 / 09 v3 ([`CreateFlowScreen`](../../app/src/main/java/com/arjunrana/tokishrine/ui/screens/CreateFlowScreen.kt), `StepFriction` and `MethodCard`) follow [design/screens/unlock-minutes](../../design/screens/unlock-minutes/README.md) as amended by PRD §17 (11 October). Motion is spelled out in code constants beside each screen; CSS `ease` is `CubicBezierEasing(.25,.1,.25,1)`. The gate's translucent black/white values are the documented photo-overlay literals (also used by the way-in button); the step-3 cards use Nocturne tokens only. The gate's "Minutes to unlock" row is always composed at a constant height, so opening it never moves the buttons; closed, it is hidden from touch and accessibility. Owner visual/motion acceptance passed in portrait (UM-O1, UM-O4, UM-O5, 22 October 2026). Open: the gate is not fitted for short landscape windows (the 100 dp bottom spacing plus the headline stack can exceed ~360 dp height) and is not rotation-locked; fix or lock before launch if landscape matters.
+Gate 14 v2 ([`BlockGateScreen`](../../app/src/main/java/com/arjunrana/timeshrine/ui/interruption/BlockGateScreen.kt)) and step 3 / 09 v3 ([`CreateFlowScreen`](../../app/src/main/java/com/arjunrana/timeshrine/ui/screens/CreateFlowScreen.kt), `StepFriction` and `MethodCard`) follow [design/screens/unlock-minutes](../../design/screens/unlock-minutes/README.md) as amended by PRD §17 (11 October). Motion is spelled out in code constants beside each screen; CSS `ease` is `CubicBezierEasing(.25,.1,.25,1)`. The gate's translucent black/white values are the documented photo-overlay literals (also used by the way-in button); the step-3 cards use Nocturne tokens only. The gate's "Minutes to unlock" row is always composed at a constant height, so opening it never moves the buttons; closed, it is hidden from touch and accessibility. Owner visual/motion acceptance passed in portrait (UM-O1, UM-O4, UM-O5, 22 October 2026). Open: the gate is not fitted for short landscape windows (the 100 dp bottom spacing plus the headline stack can exceed ~360 dp height) and is not rotation-locked; fix or lock before launch if landscape matters.

@@ -10,15 +10,15 @@
   ],
   "batteryInstructions": {
     "samsung": {
-      "intro": "Android is aggressive about closing background apps. Three quick taps stop it from killing Toki Shrine.",
+      "intro": "Android is aggressive about closing background apps. Three quick taps stop it from killing Time Shrine.",
       "steps": [
         [ "On the next screen, tap ", { "text": "Battery", "bold": true } ],
-        [ "Choose ", { "text": "Unrestricted", "bold": true }, " for Toki Shrine" ],
+        [ "Choose ", { "text": "Unrestricted", "bold": true }, " for Time Shrine" ],
         [ "Turn off ", { "text": "Put app to sleep", "bold": true }, " if it's on" ]
       ]
     },
     "generic": {
-      "intro": "Most phones only close apps in the background to save battery. The next screen asks to keep Toki Shrine awake — allow it.",
+      "intro": "Most phones only close apps in the background to save battery. The next screen asks to keep Time Shrine awake — allow it.",
       "steps": []
     }
   }

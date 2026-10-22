@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.arjunrana.tokishrine"
+    namespace = "com.arjunrana.timeshrine"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.arjunrana.tokishrine"
+        applicationId = "com.arjunrana.timeshrine"
         minSdk = 33
         targetSdk = 36
         versionCode = 1
