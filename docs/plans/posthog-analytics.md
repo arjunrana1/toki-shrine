@@ -2,7 +2,7 @@
 
 - **Status:** planning proposal, 27 September 2026. Arjun wants PostHog integration after the documentation cleanup and Phase 7. No SDK, consent choice, remote payload or privacy amendment is approved by this document.
 - **Sequence:** finish [Phase 7](../../coordination/tasks/TS-P7-stats-feedback-final/TASK.md) owner acceptance and the pending bounded Codex confirmation; approve the choices below; open one scoped implementation task. [CURRENT](../../coordination/CURRENT.md) remains the live assignment.
-- **Current authority:** PRD §§3/10/13 and [persistence/events](../components/persistence-events.md) still require local-only analytics. The new task must explicitly amend the product/privacy text and authorize the SDK/network changes it needs. Accounts/login and the Time Shrine rename are separate work.
+- **Current authority:** PRD §§3/10/13 and [persistence/events](../components/persistence-events.md) still require local-only analytics. The new task must explicitly amend the product/privacy text and authorize the SDK/network changes it needs. Accounts/login are separate work; the Time Shrine rename is done (23 October 2026).
 
 ## Decisions needed from Arjun
 

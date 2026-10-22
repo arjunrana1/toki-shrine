@@ -1,4 +1,4 @@
-# Toki Shrine
+# Time Shrine
 
 An Android app that puts a deliberate, self-chosen pause in front of the apps and websites you doomscroll.
 

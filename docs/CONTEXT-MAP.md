@@ -4,12 +4,12 @@ Do not read every linked document. TASK gives starting references; use this map 
 
 | Trigger / source area | Read | Specification / verification |
 |---|---|---|
-| Room, transactions, event writes, Stats, migration: `data/db`, `data/entity`, `data/repo`, `data/stats`, `TokiApplication.kt` | [Persistence/events](components/persistence-events.md) | PRD §§4/8–10/17; repository instrumented tests, Stats JVM tests |
+| Room, transactions, event writes, Stats, migration: `data/db`, `data/entity`, `data/repo`, `data/stats`, `TimeShrineApplication.kt` | [Persistence/events](components/persistence-events.md) | PRD §§4/8–10/17; repository instrumented tests, Stats JVM tests |
 | Create/edit, ownership, domain input, target lists: `CreateFlowScreen.kt`, `BlockDetailScreen.kt`, `TargetList.kt`, `Domain.kt`, `Countdown.kt` | [Blocks/targets](components/blocks-targets.md) | PRD §§4/6/7 and §17 including later addenda; Domain JVM, CreateFlow instrumented tests |
 | Activation, navigation, permissions, onboarding: `MainActivity.kt`, `data/permissions`, `ui/navigation`, `TerminalAction.kt` and permission screens | [Navigation/permissions](components/navigation-permissions.md) | PRD §§5/6/10/12 + §17 haptics; Phase 3 task, JVM orchestration tests |
 | Visual values, shared controls, icons/branding: `ui/theme`, `ui/components`, `ui/icons`, resources/design | [Theme/UI](components/theme-ui.md) | PRD §§6/15/17; relevant Nocturne tokens/markup/render only |
 | Build, dependencies, non-device checks, explicitly authorized phone setup | [Build/validation](components/build-validation.md) | Existing build.sh, tools/env.sh, build files; no unsolicited environment rebuild |
-| Detection service/URL/window logic, browser/OEM JSON: `TokiAccessibilityService.kt`, `detection` | [Phase 4](phases/phase-04.md) + affected contracts above | PRD §§10/13/14; implemented and closed, with recorded waivers/deferred risk |
+| Detection service/URL/window logic, browser/OEM JSON: `TimeShrineAccessibilityService.kt`, `detection` | [Phase 4](phases/phase-04.md) + affected contracts above | PRD §§10/13/14; implemented and closed, with recorded waivers/deferred risk |
 | Challenge/countdown: `BlockActivity.kt`, `challenge`, `ChallengeRepository.kt`; pause lifecycle: `pause` | [Phase 5](phases/phase-05.md), [Phase 6](phases/phase-06.md) as applicable | PRD §§7/8/10/17; both implemented and closed; waiting is visible-and-unlocked with no hold detection |
 | Stats UI, feedback, distribution polish: `StatsScreen.kt`, `FeedbackScreen.kt`, feedback utilities | [Phase 7](phases/phase-07.md) + persistence/theme/navigation contracts | PRD §§9/10/13 + [Stats data/UI contract](components/stats.md); Codex data layer prepared, GLM redesign UI next |
 | Future PostHog integration, remote event export, identity or consent | [PostHog plan](plans/posthog-analytics.md) + persistence/build contracts | Proposed follow-up after Phase 7 closure; PRD §10 remains local-only until amended |
@@ -28,7 +28,7 @@ Do not read every linked document. TASK gives starting references; use this map 
 - Phase 3 owner results and executed nonvisual evidence are closed in the [Phase 3 checklist](../coordination/tasks/TS-P3-validation/OWNER-CHECKS.md).
 - Create-flow draft restoration/shared accessibility semantics: blocks/targets and theme/UI contracts; do not mislabel the repaired Phase 3 route stack as still broken.
 - Migration posture is implemented: destructive fallback removed, v3/v4 exported and Stats-only MIGRATION_3_4 added, `show_typos` already absent. Read persistence/events before future schema changes; Phase 7 upgrade/data-preservation acceptance remains pending.
-- Separate Time Shrine rename and vector/themed icon polish, shadow approximation: theme/UI contract.
+- Vector/themed icon polish, shadow approximation: theme/UI contract. The Time Shrine rename is done ([TS-time-shrine-rename](../coordination/tasks/TS-time-shrine-rename/TASK.md)).
 - Samsung overnight service survival and supported browser limits: Phase 4/PRD §14.
 
 ## Phase index

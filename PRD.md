@@ -1,4 +1,4 @@
-# Toki Shrine — PRD 1.0
+# Time Shrine — PRD 1.0
 
 **Current design authority:** §17 records the owner’s refinements and later addenda. For those items it supersedes older screen descriptions, mockup copy/layout and historical decisions. Unchanged behavior and design tokens retain their existing authority. Dated checkpoints preserve evidence at that time; [CURRENT](coordination/CURRENT.md) identifies live task and acceptance status.
 
@@ -12,7 +12,7 @@ Android only. Phone, portrait, dark theme only.
 
 An Android app that puts a deliberate, self-chosen pause in front of the apps and websites a person doomscrolls.
 
-It never blocks anyone out. The user picks what to slow down, picks what it should cost to get in, and then pays that cost — either typing out a passage of random words or waiting with the Toki Shrine waiting screen visible and the device unlocked. If they still want in afterwards, that is a fine answer.
+It never blocks anyone out. The user picks what to slow down, picks what it should cost to get in, and then pays that cost — either typing out a passage of random words or waiting with the Time Shrine waiting screen visible and the device unlocked. If they still want in afterwards, that is a fine answer.
 
 ## 2. Positioning and principles
 
@@ -50,7 +50,7 @@ Two distinct gates: **pausing** costs the block's chosen friction challenge; **t
 ### Rules
 
 - An app or website belongs to **exactly one block**. Apps owned by another block remain visible in the app picker with the exact label **Already added to a block**, without the owning block name, and cannot be selected. This applies whether the other block is ON or OFF. There is no app conflict dialog or app move action. Apps already in the block currently being edited remain editable under the OFF-before-edit rule. The same no-transfer rule applies to websites: when an entered website belongs to another block, show **Already added to a block** beside the entry, without naming the block, and prevent adding it. No conflict dialog or move action is used for either target type.
-- **Toki Shrine cannot be added to a block.** It is filtered out of the picker.
+- **Time Shrine cannot be added to a block.** It is filtered out of the picker.
 - Blocks are independent. Any number may be ON, paused, or OFF simultaneously.
 - A block **must be OFF before it can be edited or deleted**. Otherwise removing an app from a block would be a free bypass.
 - A new block is saved **OFF** and does nothing until explicitly turned on.
@@ -186,7 +186,7 @@ A countdown runs; the user waits.
 
 *From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting. Current pause and disable values: §17 "Pre-launch config values addendum — 23 October 2026" (wait to pause 30–120 s, default 30; wait to disable 1 / 2 / 4 min, default 2 min).*
 
-A waiting challenge counts down only while the Toki Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app or locking the device retains the in-process challenge but resets progress to zero; returning restarts the full configured countdown. Choosing the explicit escape action terminates the challenge. These rules apply to both pause and disable waits; process-death/reboot restoration is not required.
+A waiting challenge counts down only while the Time Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app or locking the device retains the in-process challenge but resets progress to zero; returning restarts the full configured countdown. Choosing the explicit escape action terminates the challenge. These rules apply to both pause and disable waits; process-death/reboot restoration is not required.
 
 ### 7.3 Interruption
 
@@ -432,7 +432,7 @@ Recorded with rationale so future changes are informed rather than re-litigated.
 |---|---|
 | **Native Kotlin + Jetpack Compose** | The core is entirely platform API — accessibility service, overlay windows, foreground service, sensors. A cross-platform framework would only help with the easy part and would add a bridge over the hardest code. |
 | **minSdk 33 (Android 13), targetSdk 36** | Notification permission only exists from 13. A lower floor would need a conditional fourth checklist row appearing on some devices and not others — explicitly rejected. Cost is phones older than roughly four years. |
-| **`applicationId` `com.arjunrana.tokishrine`** | — |
+| **`applicationId` `com.arjunrana.timeshrine`** | — |
 | **AccessibilityService for detection** | Verified working (§14). `packageNames` filtered at runtime to blocked apps plus supported browsers, so the service is idle almost always and battery cost is negligible outside active browsing. |
 | **No overlay permission required for the block screen** | Accessibility services are exempt from background-activity-launch restrictions. Verified on Android 16 (§14). Overlay is needed only for the floating bubble. |
 | **No Firebase, no third-party SDK** | Zero external dependencies in phase 1. |
@@ -586,7 +586,7 @@ These owner decisions supersede conflicting onboarding/battery presentation text
 
 - **Welcome:** headline `Your time, your rules`; body lines `Doomscrolling? Time-blindness? Yeah, we got you.`, `We don't block you! We just do a vibe check before you fall in.`, and `You choose what gets paused, for how long, and how you get back.`
 - **Battery guidance:** presentation is manufacturer-neutral and says Android is aggressive. Remove the owner-facing manufacturer picker and its `Not a Samsung? Pick your phone` CTA. Automatic Samsung/generic step selection and real-state refresh remain.
-- **Accessibility handoff:** the app cannot decorate or highlight Android/One UI's system-owned **Installed apps** row. Keep the generic Accessibility Settings route; any extra direction belongs in Toki Shrine's preceding explainer and requires a separate owner copy decision.
+- **Accessibility handoff:** the app cannot decorate or highlight Android/One UI's system-owned **Installed apps** row. Keep the generic Accessibility Settings route; any extra direction belongs in Time Shrine's preceding explainer and requires a separate owner copy decision.
 - **Insets and spacing:** all screen roots respect top and bottom system insets; top navigation, the Blocks title and bottom-most CTAs retain consistent safe separation. The new-block review helper has visible space below `Turn it on from the “Blocks” homescreen.`
 - **App loading:** while installed apps are being fetched, show `loading...` immediately below search and remove it when loading completes.
 
@@ -652,7 +652,7 @@ Arjun's device feedback on the debug testing-values build (`70bd8e8` + Claude de
   - **How it's valued:** an auto-nope is valued and counted exactly like a chosen nope: an attempt, saving the usual visit length or 10 m, with the five-minute dedup unchanged. It carries a distinguishable walk-away source (`auto_away`).
   - **No Walk-Away moment:** it's recorded quietly and no counter screen is shown.
   - **Coming back in time:** returning within 15 s resumes the same challenge, but typed text is cleared and the wait restarts (as today).
-  - **A failed save never costs a completed challenge** (owner decision, 8 October, F-A review P7-F-A2). If saving a completed challenge fails while the screen is on, it is retried as before. If the screen is off or Toki is hidden, the completion is kept and saved when the user is next on screen. The away clock never starts from a failed save.
+  - **A failed save never costs a completed challenge** (owner decision, 8 October, F-A review P7-F-A2). If saving a completed challenge fails while the screen is on, it is retried as before. If the screen is off or Time Shrine is hidden, the completion is kept and saved when the user is next on screen. The away clock never starts from a failed save.
   - Auto-nope also stops suspended challenges from different blocks clashing later.
 
 **Blocks — Add more.** The block detail APPS & SITES label row gains an **Add more** action, available while the block is ON.
@@ -666,7 +666,7 @@ Arjun's device feedback on the debug testing-values build (`70bd8e8` + Claude de
 - **This week** card: **Avg time saved** (`48m / day`, 7-day saved ÷ 7) and **Nope rate · N of M**.
 - **Time saved on blocked apps ⓘ**: rows read "N nopes this week" plus a visit-length chip (`~6m /visit ✎`, or `12m/visit · yours` when set by the user). Saved time sits on the right. The list is a fixed-height box of about five rows that scrolls on its own.
 - The two seven-day charts and the Recalibrate card are unchanged. Attempts/day is retired.
-- **Time saved sheet:** generous spacing with the copy "Each nope skips a visit. We count the time that visit usually takes.", the Nopes × Usual visit length = Time saved formula, and "Usual visit length comes from your 7 days before Toki. You can set your own per app." The "Tried again within 5 minutes…" line is removed.
+- **Time saved sheet:** generous spacing with the copy "Each nope skips a visit. We count the time that visit usually takes.", the Nopes × Usual visit length = Time saved formula, and "Usual visit length comes from your 7 days before Time Shrine. You can set your own per app." The "Tried again within 5 minutes…" line is removed.
 - **No enabled blocks:** the S6 empty state shows only when there is also no outcome in the seven-day window. Otherwise the dashboard stays visible with a small "No blocks are on" note, and apps with outcomes this week stay listed. Owner to confirm on implementation review.
 
 **Stats — usual visit length.**
@@ -696,7 +696,7 @@ Arjun's device test of the 8 October build (debug APK `65460244…`). It superse
 **Challenges**
 - **Escape label:** the challenge escape button reads **"Nope, not now"** on typing and waiting challenges, for pause and turn-off alike. The block (gate) screen keeps "Not now".
 - **Back nudge:** the haptic is one step stronger (a click instead of a tick).
-- **After an auto-nope, land on the phone's home screen** (pause and turn-off), including when it happens while the screen is off. Toki is not shown. A turn-off challenge the user abandons with the button still returns to the block.
+- **After an auto-nope, land on the phone's home screen** (pause and turn-off), including when it happens while the screen is off. Time Shrine is not shown. A turn-off challenge the user abandons with the button still returns to the block.
 
 **Celebration (Walk-Away moment, screen 16)**
 - **Layout:** follows the 9 October reference (image, bold title, grey subtitle, "N wins today" pill) on a light lavender background. This is a deliberate exception to the dark theme for this screen only. Tap-to-continue and the automatic dismissal stay.
@@ -791,7 +791,7 @@ Arjun's change request, with his answers to the architect's clarifying questions
 
 ### Pre-launch config values addendum — 23 October 2026
 
-Arjun's final values from the pre-launch config review (9 October reminder), given and confirmed on 23 October 2026. **Recorded, not yet implemented** until [TS-config-values](coordination/tasks/TS-config-values/TASK.md) lands. From that build it supersedes the pause value table in the 11 October unlock-minutes addendum, the disable rows of §7.1/§7.2, and the debug disable values of the 7 October delta 5 (debug keeps only its quick 20 rung).
+Arjun's final values from the pre-launch config review (9 October reminder), given and confirmed on 23 October 2026. Implemented in [TS-config-values](coordination/tasks/TS-config-values/TASK.md) (code `ce2b236`). It supersedes the pause value table in the 11 October unlock-minutes addendum, the disable rows of §7.1/§7.2, and the debug disable values of the 7 October delta 5 (debug keeps only its quick 20 rung).
 
 **Pause challenge values (every build)**
 
@@ -812,3 +812,12 @@ Arjun's final values from the pre-launch config review (9 October reminder), giv
 - Stored blocks keep working with their stored values until re-saved. Editing clamps the pause values into the new ranges (as before) and moves a stored disable value that is not on the ladder to the nearest rung (a tie goes to the harder rung), so the edited block always saves.
 - **Typing passages:** the word list grows to **330 words** (lowercase, all distinct, 3–10 letters, at least two words of every length).
 - Unchanged: unlock choices 5/10/15/20, auto-nope after 15 s away, the Stats visit settings (75th percentile, 30 s minimum visit, 3 visits), the gate images and lines, and the celebration titles and subtitles.
+
+### Time Shrine rename addendum — 23 October 2026
+
+Arjun's go-ahead for the rename recorded on 9 September 2026 ([branding decision](docs/history/decisions/07-branding.md)), with his answers on 23 October. Implemented in [TS-time-shrine-rename](coordination/tasks/TS-time-shrine-rename/TASK.md); this document now uses the new name throughout, while older records keep Toki Shrine as written.
+
+- **Name users see:** **Time Shrine** (two words): launcher label, in-app copy, the Accessibility service description, and later the Play listing.
+- **Identity:** applicationId and Kotlin package **`com.arjunrana.timeshrine`**. This is permanent once uploaded to Play, so the rename lands before any upload. It installs as a **new app with no carried data** (no users yet). Arjun uninstalls the old Toki Shrine himself, so two blockers don't both hold Accessibility.
+- **Code:** full rename. `Toki*` classes become `TimeShrine*`, the database file becomes `time-shrine.db`, the theme becomes `Theme.TimeShrine`, the Gradle project becomes "Time Shrine", and the Room schema folder follows the database class.
+- **Not renamed:** the GitHub repository (`toki-shrine`, for now), existing folder paths such as `toki-shrine-ui-mockups/`, the local emulator name, and historical records, which keep the name as written.

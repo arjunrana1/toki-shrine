@@ -1,4 +1,4 @@
-# Toki Shrine — agent entry point
+# Time Shrine — agent entry point
 
 Read this file first. Arjun manually orchestrates architect, implementer and reviewer sessions. One agent writes at a time; no automatic dispatch or parallel writers.
 
@@ -13,8 +13,8 @@ Read this file first. Arjun manually orchestrates architect, implementer and rev
 ## Authority and boundaries
 
 - [PRD](PRD.md) defines behavior. Its §17 and post-validation addenda supersede older values/copy/mockups for affected features. Read the applicable amendments with the relevant section. Ask Arjun about genuinely unresolved product behavior; decide routine implementation details within scope.
-- Nocturne tokens define visual values; use the [theme/UI contract](docs/components/theme-ui.md) before visual work. The recorded Time Shrine rename is a separate pending change; preserve current Toki Shrine naming/package until assigned.
-- Kotlin/Compose/Room; minSdk 33, targetSdk 36, applicationId `com.arjunrana.tokishrine`. No new dependencies or toolchain changes without owner approval. Use `./build.sh`; see [build/validation](docs/components/build-validation.md) when implementing or verifying.
+- Nocturne tokens define visual values; use the [theme/UI contract](docs/components/theme-ui.md) before visual work. The product is **Time Shrine** (renamed 23 October 2026, [TS-time-shrine-rename](coordination/tasks/TS-time-shrine-rename/TASK.md)); older records keep the name Toki Shrine as written.
+- Kotlin/Compose/Room; minSdk 33, targetSdk 36, applicationId `com.arjunrana.timeshrine`. No new dependencies or toolchain changes without owner approval. Use `./build.sh`; see [build/validation](docs/components/build-validation.md) when implementing or verifying.
 - Codex may implement critical logic and efficient localized repairs under WORKFLOW; it is no longer restricted to review-only. GLM handles suitable routine work. After one unsuccessful GLM repair submission, reassess ownership before another assignment.
 - Arjun owns all device and experience testing. No adb, device/emulator access, installations, screenshots, database extraction or instrumented execution unless explicitly authorized. An installation request permits the agreed setup, not exploratory testing.
 - Preserve scope and acceptance tests; never weaken tests to obtain a pass. Code approval is separate from owner acceptance. Do not start the next phase without clearance.
