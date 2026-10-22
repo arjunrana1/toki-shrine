@@ -96,6 +96,7 @@ import com.arjunrana.tokishrine.ui.util.isValidFullDomain
 import com.arjunrana.tokishrine.ui.util.toImageBitmap
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -209,6 +210,20 @@ class CreateFlowState(
             storedWaitSeconds, PAUSE_WAIT_SECONDS_MIN, PAUSE_WAIT_SECONDS_MAX, PAUSE_WAIT_SECONDS_STEP,
         )
     }
+
+    /**
+     * Edit prefill for the disable ladders (23 October config values
+     * addendum): a stored value that is no longer a rung moves to the nearest
+     * rung, a tie going to the harder one, so the edited draft always saves.
+     * Both methods' values are snapped because the saved row keeps both.
+     */
+    fun prefillDisable(storedChars: Int, storedWaitSeconds: Int) {
+        typingTurnoffChars = nearestRung(storedChars, DISABLE_CHARS_CHOICES)
+        waitTurnoffSeconds = nearestRung(storedWaitSeconds, DISABLE_WAIT_SECONDS_CHOICES)
+    }
+
+    private fun nearestRung(value: Int, rungs: List<Int>): Int =
+        rungs.minWith(compareBy<Int> { abs(it - value) }.thenByDescending { it })
 
     private fun clampToStep(value: Int, min: Int, max: Int, step: Int): Int {
         val inRange = value.coerceIn(min, max)
@@ -513,8 +528,7 @@ fun CreateFlowScreen(
                 // The stored method opens chosen (09 v3).
                 state.chooseMethod(stored.block.frictionType)
                 state.prefillPause(stored.block.pauseChars, stored.block.countdownSeconds)
-                state.typingTurnoffChars = stored.block.turnoffChars
-                state.waitTurnoffSeconds = stored.block.turnoffSeconds
+                state.prefillDisable(stored.block.turnoffChars, stored.block.turnoffSeconds)
                 state.apps.addAll(
                     stored.apps.map { AppEntry(it.packageName, appsRepo.labelFor(it.packageName), null) },
                 )
@@ -1372,7 +1386,11 @@ private fun StepDisable(state: CreateFlowState, onBack: () -> Unit, onNext: () -
 // values (3/6/12 minutes, not the mock's old note). A rung under a minute
 // (the debug owner-testing 20 s) is named in seconds, never "0 minutes".
 internal fun disableCardCopy(method: FrictionType, index: Int, value: Int): Pair<String, String> {
-    val wait = if (value < 60) "$value seconds" else "${value / 60} minutes"
+    val wait = when {
+        value < 60 -> "$value seconds"
+        value == 60 -> "1 minute"
+        else -> "${value / 60} minutes"
+    }
     val title = when (method) {
         FrictionType.TYPING -> when (index) {
             0 -> "Type a bit"

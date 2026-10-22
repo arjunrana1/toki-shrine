@@ -179,7 +179,7 @@ class StatsMigrationTest {
                     assertNull(first.appMetaDao().get("first_launch_at"))
                     assertNull(first.statsDao().state())
                     BlockRepository(first).createBlock(
-                        BlockDraft("New", listOf("fixture.app"), emptyList(), FrictionType.TYPING, 20, 350, 60, 360),
+                        BlockDraft("New", listOf("fixture.app"), emptyList(), FrictionType.TYPING, 40, 200, 60, 120),
                     )
                 } finally { first.close() }
 

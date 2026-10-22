@@ -55,8 +55,8 @@ class BlockRepositoryTest {
         sites: List<String> = emptyList(),
         frictionType: FrictionType = FrictionType.TYPING,
         countdownSeconds: Int = 90,
-        turnoffSeconds: Int = 360,
-        turnoffChars: Int = 350,
+        turnoffSeconds: Int = 120, // a rung on both variants' ladders (CV-2/CV-3)
+        turnoffChars: Int = 200,
         pauseChars: Int = 120,
     ) = BlockDraft(
         name = name,
@@ -78,7 +78,7 @@ class BlockRepositoryTest {
                 apps = listOf("com.instagram.android", "com.reddit.frontpage"),
                 sites = listOf("reddit.com"),
                 frictionType = FrictionType.DELAY,
-                turnoffSeconds = 720,
+                turnoffSeconds = 240,
             ),
         )
 
@@ -88,9 +88,9 @@ class BlockRepositoryTest {
         assertEquals("Social", read.block.name)
         assertEquals(FrictionType.DELAY, read.block.frictionType)
         assertEquals(120, read.block.pauseChars)
-        assertEquals(350, read.block.turnoffChars)
+        assertEquals(200, read.block.turnoffChars)
         assertEquals(90, read.block.countdownSeconds)
-        assertEquals(720, read.block.turnoffSeconds)
+        assertEquals(240, read.block.turnoffSeconds)
         // PRD §4: a new block is saved OFF, whatever the draft carried.
         assertEquals(false, read.block.enabled)
         assertEquals(
@@ -205,16 +205,16 @@ class BlockRepositoryTest {
                 siteDomains = listOf("news.siteexample.com"),
                 frictionType = FrictionType.DELAY,
                 pauseChars = 120,
-                turnoffChars = 350,
+                turnoffChars = 200,
                 countdownSeconds = 90,
-                turnoffSeconds = 720,
+                turnoffSeconds = 240,
             ),
         )
 
         val updated = repo.getBlockWithContents(social)!!
         assertEquals("Social renamed", updated.block.name)
         assertEquals(FrictionType.DELAY, updated.block.frictionType)
-        assertEquals(720, updated.block.turnoffSeconds)
+        assertEquals(240, updated.block.turnoffSeconds)
         assertEquals(false, updated.block.enabled)
         assertEquals(listOf("com.reddit.frontpage"), updated.apps.map { it.packageName })
         assertEquals(listOf("news.siteexample.com"), updated.sites.map { it.domain })
@@ -240,9 +240,9 @@ class BlockRepositoryTest {
                         siteDomains = emptyList(),
                         frictionType = FrictionType.TYPING,
                         pauseChars = 150,
-                        turnoffChars = 350,
+                        turnoffChars = 200,
                         countdownSeconds = 90,
-                        turnoffSeconds = 360,
+                        turnoffSeconds = 120,
                     ),
                 )
             }
@@ -303,9 +303,9 @@ class BlockRepositoryTest {
                         siteDomains = listOf("reddit.com", "news.siteexample.com"),
                         frictionType = FrictionType.DELAY,
                         pauseChars = 150,
-                        turnoffChars = 350,
+                        turnoffChars = 200,
                         countdownSeconds = 90,
-                        turnoffSeconds = 360,
+                        turnoffSeconds = 120,
                     ),
                 )
             }
@@ -471,7 +471,7 @@ class BlockRepositoryTest {
     // read back, both methods' columns at once.
     @Test
     fun pauseRangeEdgesSaveAndReadBack() = runBlocking {
-        listOf(20 to 20, 150 to 240).forEach { (chars, seconds) ->
+        listOf(30 to 30, 150 to 120).forEach { (chars, seconds) ->
             val id = repo.createBlock(
                 draft("Edge $chars", apps = listOf("com.instagram.android"), pauseChars = chars, countdownSeconds = seconds),
             )
@@ -483,11 +483,11 @@ class BlockRepositoryTest {
         assertTrue(repo.getBlocksWithContents().isEmpty())
     }
 
-    // Supersedes the 100..200 (debug 20..200) range: 20..150 in steps of 10
-    // in every build (UM-3).
+    // Supersedes 20..150 (UM-3): 30..150 in steps of 10 in every build
+    // (CV-1); the old floor of 20 is now rejected.
     @Test
     fun createBlockRejectsPassageLengthOutsideApprovedRange() = runBlocking {
-        listOf(10, 160, 125).forEach { chars ->
+        listOf(20, 160, 125).forEach { chars ->
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad passage", apps = listOf("com.instagram.android"), pauseChars = chars))
@@ -502,14 +502,14 @@ class BlockRepositoryTest {
     // per-method columns — the inactive column included.
     @Test
     fun createBlockRejectsDisableValuesOffTheLadders() = runBlocking {
-        listOf(300, 220 + 10).forEach { chars ->
+        listOf(350, 200 + 10).forEach { chars -> // an old rung, and off the step
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(draft("Bad typing disable", apps = listOf("com.instagram.android"), turnoffChars = chars))
                 }
             }
         }
-        listOf(3600, 200).forEach { seconds ->
+        listOf(3600, 200, 360).forEach { seconds -> // 360: an old rung
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking {
                     repo.createBlock(
@@ -530,12 +530,12 @@ class BlockRepositoryTest {
             runBlocking {
                 repo.updateBlock(
                     social,
-                    draft("Social", apps = listOf("com.instagram.android"), turnoffSeconds = 120),
+                    draft("Social", apps = listOf("com.instagram.android"), turnoffSeconds = 360), // an old rung
                 )
             }
         }
 
-        assertEquals(360, repo.getBlockWithContents(social)!!.block.turnoffSeconds)
+        assertEquals(120, repo.getBlockWithContents(social)!!.block.turnoffSeconds)
     }
 
     // Every approved rung of both ladders round-trips through the

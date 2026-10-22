@@ -44,10 +44,10 @@ class CreateFlowStateTest {
         assertEquals(FrictionType.TYPING, state.frictionType)
         assertEquals(PAUSE_CHARS_DEFAULT, state.typingPauseChars)
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, state.waitPauseSeconds)
-        // Supersedes the old 15-minute pause default (UM-A): every build
-        // now starts typing at 20 characters and waiting at 60 s.
-        assertEquals(20, state.typingPauseChars)
-        assertEquals(60, state.waitPauseSeconds)
+        // Supersedes 20 characters / 60 s (UM-A): every build now starts
+        // typing at 40 characters and waiting at 30 s (CV-1, 23 October).
+        assertEquals(40, state.typingPauseChars)
+        assertEquals(30, state.waitPauseSeconds)
         assertEquals(DISABLE_CHARS_DEFAULT, state.typingTurnoffChars)
         assertEquals(DISABLE_WAIT_SECONDS_DEFAULT, state.waitTurnoffSeconds)
     }
@@ -61,13 +61,13 @@ class CreateFlowStateTest {
 
     // — bounds and steps —
 
-    // Supersedes typingPauseFloorToTwoHundredStepTen (UM-A): 20..150 / 10.
+    // Supersedes typingPauseTwentyToOneFiftyStepTen (CV-1, 23 October): 30..150 / 10.
     @Test
-    fun typingPauseTwentyToOneFiftyStepTen() {
+    fun typingPauseThirtyToOneFiftyStepTen() {
         val state = CreateFlowState(null)
         state.adjustTypingPause(-PAUSE_CHARS_STEP)
         state.adjustTypingPause(-PAUSE_CHARS_STEP * 100) // floor at the minimum
-        assertEquals(20, PAUSE_CHARS_MIN)
+        assertEquals(30, PAUSE_CHARS_MIN)
         assertEquals(PAUSE_CHARS_MIN, state.typingPauseChars)
         state.adjustTypingPause(PAUSE_CHARS_STEP * 100) // ceiling at 150
         assertEquals(150, PAUSE_CHARS_MAX)
@@ -76,18 +76,18 @@ class CreateFlowStateTest {
         assertEquals(140, state.typingPauseChars)
     }
 
-    // Supersedes waitPauseFloorToThreeHundredStepFive (UM-A): 20..240 s / 10.
+    // Supersedes waitPauseTwentyToTwoFortyStepTen (CV-1, 23 October): 30..120 s / 10.
     @Test
-    fun waitPauseTwentyToTwoFortyStepTen() {
+    fun waitPauseThirtyToOneTwentyStepTen() {
         val state = CreateFlowState(null)
         state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP * 100)
-        assertEquals(20, PAUSE_WAIT_SECONDS_MIN)
+        assertEquals(30, PAUSE_WAIT_SECONDS_MIN)
         assertEquals(PAUSE_WAIT_SECONDS_MIN, state.waitPauseSeconds)
         state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP * 100)
-        assertEquals(240, PAUSE_WAIT_SECONDS_MAX)
+        assertEquals(120, PAUSE_WAIT_SECONDS_MAX)
         assertEquals(PAUSE_WAIT_SECONDS_MAX, state.waitPauseSeconds)
         state.adjustWaitPause(-PAUSE_WAIT_SECONDS_STEP)
-        assertEquals(230, state.waitPauseSeconds)
+        assertEquals(110, state.waitPauseSeconds)
     }
 
     // Supersedes the old 5..100-minute pause-length test: the pause length
@@ -96,18 +96,18 @@ class CreateFlowStateTest {
     @Test
     fun editPrefillClampsStoredPauseValuesIntoRangeAndOntoTheStep() {
         val state = CreateFlowState(editBlockId = 3)
-        state.prefillPause(storedChars = 200, storedWaitSeconds = 300) // old maxima
+        state.prefillPause(storedChars = 200, storedWaitSeconds = 240) // old maxima
         assertEquals(150, state.typingPauseChars)
-        assertEquals(240, state.waitPauseSeconds)
-        state.prefillPause(storedChars = 10, storedWaitSeconds = 5) // below the floors
-        assertEquals(20, state.typingPauseChars)
-        assertEquals(20, state.waitPauseSeconds)
+        assertEquals(120, state.waitPauseSeconds)
+        state.prefillPause(storedChars = 20, storedWaitSeconds = 20) // old floors, below the new
+        assertEquals(30, state.typingPauseChars)
+        assertEquals(30, state.waitPauseSeconds)
         state.prefillPause(storedChars = 120, storedWaitSeconds = 65) // old 5 s step
         assertEquals(120, state.typingPauseChars)
         assertEquals(60, state.waitPauseSeconds)
-        state.prefillPause(storedChars = 100, storedWaitSeconds = 180) // in range: unchanged
+        state.prefillPause(storedChars = 100, storedWaitSeconds = 90) // in range: unchanged
         assertEquals(100, state.typingPauseChars)
-        assertEquals(180, state.waitPauseSeconds)
+        assertEquals(90, state.waitPauseSeconds)
         // The clamped draft is always a valid save.
         val draft = state.draft()
         assertTrue(draft.pauseChars in PAUSE_CHARS_MIN..PAUSE_CHARS_MAX && draft.pauseChars % PAUSE_CHARS_STEP == 0)
@@ -115,6 +115,33 @@ class CreateFlowStateTest {
             draft.countdownSeconds in PAUSE_WAIT_SECONDS_MIN..PAUSE_WAIT_SECONDS_MAX &&
                 draft.countdownSeconds % PAUSE_WAIT_SECONDS_STEP == 0,
         )
+    }
+
+    // CV-5: a stored disable value that is off the current ladder moves to
+    // the nearest rung (a tie goes to the harder one), so editing an older
+    // block always saves; a value on the ladder is kept.
+    @Test
+    fun editPrefillSnapsStoredDisableValuesOntoTheLadder() {
+        val state = CreateFlowState(editBlockId = 3)
+        state.prefillDisable(storedChars = DISABLE_CHARS_CHOICES[1], storedWaitSeconds = DISABLE_WAIT_SECONDS_CHOICES[1])
+        assertEquals(DISABLE_CHARS_CHOICES[1], state.typingTurnoffChars)
+        assertEquals(DISABLE_WAIT_SECONDS_CHOICES[1], state.waitTurnoffSeconds)
+        state.prefillDisable(storedChars = 10_000, storedWaitSeconds = 10_000) // far above
+        assertEquals(DISABLE_CHARS_CHOICES.last(), state.typingTurnoffChars)
+        assertEquals(DISABLE_WAIT_SECONDS_CHOICES.last(), state.waitTurnoffSeconds)
+        state.prefillDisable(storedChars = 1, storedWaitSeconds = 1) // below the first rung
+        assertEquals(DISABLE_CHARS_CHOICES.first(), state.typingTurnoffChars)
+        assertEquals(DISABLE_WAIT_SECONDS_CHOICES.first(), state.waitTurnoffSeconds)
+        // Exactly between the two upper rungs: the harder one wins.
+        val charsTie = (DISABLE_CHARS_CHOICES[1] + DISABLE_CHARS_CHOICES[2]) / 2
+        val waitTie = (DISABLE_WAIT_SECONDS_CHOICES[1] + DISABLE_WAIT_SECONDS_CHOICES[2]) / 2
+        state.prefillDisable(storedChars = charsTie, storedWaitSeconds = waitTie)
+        assertEquals(DISABLE_CHARS_CHOICES[2], state.typingTurnoffChars)
+        assertEquals(DISABLE_WAIT_SECONDS_CHOICES[2], state.waitTurnoffSeconds)
+        // The snapped draft is always on the ladder, so it saves.
+        val draft = state.draft()
+        assertTrue(draft.turnoffChars in DISABLE_CHARS_CHOICES)
+        assertTrue(draft.turnoffSeconds in DISABLE_WAIT_SECONDS_CHOICES)
     }
 
     // — inline method cards (09 v3) —
@@ -151,7 +178,7 @@ class CreateFlowStateTest {
         val state = CreateFlowState(null)
         state.adjustTypingPause(PAUSE_CHARS_STEP * 3)
         state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP * 5)
-        state.typingTurnoffChars = 700
+        state.typingTurnoffChars = DISABLE_CHARS_CHOICES[2]
 
         state.chooseMethod(FrictionType.DELAY)
         state.chooseMethod(FrictionType.TYPING)
@@ -159,7 +186,7 @@ class CreateFlowStateTest {
 
         assertEquals(PAUSE_CHARS_DEFAULT + 30, state.typingPauseChars)
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT + 50, state.waitPauseSeconds)
-        assertEquals(700, state.typingTurnoffChars)
+        assertEquals(DISABLE_CHARS_CHOICES[2], state.typingTurnoffChars)
         assertEquals(FrictionType.TYPING, state.frictionType)
         assertTrue(state.methodChosen)
     }
@@ -209,14 +236,14 @@ class CreateFlowStateTest {
         // A waiting rung that is neither the typing pick nor the default.
         val waitPick = (0..2).first { it != 2 && it != waitDefaultIndex }
         val state = CreateFlowState(null)
-        state.disableChoiceIndex = 2 // typing: 700
+        state.disableChoiceIndex = 2 // typing: the hardest rung
         state.adjustTypingPause(PAUSE_CHARS_STEP * 3) // typing pause + 30: unrelated
         state.frictionType = FrictionType.DELAY
         assertEquals(waitDefaultIndex, state.disableChoiceIndex) // waiting keeps its own rung
         state.disableChoiceIndex = waitPick
         state.frictionType = FrictionType.TYPING
         assertEquals(2, state.disableChoiceIndex)
-        assertEquals(700, state.typingTurnoffChars)
+        assertEquals(DISABLE_CHARS_CHOICES[2], state.typingTurnoffChars)
         assertEquals(DISABLE_WAIT_SECONDS_CHOICES[waitPick], state.waitTurnoffSeconds)
         assertEquals(PAUSE_CHARS_DEFAULT + 30, state.typingPauseChars)
     }
@@ -225,11 +252,11 @@ class CreateFlowStateTest {
     @Test
     fun disableWaitCopyNamesSecondsBelowAMinute() {
         assertEquals("Wait for 20 seconds.", disableCardCopy(FrictionType.DELAY, 0, 20).second)
-        assertEquals("Wait for 3 minutes.", disableCardCopy(FrictionType.DELAY, 0, 180).second)
-        assertEquals("Wait for 6 minutes.", disableCardCopy(FrictionType.DELAY, 1, 360).second)
+        assertEquals("Wait for 1 minute.", disableCardCopy(FrictionType.DELAY, 0, 60).second) // CV-4: singular
+        assertEquals("Wait for 2 minutes.", disableCardCopy(FrictionType.DELAY, 1, 120).second)
         assertEquals(
-            "Wait for 12 minutes. For blocks you don't trust yourself with.",
-            disableCardCopy(FrictionType.DELAY, 2, 720).second,
+            "Wait for 4 minutes. For blocks you don't trust yourself with.",
+            disableCardCopy(FrictionType.DELAY, 2, 240).second,
         )
         assertEquals("Type a bit" to "Type 20 characters. Random words.", disableCardCopy(FrictionType.TYPING, 0, 20))
     }
@@ -241,12 +268,12 @@ class CreateFlowStateTest {
         val state = CreateFlowState(null)
         state.frictionType = FrictionType.DELAY
         state.adjustWaitPause(PAUSE_WAIT_SECONDS_STEP * 6) // default + 60
-        state.disableChoiceIndex = 2 // waiting 720
+        state.disableChoiceIndex = 2 // waiting: the hardest rung
 
         val draft = state.draft()
         assertEquals(FrictionType.DELAY, draft.frictionType)
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT + 60, draft.countdownSeconds)
-        assertEquals(720, draft.turnoffSeconds)
+        assertEquals(DISABLE_WAIT_SECONDS_CHOICES[2], draft.turnoffSeconds)
         // The inactive typing columns still carry the typing method's drafts.
         assertEquals(PAUSE_CHARS_DEFAULT, draft.pauseChars)
         assertEquals(DISABLE_CHARS_DEFAULT, draft.turnoffChars)
@@ -266,7 +293,7 @@ class CreateFlowStateTest {
         state.frictionType = FrictionType.DELAY
         state.methodChosen = true
         state.typingPauseChars = 140
-        state.waitPauseSeconds = 230
+        state.waitPauseSeconds = 110 // in the 30..120 range (CV-1)
         state.typingTurnoffChars = DISABLE_CHARS_CHOICES[2]
         state.waitTurnoffSeconds = DISABLE_WAIT_SECONDS_CHOICES[0]
         state.prefilled = true
@@ -289,7 +316,7 @@ class CreateFlowStateTest {
         assertEquals(FrictionType.DELAY, restored.frictionType)
         assertTrue(restored.methodChosen)
         assertEquals(140, restored.typingPauseChars)
-        assertEquals(230, restored.waitPauseSeconds)
+        assertEquals(110, restored.waitPauseSeconds)
         assertEquals(DISABLE_CHARS_CHOICES[2], restored.typingTurnoffChars)
         assertEquals(DISABLE_WAIT_SECONDS_CHOICES[0], restored.waitTurnoffSeconds)
         assertTrue(restored.prefilled)

@@ -178,9 +178,9 @@ class CreateFlowScreenTest {
         siteDomains = sites,
         frictionType = FrictionType.TYPING,
         pauseChars = 120,
-        turnoffChars = 350,
+        turnoffChars = 200,
         countdownSeconds = 90,
-        turnoffSeconds = 360,
+        turnoffSeconds = 120,
     )
 
     private fun showFlow(
@@ -302,9 +302,9 @@ class CreateFlowScreenTest {
     // finds the guard taken and does nothing. Exactly one block, exactly one
     // block_created, exactly one navigation — and no abandonment after it.
     // The five-step wizard logs steps 1..5; the created payload carries the
-    // fresh-draft defaults (every build: 20 chars / 60 s wait; release middle
-    // ladder rungs 350 chars and 360 s, debug owner testing the 20 first
-    // rungs). Since the unlock-minutes addendum (UM-6) it carries no pause
+    // fresh-draft defaults (every build: 40 chars / 30 s wait; release middle
+    // ladder rungs 200 chars and 120 s, debug owner testing the 20 first
+    // rungs; 23 October config values). Since the unlock-minutes addendum (UM-6) it carries no pause
     // length: the exact key set is pinned.
     @Test
     fun repeatedSaveWhilePersistSuspendsCreatesExactlyOnce() {
@@ -850,7 +850,7 @@ class CreateFlowScreenTest {
 
         awaitText("3 / 5")
         awaitText("Type a passage")
-        // Stored pauseChars (120, not the 20 default) proves the prefill
+        // Stored pauseChars (120, not the 40 default) proves the prefill
         // landed in the open card's stepper (09 v3: the stored method opens
         // chosen, with no pick needed); the nonempty draft may proceed from
         // the method step. The card names no pause length (UM-A).
@@ -876,9 +876,9 @@ class CreateFlowScreenTest {
                     name = "Legacy empty",
                     frictionType = FrictionType.TYPING,
                     pauseChars = 120,
-                    turnoffChars = 350,
+                    turnoffChars = 200,
                     countdownSeconds = 90,
-                    turnoffSeconds = 360,
+                    turnoffSeconds = 120,
                     enabled = false,
                 ),
             )
@@ -1017,12 +1017,12 @@ class CreateFlowScreenTest {
         awaitText("Make it hurt")
         awaitText("Recommended")
         compose.onNodeWithText("Next").assertIsEnabled()
-        compose.onNodeWithText("Wait a bit more").performClick() // 6 min rung
+        compose.onNodeWithText("Wait a bit more").performClick() // 2 min rung, both variants
         next() // step_completed(4)
 
         awaitText("5 / 5")
         awaitText("Wait ${formatCountdown(PAUSE_WAIT_SECONDS_DEFAULT)}") // pause cost row: no phone-in-hand copy
-        awaitText("Wait 6 min") // disable cost row follows the chosen rung
+        awaitText("Wait 2 min") // disable cost row follows the chosen rung
         compose.onNodeWithText("Save block").performClick()
         compose.waitUntil(timeoutMillis = 5_000) { closeCount.get() == 1 }
 
@@ -1030,7 +1030,7 @@ class CreateFlowScreenTest {
             .first { it.block.name == "Evening wind-down" }
         assertEquals(FrictionType.DELAY, saved.block.frictionType)
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, saved.block.countdownSeconds)
-        assertEquals(360, saved.block.turnoffSeconds)
+        assertEquals(120, saved.block.turnoffSeconds)
         // The typing method's columns keep their untouched drafts.
         assertEquals(PAUSE_CHARS_DEFAULT, saved.block.pauseChars)
         assertEquals(DISABLE_CHARS_DEFAULT, saved.block.turnoffChars)
@@ -1041,7 +1041,7 @@ class CreateFlowScreenTest {
         val params = JSONObject(created.paramsJson!!)
         assertEquals("delay", params.getString("friction_type"))
         assertEquals(PAUSE_WAIT_SECONDS_DEFAULT, params.getInt("countdown_seconds"))
-        assertEquals(360, params.getInt("turnoff_seconds"))
+        assertEquals(120, params.getInt("turnoff_seconds"))
     }
 
     // Supersedes sheetBackDismissesTheSheetBeforeWizardBack (UM-B): the

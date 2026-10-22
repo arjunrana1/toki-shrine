@@ -17,7 +17,7 @@ class ChallengeContentSelectorTest {
 
     @Test
     fun passagesHaveTheExactRequestedLengthAcrossTheConfiguredRange() {
-        val lengths = (3..200).toList() + listOf(220, 350, 700)
+        val lengths = (3..200).toList() + listOf(300, 350, 700) // the disable ladders, current and past
         lengths.forEach { length ->
             val passage = ChallengeContentSelector(Random(length)).passage(length)
             assertEquals("length $length", length, passage.length)
@@ -40,7 +40,7 @@ class ChallengeContentSelectorTest {
 
     @Test
     fun passagesNeverRepeatAWordImmediately() {
-        val lengths = (3..60).toList() + (70..200 step 10) + listOf(220, 350, 700)
+        val lengths = (3..60).toList() + (70..200 step 10) + listOf(300, 350, 700)
         lengths.forEach { length ->
             repeat(30) { seed ->
                 val words = ChallengeContentSelector(Random(seed)).passage(length).split(' ')
@@ -71,7 +71,7 @@ class ChallengeContentSelectorTest {
     @Test
     fun typingWordsAreLowercaseDistinctAndNeverSoloPerLength() {
         val words = AppConfig.TYPING_WORDS
-        assertTrue(words.size >= 100)
+        assertEquals(330, words.size) // CV-6, 23 October config values addendum
         assertTrue(words.all { it.matches(Regex("[a-z]+")) })
         assertEquals(words.size, words.distinct().size)
         // A 3-letter word keeps passage(length >= 3) satisfiable, and every

@@ -58,82 +58,112 @@ object AppConfig {
     )
 
     /**
-     * Typing passage vocabulary (P7-F12): the original 56 calm-nature words
-     * plus everyday vocabulary across length 3–10. Plain lowercase words,
+     * Typing passage vocabulary (P7-F12; 330 words since the 23 October
+     * config values addendum): the original 56 calm-nature words plus
+     * everyday vocabulary across length 3–10. Plain lowercase words,
      * all distinct, and at least two words of every length present, so the
      * exact-length fill can always avoid repeating the previous word.
      * Pinned by ChallengeContentSelectorTest.
      */
     internal val TYPING_WORDS = listOf(
-        "adventure", "amber", "anchor", "apple",
-        "apricot", "avocado", "bamboo", "beach",
-        "beacon", "berry", "birch", "blackberry",
-        "blanket", "bluebird", "bread", "breeze",
-        "brook", "brush", "bubble", "butter",
-        "butterfly", "cabinet", "cactus",
-        "candle", "cedar", "cheese", "cherry", "chocolate",
-        "cinnamon", "cloud", "copper", "coral",
-        "cotton", "crane", "crayon", "crow",
-        "dawn", "deer", "desert", "dolphin",
-        "dragonfly", "drift", "dusk",
-        "elephant", "ember", "fabric", "feather", "fern",
-        "festival", "field", "finch", "flint",
-        "fog", "forest", "fossil", "fox", "frost",
-        "galaxy", "garden", "gem", "gemstone",
-        "glade", "granite",
-        "grape", "guitar", "harbor",
-        "harvest", "hazel", "herb", "heron",
-        "honey", "ink", "island", "ivy",
-        "jacket", "journey", "joy", "juniper",
-        "kelp", "kitchen", "kitten", "ladder",
-        "lake", "lantern", "lavender", "leaf",
-        "lemon", "light", "linen", "loam",
-        "mango", "maple", "marble", "market",
-        "meadow", "melon", "metal", "mirror",
-        "mist", "moon", "moonbeam", "moonlight",
+        "acorn", "adventure", "alligator", "almond",
+        "amber", "anchor", "apple", "applesauce",
+        "apricot", "aquarium", "astronaut", "avocado",
+        "backpack", "balloon", "bamboo", "basket",
+        "beach", "beacon", "bee", "bell",
+        "bench", "berry", "birch", "biscuit",
+        "blackberry", "blanket", "blizzard", "blossom",
+        "blueberry", "bluebird", "boat", "bonnet",
+        "bookcase", "bread", "breeze", "brick",
+        "bridge", "brook", "brush", "bubble",
+        "bumblebee", "butter", "butterfly", "button",
+        "cabbage", "cabinet", "cactus", "cake",
+        "calendar", "candle", "canyon", "caramel",
+        "cardinal", "carnation", "carrot", "castle",
+        "cedar", "chameleon", "cheese", "cherry",
+        "chestnut", "chimney", "chocolate", "cinnamon",
+        "clay", "cliff", "cloud", "cobalt",
+        "coin", "compass", "cookie", "copper",
+        "coral", "cottage", "cotton", "crane",
+        "crayon", "cricket", "crocodile", "crow",
+        "crystal", "cup", "cupcake", "daffodil",
+        "daisy", "dawn", "deer", "desert",
+        "diamond", "dinosaur", "dolphin", "doorbell",
+        "dragon", "dragonfly", "drift", "driftwood",
+        "dumpling", "dune", "dusk", "eagle",
+        "elephant", "elm", "ember", "emerald",
+        "envelope", "evergreen", "fable", "fabric",
+        "falcon", "feather", "fern", "festival",
+        "field", "finch", "firefly", "fireplace",
+        "fireside", "flame", "flamingo", "flint",
+        "flower", "flute", "fog", "footpath",
+        "forest", "fossil", "fox", "frog",
+        "frost", "galaxy", "garden", "garnet",
+        "gem", "gemstone", "gentle", "ginger",
+        "giraffe", "glacier", "glade", "gold",
+        "goldfish", "granite", "grape", "grapefruit",
+        "grove", "guitar", "hammer", "hammock",
+        "harbor", "harmony", "harvest", "hat",
+        "hazel", "heart", "hedgehog", "helmet",
+        "herb", "heron", "honey", "horizon",
+        "ink", "island", "ivy", "jacket",
+        "jam", "jellyfish", "journey", "joy",
+        "juniper", "kelp", "keyboard", "kit",
+        "kitchen", "kite", "kitten", "knoll",
+        "ladder", "lake", "lamp", "lantern",
+        "lavender", "leaf", "lemon", "lemonade",
+        "light", "lighthouse", "lily", "linen",
+        "loam", "mango", "map", "maple",
+        "marble", "market", "meadow", "melon",
+        "metal", "mint", "mirror", "mist",
+        "moon", "moonbeam", "moonlight", "moonstone",
         "morning", "moss", "moth", "mountain",
         "mouse", "mustard", "necklace", "needle",
-        "nest", "nightfall", "oak", "ocean",
-        "olive", "orange", "orchard", "orchid",
-        "owl", "paper", "parrot", "peach",
-        "pear", "pearl", "pebble", "pencil",
-        "penguin", "pepper", "petal", "piano",
+        "nest", "nightfall", "oak", "oar",
+        "ocean", "olive", "orange", "orchard",
+        "orchid", "otter", "owl", "paintbrush",
+        "paper", "parrot", "peach", "pear",
+        "pearl", "pebble", "pencil", "penguin",
+        "pepper", "peppermint", "petal", "piano",
         "picnic", "picture", "pillow", "pine",
-        "planet", "pond", "popcorn", "pudding",
-        "puddle", "quiet", "rabbit", "rain",
+        "pineapple", "planet", "plaza", "pond",
+        "popcorn", "pudding", "puddle", "quiet",
+        "quilt", "rabbit", "rain", "raven",
         "reed", "reef", "ribbon", "river",
         "robin", "rocket", "root", "rope",
         "rye", "saffron", "sage", "sail",
-        "salad", "salmon", "sand", "seashell",
-        "seed", "sheet", "shore", "shrimp",
-        "silk", "silver", "skirt", "sky",
-        "smoke", "snow", "soil", "song",
-        "spice", "spinach", "spiral", "spruce",
-        "star", "stone", "stream", "sugar",
-        "summer", "sun", "sunbeam", "sunflower",
-        "sunset", "sunshine", "tea", "thistle",
-        "thunder", "tide", "toast", "towel",
-        "trail", "treasure", "tulip", "twilight",
-        "umbrella", "valley", "vanilla", "vase", "velvet",
-        "violet", "walnut", "waterfall", "watermelon",
-        "whisper", "wild", "wildflower", "willow",
-        "wind", "window", "winter", "wood",
-        "wool", "wren", "yarn"
+        "salad", "salmon", "sand", "sandcastle",
+        "sapphire", "seashell", "seed", "sheet",
+        "shore", "shrimp", "silk", "silver",
+        "skirt", "sky", "smoke", "snow",
+        "soil", "song", "sparrow", "spice",
+        "spinach", "spiral", "spruce", "star",
+        "stargazer", "stone", "strawberry", "stream",
+        "sugar", "summer", "sun", "sunbeam",
+        "sunflower", "sunset", "sunshine", "tea",
+        "thistle", "thunder", "tide", "toast",
+        "towel", "trail", "treasure", "tulip",
+        "twilight", "umbrella", "valley", "vanilla",
+        "vase", "velvet", "violet", "walnut",
+        "waterfall", "watermelon", "whisper", "wild",
+        "wildflower", "willow", "wind", "window",
+        "winter", "wood", "woodpecker", "wool",
+        "wren", "yarn"
     )
 
-    // — Pause challenge values, the same in every build (11 October §17
-    //    unlock-minutes addendum; enforced at the persistence boundary). The
-    //    pause length is no longer a block setting: the user picks one of
-    //    UNLOCK_MINUTE_CHOICES at the gate for each session. —
+    // — Pause challenge values, the same in every build (23 October §17
+    //    pre-launch config values addendum; enforced at the persistence
+    //    boundary). The pause length is no longer a block setting: the user
+    //    picks one of UNLOCK_MINUTE_CHOICES at the gate for each session. —
 
-    const val PAUSE_CHARS_MIN = 20
+    const val PAUSE_CHARS_MIN = 30
     const val PAUSE_CHARS_MAX = 150
     const val PAUSE_CHARS_STEP = 10
-    const val PAUSE_CHARS_DEFAULT = 20
-    const val PAUSE_WAIT_SECONDS_MIN = 20
-    const val PAUSE_WAIT_SECONDS_MAX = 240
+    const val PAUSE_CHARS_DEFAULT = 40
+    const val PAUSE_WAIT_SECONDS_MIN = 30
+    const val PAUSE_WAIT_SECONDS_MAX = 120
     const val PAUSE_WAIT_SECONDS_STEP = 10
-    const val PAUSE_WAIT_SECONDS_DEFAULT = 60
+    const val PAUSE_WAIT_SECONDS_DEFAULT = 30
 
     val UNLOCK_MINUTE_CHOICES = listOf(5, 10, 15, 20)
 

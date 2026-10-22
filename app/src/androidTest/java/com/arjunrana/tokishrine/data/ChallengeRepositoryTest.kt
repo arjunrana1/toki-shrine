@@ -143,10 +143,10 @@ class ChallengeRepositoryTest {
             blockId = blockId,
             purpose = ChallengePurpose.TURN_OFF,
             method = FrictionType.DELAY,
-            durationMs = 360_400,
+            durationMs = 120_400,
             attempts = 1,
-            countdownElapsedMs = 360_000,
-            configuredAmount = 360,
+            countdownElapsedMs = 120_000,
+            configuredAmount = 120,
             unlockMinutes = null,
         )
 
@@ -154,7 +154,7 @@ class ChallengeRepositoryTest {
         val events = db.eventDao().getAll()
         assertEquals(1, events.count { it.name == EventRepository.EVENT_COUNTDOWN_COMPLETED })
         val countdown = events.single { it.name == EventRepository.EVENT_COUNTDOWN_COMPLETED }
-        assertEquals(360_000L, JSONObject(countdown.paramsJson!!).getLong("elapsed_ms"))
+        assertEquals(120_000L, JSONObject(countdown.paramsJson!!).getLong("elapsed_ms"))
     }
 
     @Test
@@ -349,9 +349,9 @@ class ChallengeRepositoryTest {
                 siteDomains = emptyList(),
                 frictionType = method,
                 pauseChars = 150,
-                turnoffChars = 350,
+                turnoffChars = 200,
                 countdownSeconds = 60,
-                turnoffSeconds = 360,
+                turnoffSeconds = 120,
             ),
         )
         blocks.setEnabled(id, true)
@@ -367,7 +367,7 @@ class ChallengeRepositoryTest {
         durationMs = 4_000,
         attempts = 2,
         countdownElapsedMs = 0,
-        configuredAmount = 350,
+        configuredAmount = 200,
         unlockMinutes = null,
     )
 }

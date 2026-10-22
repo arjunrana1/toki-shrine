@@ -87,9 +87,9 @@ class AddMoreScreenTest {
         siteDomains = sites,
         frictionType = FrictionType.TYPING,
         pauseChars = 120,
-        turnoffChars = 350,
+        turnoffChars = 200,
         countdownSeconds = 60,
-        turnoffSeconds = 360,
+        turnoffSeconds = 120,
     )
 
     /** Seeds the block under test ON with Instagram + reddit.com and shows the screen. */

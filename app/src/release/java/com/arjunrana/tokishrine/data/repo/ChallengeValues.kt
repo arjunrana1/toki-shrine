@@ -1,14 +1,14 @@
 package com.arjunrana.tokishrine.data.repo
 
-// Production disable values (PRD §7 / §17) for the release variant. The
-// debug variant's ChallengeValues.kt declares the same names; pause values
-// are the same in every build and live in AppConfig (11 October §17
-// unlock-minutes addendum).
+// Production disable values (PRD §17 23 October pre-launch config values
+// addendum) for the release variant. The debug variant's ChallengeValues.kt
+// declares the same names; pause values are the same in every build and live
+// in AppConfig.
 
 // Fixed disable ladders: no custom stepper or second method selector. The
 // middle entry is the recommended preselection.
-val DISABLE_CHARS_CHOICES = listOf(220, 350, 700)
-val DISABLE_WAIT_SECONDS_CHOICES = listOf(180, 360, 720)
+val DISABLE_CHARS_CHOICES = listOf(150, 200, 300)
+val DISABLE_WAIT_SECONDS_CHOICES = listOf(60, 120, 240)
 
-const val DISABLE_CHARS_DEFAULT = 350
-const val DISABLE_WAIT_SECONDS_DEFAULT = 360
+const val DISABLE_CHARS_DEFAULT = 200
+const val DISABLE_WAIT_SECONDS_DEFAULT = 120
