@@ -163,7 +163,7 @@ A fresh passage of random words is displayed; the user types it correctly. Lengt
 | Passage length to pause | 150 chars | 100–200 chars | 10 chars |
 | Passage length to disable | 350 chars (recommended) | 220 / 350 / 700 chars | Fixed choices |
 
-*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting (the user picks 5 / 10 / 15 / 20 minutes at the gate), and passage length to pause is 20–150 characters in steps of 10, default 20, in every build. Typing time estimates are no longer shown anywhere.*
+*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting (the user picks 5 / 10 / 15 / 20 minutes at the gate). Typing time estimates are no longer shown anywhere. Current pause and disable values: §17 "Pre-launch config values addendum — 23 October 2026" (pause 30–150 chars, default 40; disable 150 / 200 / 300, default 200).*
 
 Typo positions are highlighted only after a failed explicit Submit; there is no setting. Where other surfaces display typing estimates, use 0.4 seconds per character. The method cards state actual characters and pause duration in plain words, replacing the old configuration estimate paragraph.
 
@@ -184,7 +184,7 @@ A countdown runs; the user waits.
 | Wait to pause | 60 sec | 60–300 sec | 5 sec |
 | Wait to disable | 6 min (recommended) | 3 / 6 / 12 min | Fixed choices |
 
-*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting, and wait to pause is 20–240 seconds in steps of 10, default 60, in every build.*
+*From the unlock-minutes build (§17 11 October addendum), the pause rows above are superseded: no "Block stays off for" setting. Current pause and disable values: §17 "Pre-launch config values addendum — 23 October 2026" (wait to pause 30–120 s, default 30; wait to disable 1 / 2 / 4 min, default 2 min).*
 
 A waiting challenge counts down only while the Toki Shrine waiting screen is visible and the device remains unlocked. The phone may be held or placed down. No hold detection, accelerometer variance or tilt condition is required. Leaving the app or locking the device retains the in-process challenge but resets progress to zero; returning restarts the full configured countdown. Choosing the explicit escape action terminates the challenge. These rules apply to both pause and disable waits; process-death/reboot restoration is not required.
 
@@ -788,3 +788,27 @@ Arjun's change request, with his answers to the architect's clarifying questions
 **Data and events**
 - A block no longer stores a pause length; the `pause_minutes` column is dropped (schema v6). There are no users, so Arjun accepts that this upgrade may reset the app's data, and he will reinstall from scratch if needed. This is not a general destructive-migration policy, and later schema versions still need explicit migrations.
 - The chosen length is recorded in the existing `pause_started.minutes`. `pause_minutes` leaves `block_created` and `block_edited.fields_changed`. No other event changes.
+
+### Pre-launch config values addendum — 23 October 2026
+
+Arjun's final values from the pre-launch config review (9 October reminder), given and confirmed on 23 October 2026. **Recorded, not yet implemented** until [TS-config-values](coordination/tasks/TS-config-values/TASK.md) lands. From that build it supersedes the pause value table in the 11 October unlock-minutes addendum, the disable rows of §7.1/§7.2, and the debug disable values of the 7 October delta 5 (debug keeps only its quick 20 rung).
+
+**Pause challenge values (every build)**
+
+| Control | Default | Range | Step |
+|---|---|---|---|
+| Passage length to pause | 40 chars | 30–150 chars | 10 chars |
+| Wait to pause | 30 sec | 30–120 sec | 10 sec |
+| Pause length | chosen at the gate | 5 / 10 / 15 / 20 min | fixed choices (unchanged) |
+
+**Disable ladders ("a bit", "a bit more", "make it hurt"); the middle rung is "Recommended"**
+
+| Control | Release | Debug |
+|---|---|---|
+| Passage length to disable | **150 / 200 / 300** chars, default **200** | **20 / 200 / 300**, default **20** |
+| Wait to disable | **1 / 2 / 4 min**, default **2 min** | **20 s / 2 min / 4 min**, default **20 s** |
+
+- A one-minute rung reads "Wait for 1 minute." (singular).
+- Stored blocks keep working with their stored values until re-saved. Editing clamps the pause values into the new ranges (as before) and moves a stored disable value that is not on the ladder to the nearest rung (a tie goes to the harder rung), so the edited block always saves.
+- **Typing passages:** the word list grows to **330 words** (lowercase, all distinct, 3–10 letters, at least two words of every length).
+- Unchanged: unlock choices 5/10/15/20, auto-nope after 15 s away, the Stats visit settings (75th percentile, 30 s minimum visit, 3 visits), the gate images and lines, and the celebration titles and subtitles.
