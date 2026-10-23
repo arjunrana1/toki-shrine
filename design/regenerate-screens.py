@@ -1,5 +1,5 @@
 import re, os, pathlib, shutil
-PROJ = pathlib.Path(os.path.expanduser("~/Claude Projects/Anti Doomscrolling/toki-shrine-ui-mockups/project"))
+PROJ = pathlib.Path(__file__).resolve().parent / "mockups" / "project"
 html = (PROJ/"TimeShrine Mocks.dc.html").read_text(encoding="utf-8")
 style = re.search(r"<style>(.*?)</style>", html, re.S).group(1)
 OUT = PROJ/"_render"

@@ -2,7 +2,7 @@ package com.arjunrana.timeshrine.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// The Nocturne tokens from toki-shrine-ui-mockups/project/_ds/nocturne-*/styles.css,
+// The Nocturne tokens from design/mockups/project/_ds/nocturne-*/styles.css,
 // translated once. This is the only file allowed to carry hex values.
 // Derived token: --color-divider is color-mix(in srgb, #e9e9ed 16%, transparent).
 

@@ -23,12 +23,9 @@ Start with [AGENTS.md](AGENTS.md), then [CURRENT](coordination/CURRENT.md). The 
 
 | Path | What's there |
 |---|---|
-| `design/screens/` | Numbered screen renders plus current owner-supplied references |
-| `design/humor-assets/` | Block-screen images and display font |
-| `design/regenerate-screens.py` | Rebuilds the renders from the design export |
-| `toki-shrine-ui-mockups/` | Claude Design export — Nocturne tokens and source markup |
+All design material is in [`design/`](design/README.md): the Nocturne design system and source mocks (`design/mockups/`), screen renders and handoffs (`design/screens/`), the app icon (`design/icon-final/`) and block-screen assets (`design/humor-assets/`).
 
-Nocturne, dark theme only. Every visual value comes from `_ds/nocturne-*/styles.css`.
+Nocturne, dark theme only. Every visual value comes from `design/mockups/project/_ds/nocturne-*/styles.css`.
 
 ## Status
 
@@ -38,4 +35,4 @@ Android first. iOS is a separate architecture built on Apple's Screen Time APIs 
 
 ## History
 
-`PRD-phase-0.md` and `DESIGN-BRIEF-phase-1.md` are the earlier documents that fed into PRD 1.0, retained for reference.
+The earlier documents that fed into PRD 1.0 ([Phase 0 PRD](docs/history/inputs/PRD-phase-0.md), [Phase 1 design brief](docs/history/inputs/DESIGN-BRIEF-phase-1.md)) and the phase verification reports ([verification feedback](docs/history/verification-feedback/)) are kept in [docs/history](docs/history/INDEX.md).

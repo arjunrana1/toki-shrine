@@ -1,6 +1,6 @@
 # Theme, UI and branding
 
-Read for visual implementation or shared controls. PRD §§6/15 and §17 addenda override stale mock copy/layout. Canonical token files: [styles.css](../../toki-shrine-ui-mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/styles.css), [design rules](../../toki-shrine-ui-mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/readme.md). Read only relevant screen markup/render in `toki-shrine-ui-mockups/project/TimeShrine Mocks.dc.html` and `design/screens/`.
+Read for visual implementation or shared controls. PRD §§6/15 and §17 addenda override stale mock copy/layout. Canonical token files: [styles.css](../../design/mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/styles.css), [design rules](../../design/mockups/project/_ds/nocturne-82412343-c17a-4e25-85de-f680ed74498c/readme.md). Read only relevant screen markup/render in `design/mockups/project/TimeShrine Mocks.dc.html` and `design/screens/`.
 
 Source: `app/src/main/java/com/arjunrana/timeshrine/ui/theme/`, `ui/components/NocturneUi.kt`, `TargetList.kt`, `ui/icons/Phosphor.kt`, resources under `app/src/main/res/`.
 
@@ -15,7 +15,7 @@ Source: `app/src/main/java/com/arjunrana/timeshrine/ui/theme/`, `ui/components/N
 
 ## Naming and open obligations
 
-The product is **Time Shrine** (`com.arjunrana.timeshrine`, theme `Theme.TimeShrine`), renamed 23 October 2026 (PRD §17 rename addendum). The design export folder keeps its old path `toki-shrine-ui-mockups/`; strings inside older mocks may still say Toki Shrine or TimeShrine, and the app copy wins.
+The product is **Time Shrine** (`com.arjunrana.timeshrine`, theme `Theme.TimeShrine`), renamed 23 October 2026 (PRD §17 rename addendum). The design export lives in `design/mockups/` (formerly `toki-shrine-ui-mockups/`); strings inside older mocks may still say Toki Shrine or TimeShrine, and the app copy wins.
 
 Phase 7 added labels/roles and 44 dp targets to the shared Back and home Stats/Settings controls. Its TalkBack, large-text and final visual acceptance remain pending in [P7-O20–O22](../../coordination/tasks/TS-P7-stats-feedback-final/OWNER-CHECKS.md); this is not proof that every surface has passed accessibility testing. Haptic acceptance is recorded in [navigation/permissions](navigation-permissions.md). Arjun owns visual/device acceptance; source/compilation is not a pixel or feel pass. Routine owner-reported visual corrections may use the direct GLM path in WORKFLOW.
 

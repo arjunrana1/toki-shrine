@@ -43,7 +43,7 @@ import com.arjunrana.timeshrine.ui.theme.NocturneTheme
 // while it loads (or if the asset is corrupt, a build defect) and the
 // screen renders its frame with the settings button still functional.
 // There is no text field on this screen, so the One UI keyboard+dialog
-// freeze guidance (DECISIONS.md, Phase 2) does not apply — still flagged
+// freeze guidance (docs/history decisions, Phase 2) does not apply — still flagged
 // for device validation like every dialog. The earlier completion CTA
 // was also removed by owner request (P3-F05).
 @Composable

@@ -2,7 +2,7 @@
 
 **Current design authority:** §17 records the owner’s refinements and later addenda. For those items it supersedes older screen descriptions, mockup copy/layout and historical decisions. Unchanged behavior and design tokens retain their existing authority. Dated checkpoints preserve evidence at that time; [CURRENT](coordination/CURRENT.md) identifies live task and acceptance status.
 
-Product and build specification. Supersedes `PRD-phase-0.md` and `DESIGN-BRIEF-phase-1.md`, which are retained as history.
+Product and build specification. Supersedes the [Phase 0 PRD](docs/history/inputs/PRD-phase-0.md) and [Phase 1 design brief](docs/history/inputs/DESIGN-BRIEF-phase-1.md), which are retained as history.
 
 Android only. Phone, portrait, dark theme only.
 
@@ -218,7 +218,7 @@ The counter shown to the user is **global** across all blocks. Individual events
 
 ## 9. Stats — Your time (approved replacement, 4 October 2026)
 
-This replaces the former walk-away dashboard in open Phase 7. Continue from the current implementation; do not revert Phase 6. Design screen number is **23** (the supplied handoff calls it 21). [S1–S6 PNGs](design/screens/stats-redesign/README.md) and the [HTML/spec](toki-shrine-ui-mockups/stats-screen/INTAKE.md) define layout; this section overrides their older behavior/copy. [Data/UI contract](docs/components/stats.md) defines the implementation boundary.
+This replaces the former walk-away dashboard in open Phase 7. Continue from the current implementation; do not revert Phase 6. Design screen number is **23** (the supplied handoff calls it 21). [S1–S6 PNGs](design/screens/stats-redesign/README.md) and the [HTML/spec](design/mockups/stats-screen/INTAKE.md) define layout; this section overrides their older behavior/copy. [Data/UI contract](docs/components/stats.md) defines the implementation boundary.
 
 **Outcomes.** Explicit *Not now* / *Never mind* actions are nopes, whether the interruption targeted an app or a site. Home, Back, lock and switching apps suspend and produce no outcome. A successful pause challenge is a push-through, app- or site-triggered alike. Attempts = counted nopes + push-throughs; pending and turn-off challenges contribute neither. A site outcome attributes to the hosting browser's package: for site interruptions the browser is the Stats app, appearing on the app leaderboard with savings aggregated across its site and app triggers (4 October §17 addendum). The global in-the-moment walk-away counter retains raw app + site behavior from §8.
 
@@ -485,10 +485,10 @@ Stats screen 23 now uses [six supplied PNGs](design/screens/stats-redesign/READM
 
 | Asset | Location | Authority |
 |---|---|---|
-| Design tokens | `toki-shrine-ui-mockups/project/_ds/nocturne-*/styles.css` | **Canonical.** Every colour, font, spacing, radius and shadow comes from these variables. Never hard-code a value the tokens carry. |
-| Design language rules | `toki-shrine-ui-mockups/project/_ds/nocturne-*/readme.md` | Rules to follow — outlined buttons never filled, no pure black or white, Phosphor icons, 0.7× density |
+| Design tokens | `design/mockups/project/_ds/nocturne-*/styles.css` | **Canonical.** Every colour, font, spacing, radius and shadow comes from these variables. Never hard-code a value the tokens carry. |
+| Design language rules | `design/mockups/project/_ds/nocturne-*/readme.md` | Rules to follow — outlined buttons never filled, no pure black or white, Phosphor icons, 0.7× density |
 | Screen renders | `design/screens/` | Layout and arrangement reference, 27 PNGs |
-| Source markup | `toki-shrine-ui-mockups/project/TimeShrine Mocks.dc.html` | Exact values, structure and copy |
+| Source markup | `design/mockups/project/TimeShrine Mocks.dc.html` | Exact values, structure and copy |
 | Humour assets | `design/humor-assets/` | Eleven images plus the retained Anton source asset |
 | Screen regeneration | `design/regenerate-screens.py` | Rebuilds the PNGs if the design export changes |
 
@@ -541,7 +541,7 @@ All listed owner choices are resolved as of 13 September 2026. R1–R14 and the 
 
 ### Evidence and validation status
 
-Evidence in `Verification Feedback/phase-2-verification/owner-feedback-2026-09-12/`:
+Evidence in `docs/history/verification-feedback/phase-2-verification/owner-feedback-2026-09-12/`:
 
 - `01-review-overflow.png`: observed create-review overflow; website chip stretches at right, summary pushed down.
 - `02-review-list-reference.png`: desired vertical target-list arrangement only. Old helper copy, estimates and saved-OFF sentence in this reference are superseded above.
@@ -820,4 +820,4 @@ Arjun's go-ahead for the rename recorded on 9 September 2026 ([branding decision
 - **Name users see:** **Time Shrine** (two words): launcher label, in-app copy, the Accessibility service description, and later the Play listing.
 - **Identity:** applicationId and Kotlin package **`com.arjunrana.timeshrine`**. This is permanent once uploaded to Play, so the rename lands before any upload. It installs as a **new app with no carried data** (no users yet). Arjun uninstalls the old Toki Shrine himself, so two blockers don't both hold Accessibility.
 - **Code:** full rename. `Toki*` classes become `TimeShrine*`, the database file becomes `time-shrine.db`, the theme becomes `Theme.TimeShrine`, the Gradle project becomes "Time Shrine", and the Room schema folder follows the database class.
-- **Not renamed:** the GitHub repository (`toki-shrine`, for now), existing folder paths such as `toki-shrine-ui-mockups/`, the local emulator name, and historical records, which keep the name as written.
+- **Not renamed:** the GitHub repository (`toki-shrine`, for now), the local emulator name, and historical records, which keep the name as written. (The design export folder `toki-shrine-ui-mockups/` later moved to `design/mockups/`, 23 October 2026.)

@@ -1,6 +1,6 @@
 # Stats redesign PNG references
 
-Owner-supplied exports for the approved "Your time" screen. For metric definitions and exact UI specifications, use the [source handoff](../../../toki-shrine-ui-mockups/stats-screen/INTAKE.md). The existing `../23-stats.png` is the older implemented Stats design.
+Owner-supplied exports for the approved "Your time" screen. For metric definitions and exact UI specifications, use the [source handoff](../../mockups/stats-screen/INTAKE.md). The existing `../23-stats.png` is the older implemented Stats design.
 
 | State | PNG | Coverage |
 |---|---|---|

@@ -1,6 +1,6 @@
 .DS_Store
 *.zip
-toki-shrine-ui-mockups/project/_render/
+design/mockups/project/_render/
 build/
 .gradle/
 app/build/

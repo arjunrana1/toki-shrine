@@ -46,7 +46,7 @@ The six files in `migration-2026-09-18/` preserve all original bytes, including 
 - [Original README](migration-2026-09-18/README.before.txt)
 - [Original product specification](migration-2026-09-18/PRD.before.txt)
 
-Existing Verification Feedback reports remain in place. Earlier PRD-phase-0.md and DESIGN-BRIEF-phase-1.md are historical design inputs, not the current specification.
+The phase verification reports are in [verification-feedback/](verification-feedback/). The earlier [PRD-phase-0.md](inputs/PRD-phase-0.md) and [DESIGN-BRIEF-phase-1.md](inputs/DESIGN-BRIEF-phase-1.md) are historical design inputs, not the current specification. The retired root redirect stubs (DECISIONS.md, HANDOVER.md, GLM_HANDOVER.md) were removed on 23 October 2026; their original texts are in [migration-2026-09-18](migration-2026-09-18/). AGENTS.md is the only entry point.
 
 ## Document freshness maintenance — 27 September 2026
 

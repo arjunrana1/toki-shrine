@@ -186,7 +186,7 @@ val NocturneColorScheme: ColorScheme = darkColorScheme(
     inversePrimary = NocturneAccentRamp700,
     inverseSurface = NocturneNeutral200,
     inverseOnSurface = NocturneNeutral900,
-    // - Error: derived family (see DECISIONS.md, Phase 0). Nocturne has no
+    // - Error: derived family (see docs/history decisions, Phase 0). Nocturne has no
     //   error colour, so one was generated the way the system builds its own
     //   ramps — OKLCH, shared lightness steps, low chroma, warm-red hue 25
     //   (the hue of the mocks' #8B0000 typo marks). Same L/C as the accent.
