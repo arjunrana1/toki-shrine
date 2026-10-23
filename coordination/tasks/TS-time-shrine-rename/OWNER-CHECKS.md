@@ -1,6 +1,10 @@
 # TS-time-shrine-rename — owner checks
 
-Run on the installed Time Shrine build (a new app, so set up from scratch). Record each result with the date and the **installed APK hash**. Not installed yet; no results. Also run [TS-config-values CV-O1–CV-O4](../TS-config-values/OWNER-CHECKS.md) on the same build.
+Run on the installed Time Shrine build (a new app, so set up from scratch). Record each result with the date and the **installed APK hash**. No results yet.
+
+## Install record — 23 October 2026
+
+- Debug APK `453208bdbbdb5f2fbba0374bae9e13bb73882af9b2b3d8fdd707b7cbfa7d28e4` (rename D1 on config D1), installed at Arjun's request with `adb -s R5CW30ZBM2R install` (a new package, so not over anything) → `Success`, `firstInstallTime` 2026-10-23 01:33:52 IST, by Claude Opus 5.5. Toki Shrine was already uninstalled (user 0 lists only `com.arjunrana.timeshrine`). No launch or other device query. Run TR-O1–O4 and CV-O1–O4 against this hash. Also run [TS-config-values CV-O1–CV-O4](../TS-config-values/OWNER-CHECKS.md) on the same build.
 
 Before installing: uninstall the old Toki Shrine yourself, so two apps don't both use Accessibility.
 
